@@ -1,2 +1,2 @@
-# GLEON_Bayesian_WG
-A working group studying algae blooms in Lake Sunapee, NH
+# Bayes_forecast_WG
+A working group using Bayesian techniques to develop ecological forecasts
