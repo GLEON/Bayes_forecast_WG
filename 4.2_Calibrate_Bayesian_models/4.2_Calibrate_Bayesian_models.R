@@ -24,28 +24,30 @@ my_models <- c("RW","RW_obs","AR")
 
 for (i in 1:length(my_models)){
 
-  #source helper functions
+#1) Source helper functions ---------------------------------------------------------
   source('0_Function_library/model_calibration_plug_n_play.R')
   source('0_Function_library/model_calibration_get_data.R')
   source('0_Function_library/model_calibration_plots.R')
 
-#1) Model options => pick model -----------------------------------------------------
+#2) Model options => pick model -----------------------------------------------------
 
 model_name = my_models[i] # options are found in 4.1_JAGS_models
 model=paste0("4.1_JAGS_models/",model_name, '.R') #Do not edit
 
 
-#2) Read in and visualize data for model ------------------------------------------------------------------------------------------------------------
+#3) Read in data for model ------------------------------------------------------------------------------------------------------------
 
-#see 0_Function_library/model_calibration_plug_n_play.R for this function
+#see 0_Function_library/model_calibration_get_data.R for this function
 cal_data <- get_calibration_data(model_name)
 
 
-#3) JAGS Plug-Ins => initial conditions, priors, data, etc. --------------------------------------------------------------------------------------
+#4) JAGS Plug-Ins => initial conditions, priors, data, etc. --------------------------------------------------------------------------------------
+
+#see 0_Function_library/model_calibration_plug_n_play.R for this function
 jags_plug_ins <- jags_plug_ins(model_name = model_name)
 
 
-#4) Run model (no edits, unless you want to change # of iterations) -------------------------------------------------------------
+#5) Run model (no edits, unless you want to change # of iterations) -------------------------------------------------------------
 j.model   <- jags.model (file = model,
                          data = jags_plug_ins$data.model,
                          inits = jags_plug_ins$init.model,
@@ -64,7 +66,7 @@ jags.out <- run.jags(model = model,
 jags.out.mcmc <- as.mcmc.list(jags.out)
 
 
-#5) Assess calibration
+#6) Assess calibration
 
 #plot parameters
 plot_parameters(params = jags_plug_ins$params.model,
@@ -84,7 +86,7 @@ crosscorr
 sink()
 
 
-#6) Save runjags output
+#7) Save runjags output
 write.jagsfile(jags.out, file=file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_calibration.txt')),
                remove.tags = TRUE, write.data = TRUE, write.inits = TRUE)
 
