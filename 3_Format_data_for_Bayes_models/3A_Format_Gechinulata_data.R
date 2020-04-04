@@ -8,26 +8,55 @@
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate)
+pacman::p_load(tidyverse, lubridate, googledrive)
 
-#load data file
-dat <- read_csv("./Uncertainty-partitioning-of-forecasts/00_Data_files/All_Sites_Gloeo_20Mar2020.csv") 
+#TEMPORARY: get signed into google drive package; once you are signed in, return to R
+#only necessary to run once
+#drive_find(pattern = "weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv")
 
-#insert rows for missing observations in 2009-2016
-date <- c(rep(c("2009-06-11","2009-09-28","2015-06-25","2016-06-09","2016-08-10"),times = 1,each = 4),"2014-07-17","2015-06-11","2015-07-23","2015-08-20")
-site <- c(rep(c("North_Sunapee_Harbor","South_of_the_Fells","South_Herrick_Cove","Newbury"),times = 5),"Newbury","South_of_the_Fells","South_Herrick_Cove","South_of_the_Fells")
+#download data file into appropriate local folder
+drive_download("~/GLEON_Bayesian_WG/EDI.data.clones/gloeo.counts/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv",
+                      path = "./00_Data_files/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv", overwrite = TRUE)
 
-missing_obs <- data.frame(cbind(date,site))
-missing_obs$coloniesperL <- NA
-missing_obs$filbundperL <- NA
-missing_obs$totalperL <- NA
+#load data into R
+dat <- read_csv("./00_Data_files/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv")
 
-#combine missing observations with original data file
-#select dates in 2009-2016
+#create tibble with rows for missing observations in 2009-2016
+date <- c(rep(c("2009-06-11","2009-09-28","2015-06-25","2016-06-09","2016-08-10"),times = 1,each = 4),"2014-07-17","2015-06-11","2015-07-23","2015-08-20","2016-08-04")
+site <- c(rep(c("NorthSunapeeHarbor","SouthoftheFells","HerrickCoveSouth","Newbury"),times = 5),"Newbury","SouthoftheFells","HerrickCoveSouth","SouthoftheFells","NorthSunapeeHarbor")
+
+odd_obs <- as_tibble(cbind(site,date)) %>%
+  mutate(date = as.Date(date))
+odd_obs$year <- year(odd_obs$date)
+odd_obs$dayofyr <- yday(odd_obs$date)
+odd_obs$coloniesperL <- NA
+odd_obs$filbundperL <- NA
+odd_obs$totalperL <- NA
+
+#isolate and average duplicate samples on same day
+dup_days <- c("2010-06-10","2016-08-15")
+
+for (i in 1:length(dup_days)){
+  dup_sampling_day <- dat %>%
+    filter(date == dup_days[i]) %>%
+    group_by(site, date, year, dayofyr)%>%
+    summarize(coloniesperL = mean(coloniesperL, na.rm = TRUE),
+              filbundperL = mean(filbundperL, na.rm = TRUE),
+              totalperL = mean(totalperL, na.rm = TRUE))
+
+  odd_obs <- bind_rows(odd_obs, dup_sampling_day)
+
+}
+
+#eliminate duplicate samples and extra sampling days from original data file
+dat1 <- dat %>%
+  filter(!date %in% as.Date(c("2009-07-11","2010-06-10","2015-09-20","2015-10-10","2016-08-15")))#get rid of extra sampling days
+
+#combine missing and averaged duplicate observations with original data file
 #assign "sampling season weeks" numbering 1-20 each year to dates
-dat1 <- rbind(dat,missing_obs) %>%
-  mutate(week = week(date),year = year(date), dayofyr = yday(date)) %>%
-  filter(year %in% 2009:2016 & (week %in% 21:40 | dayofyr == 283))%>%
+dat2 <- bind_rows(dat1, odd_obs) %>%
+  mutate(week = week(date)) %>%
+  filter(year %in% 2009:2016 & (week %in% 21:40 | dayofyr == 283))%>% #limit to study period
   arrange(date, site) %>%
   select(date, site, coloniesperL, filbundperL, totalperL, year) %>%
   mutate(season_week = rep(c(1:20),times = 8, each = 4))
@@ -35,13 +64,13 @@ dat1 <- rbind(dat,missing_obs) %>%
 #get in wide format (year by week) for seasonal for-loop in JAGS models
 
 #Site 1 (focal site for analysis)
-dat2 <- dat1 %>%
-  filter(site == "South_Herrick_Cove") %>%
+dat3 <- dat2 %>%
+  filter(site == "HerrickCoveSouth") %>%
   select(year, season_week, totalperL) %>%
   spread(key = season_week, value = totalperL) %>%
   select(-year)
 
-colnames(dat2) <- paste("wk", colnames(dat2), sep = "_")
+colnames(dat3) <- paste("wk", colnames(dat3), sep = "_")
 
-write.csv(dat2, "./Uncertainty-partitioning-of-forecasts/00_Data_files/Gechinulata_Site1.csv", row.names = FALSE)
+write.csv(dat3, "./00_Data_files/Gechinulata_Site1.csv", row.names = FALSE)
 
