@@ -31,7 +31,48 @@ drive_download(
 #####################################################################################################################################
 
 #load buoy data into R
-buoy <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_buoy_tempstring_v07April2020.csv")
+buoy <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_buoy_tempstring_v07April2020.csv",
+                 col_types = list(
+                   datetime = col_datetime(format = ""),
+                   location = col_character(),
+                   TempC_0p5m = col_double(),
+                   TempC_0p75m = col_double(),
+                   TempC_0p85m = col_double(),
+                   TempC_1m = col_double(),
+                   TempC_1p5m = col_double(),
+                   TempC_1p75m = col_double(),
+                   TempC_1p85m = col_double(),
+                   TempC_2m = col_double(),
+                   TempC_2p5m = col_double(),
+                   TempC_2p75m = col_double(),
+                   TempC_2p85m = col_double(),
+                   TempC_3m = col_double(),
+                   TempC_3p5m = col_double(),
+                   TempC_3p75m = col_double(),
+                   TempC_3p85m = col_double(),
+                   TempC_4p5m = col_double(),
+                   TempC_4p75m = col_double(),
+                   TempC_4p85m = col_double(),
+                   TempC_5p5m = col_double(),
+                   TempC_5p75m = col_double(),
+                   TempC_5p85m = col_double(),
+                   TempC_6p5m = col_double(),
+                   TempC_6p75m = col_double(),
+                   TempC_6p85m = col_double(),
+                   TempC_7p5m = col_double(),
+                   TempC_7p75m = col_double(),
+                   TempC_7p85m = col_double(),
+                   TempC_8p5m = col_double(),
+                   TempC_8p75m = col_double(),
+                   TempC_8p85m = col_double(),
+                   TempC_9p5m = col_double(),
+                   TempC_9p75m = col_double(),
+                   TempC_9p85m = col_double(),
+                   TempC_10p5m = col_double(),
+                   TempC_11p5m = col_double(),
+                   TempC_13p5m = col_double(),
+                   temp_flag = col_character()
+                 ))
 
 #create column for date in sampling_dates.csv format
 buoy1 <- buoy %>% mutate(date = date(datetime))
@@ -99,5 +140,20 @@ schmidt1$schmidt_diff <- diff
 schmidt1[schmidt1 == Inf] <- NA
 schmidt1[schmidt1 == -Inf] <- NA
 schmidt1[is.na(schmidt1)] <- NA
+schmidt1[schmidt1 < 0] <- 0
+
+#get in wide format (year by week) for seasonal for-loop in JAGS models
+
+#Site 1 (focal site for analysis)
+schmidt2 <- schmidt1 %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(year, season_week, schmidt_mean) %>%
+  spread(key = season_week, value = schmidt_mean) %>%
+  select(-year)
+
+colnames(schmidt2) <- paste("wk", colnames(schmidt2), sep = "_")
+
+write.csv(schmidt2, "./00_Data_files/Bayesian_model_input_data/schmidt_mean.csv", row.names = FALSE)
 
 
