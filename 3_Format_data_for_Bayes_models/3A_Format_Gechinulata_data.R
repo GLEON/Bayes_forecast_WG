@@ -14,9 +14,20 @@ pacman::p_load(tidyverse, lubridate, googledrive)
 #only necessary to run once
 #drive_find(pattern = "weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv")
 
+# Alternative way to get file ID
+#as_id(drive_find(pattern = "weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv")$id)
+
 #download data file into appropriate local folder
 drive_download("~/GLEON_Bayesian_WG/EDI.data.clones/gloeo.counts/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv",
                       path = "./00_Data_files/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv", overwrite = TRUE)
+
+drive_download(file = as_id("1zjPFCU8Lf-OExyNADGPFGlTMcJOkhsz0"),
+               path = "./00_Data_files/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv", overwrite = TRUE)
+
+# alternative waying combining both steps of finding and downloading file
+drive_download(
+ file = as_id(drive_find(pattern = "weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv")$id),
+               path = "./00_Data_files/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv", overwrite = TRUE)
 
 #load data into R
 dat <- read_csv("./00_Data_files/weekly.surface.gloeo_4sites_2005-2016_v31Mar2020.csv")
