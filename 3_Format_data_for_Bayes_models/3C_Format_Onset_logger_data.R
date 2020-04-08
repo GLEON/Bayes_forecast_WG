@@ -96,7 +96,7 @@ colnames(dat6) <- paste("wk", colnames(dat6), sep = "_")
 
 write.csv(dat6, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv", row.names = FALSE)
 
-#Site 2 (focal site for analysis)
+#Site 2 (used to create temp. dataset for gap-filling)
 dat7 <- dat5 %>%
   mutate(season_week = rep(c(1:20),times = 8*4),
          year = year(date)) %>%
