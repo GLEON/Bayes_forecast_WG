@@ -94,7 +94,7 @@ dat6 <- dat5 %>%
 
 colnames(dat6) <- paste("wk", colnames(dat6), sep = "_")
 
-write.csv(dat6, "./00_Data_files/Bayesian_model_input_data/wtrtemp_mean_Site1.csv", row.names = FALSE)
+write.csv(dat6, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv", row.names = FALSE)
 
 #Site 2 (focal site for analysis)
 dat7 <- dat5 %>%
@@ -107,6 +107,6 @@ dat7 <- dat5 %>%
 
 colnames(dat7) <- paste("wk", colnames(dat7), sep = "_")
 
-write.csv(dat7, "./00_Data_files/Bayesian_model_input_data/wtrtemp_mean_Site2.csv", row.names = FALSE)
+write.csv(dat7, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv", row.names = FALSE)
 
 
