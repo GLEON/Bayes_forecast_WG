@@ -28,7 +28,19 @@ drive_download(
 #####################################################################################################################################
 
 #load data into R
-dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_L1_v07April2020.csv")
+dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_L1_v07April2020.csv",
+                col_types = list(datetime = col_datetime(),
+                                 year = col_double(),
+                                 dayofyr = col_double(),
+                                 time = col_time(),
+                                 HCS_tempC = col_double(),
+                                 HCS_flag = col_character(),
+                                 NBRY_tempC = col_double(),
+                                 NBRY_flag = col_character(),
+                                 SOTF_tempC = col_double(),
+                                 SOTF_flag = col_character(),
+                                 NSH_tempC = col_double(),
+                                 NSH_flag = col_character()))
 
 #create column for date in sampling_dates.csv format
 dat1 <- dat %>% mutate(date = date(datetime))
@@ -59,9 +71,7 @@ dat4 <- dat3 %>%
 dat4[dat4 == Inf] <- NA
 dat4[dat4 == -Inf] <- NA
 dat4[is.na(dat4)] <- NA
-##YIKES! THE ONLY SITE WITH DATA IS MIDGE --> HAVE SENT EMAIL TO BETHEL
 
-##IN MEANTIME, MAKING FILE FOR MIDGE
 #get in wide format (year by week) for seasonal for-loop in JAGS models
 
 #gap fill for missing dates
@@ -85,5 +95,18 @@ dat6 <- dat5 %>%
 colnames(dat6) <- paste("wk", colnames(dat6), sep = "_")
 
 write.csv(dat6, "./00_Data_files/Bayesian_model_input_data/wtrtemp_mean_Site1.csv", row.names = FALSE)
+
+#Site 2 (focal site for analysis)
+dat7 <- dat5 %>%
+  mutate(season_week = rep(c(1:20),times = 8*4),
+         year = year(date)) %>%
+  filter(site == "SOTF") %>%
+  select(year, season_week, wtrtemp_min) %>%
+  spread(key = season_week, value = wtrtemp_min) %>%
+  select(-year)
+
+colnames(dat7) <- paste("wk", colnames(dat7), sep = "_")
+
+write.csv(dat7, "./00_Data_files/Bayesian_model_input_data/wtrtemp_mean_Site2.csv", row.names = FALSE)
 
 
