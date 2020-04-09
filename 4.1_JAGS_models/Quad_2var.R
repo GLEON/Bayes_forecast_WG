@@ -18,8 +18,8 @@ model{
     lambda[k,j] <- beta1  + beta2*mu[k,j-1] + beta3*Temp[k,j] + beta4*(Temp[k,j]^2) + beta5*Schmidt[k,j]
 
     #gap-filling model for covariates
-    Temp[k,j]~dnorm(week_avg[j],tau_T_proc)
-    Schmidt[k,j]~dnorm(week_avg[j],tau_S_proc)
+    Temp[k,j]~dnorm(week_avg_T[j],tau_T_proc)
+    Schmidt[k,j]~dnorm(week_avg_S[j],tau_S_proc)
 
   }
 

@@ -16,7 +16,7 @@ year_no = as.numeric(as.factor(years))
 season_weeks = c(1:20)
 
 #read in Gloeo data
-y <- log(as.matrix(read_csv("./00_Data_files/Gechinulata_Site1.csv"))+0.0036)
+y <- log(as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))+0.0036)
 #remove 2015-2016 data
 y <- y[-c(7:8),]
 
@@ -33,7 +33,10 @@ if(model_name == "Linear_1var"){
   #remove 2015-2016 data
   Temp <- Temp[-c(7:8),]
   #center covariate data
-  Temp <- scale(Temp, center = TRUE, scale = TRUE)
+  Temp <- as.matrix(scale(Temp, center = TRUE, scale = TRUE))
+  #remove attributes that will crash JAGS
+  attr(Temp,"scaled:center")<-NULL
+  attr(Temp,"scaled:scale")<-NULL
 
   #read in data from Site 2 for data gap-filling
   Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
@@ -44,6 +47,8 @@ if(model_name == "Linear_1var"){
 
   #calculate weekly average of covariate from past years for gap filling
   week_avg = colMeans(Temp_prior, na.rm = TRUE)
+  #use weekly average from last sampled week (18) to serve as prior for weeks 19 & 20
+  week_avg[is.na(week_avg)] <- week_avg[18]
 
   return(list(year_no = year_no, season_weeks = season_weeks, y = y, Temp = Temp, week_avg = week_avg))
 }
@@ -72,7 +77,10 @@ if(model_name == "Linear_2var"){
   #remove 2015-2016 data
   Temp <- Temp[-c(7:8),]
   #center covariate data
-  Temp <- scale(Temp, center = TRUE, scale = TRUE)
+  Temp <- as.matrix(scale(Temp, center = TRUE, scale = TRUE))
+  #remove attributes that will crash JAGS
+  attr(Temp,"scaled:center")<-NULL
+  attr(Temp,"scaled:scale")<-NULL
 
   #read in data from Site 2 for data gap-filling
   Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
@@ -83,6 +91,8 @@ if(model_name == "Linear_2var"){
 
   #calculate weekly average of covariate from past years for gap filling
   week_avg_T = colMeans(Temp_prior, na.rm = TRUE)
+  #use weekly average from last sampled week (18) to serve as gap-filler for weeks 19 & 20
+  week_avg_T[is.na(week_avg_T)] <- week_avg_T[18]
 
   #read in covariate data
   Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_mean.csv"))
@@ -90,6 +100,9 @@ if(model_name == "Linear_2var"){
   Schmidt <- Schmidt[-c(7:8),]
   #center covariate data
   Schmidt <- scale(Schmidt, center = TRUE, scale = TRUE)
+  #remove attributes that will crash JAGS
+  attr(Schmidt,"scaled:center")<-NULL
+  attr(Schmidt,"scaled:scale")<-NULL
 
   #calculate weekly average of covariate from past years for gap filling
   week_avg_S = colMeans(Schmidt, na.rm = TRUE)
@@ -106,7 +119,10 @@ if(model_name == "Quad_2var"){
   #remove 2015-2016 data
   Temp <- Temp[-c(7:8),]
   #center covariate data
-  Temp <- scale(Temp, center = TRUE, scale = TRUE)
+  Temp <- as.matrix(scale(Temp, center = TRUE, scale = TRUE))
+  #remove attributes that will crash JAGS
+  attr(Temp,"scaled:center")<-NULL
+  attr(Temp,"scaled:scale")<-NULL
 
   #read in data from Site 2 for data gap-filling
   Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
@@ -117,6 +133,8 @@ if(model_name == "Quad_2var"){
 
   #calculate weekly average of covariate from past years for gap filling
   week_avg_T = colMeans(Temp_prior, na.rm = TRUE)
+  #use weekly average from last sampled week (18) to serve as gap-filler for weeks 19 & 20
+  week_avg_T[is.na(week_avg_T)] <- week_avg_T[18]
 
   #read in covariate data
   Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_mean.csv"))
@@ -124,6 +142,9 @@ if(model_name == "Quad_2var"){
   Schmidt <- Schmidt[-c(7:8),]
   #center covariate data
   Schmidt <- scale(Schmidt, center = TRUE, scale = TRUE)
+  #remove attributes that will crash JAGS
+  attr(Schmidt,"scaled:center")<-NULL
+  attr(Schmidt,"scaled:scale")<-NULL
 
   #calculate weekly average of covariate from past years for gap filling
   week_avg_S = colMeans(Schmidt, na.rm = TRUE)
