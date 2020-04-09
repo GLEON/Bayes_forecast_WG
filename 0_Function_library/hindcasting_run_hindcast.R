@@ -2,35 +2,28 @@
 #Author:Mary Lofton
 #Date: 05OCT19
 
-run_hindcast <- function(model_name, params, Nmc, IC){
+run_hindcast <- function(model_name, params, Nmc, IC, wk){
+
+  #check that model is set up for hindcasting
+  if(!model_name %in% c("RW","RW_obs","AR")){
+    print("This model is not included in the hindcasting functions.")
+  }
 
   #set up output matrices
   proc.model <- matrix(NA, Nmc, 4)
   out <- matrix(NA, Nmc, 4)
 
 
-  ts = rbind(1:20,21:40)
-  week_avg = week_avg
-  week_min = week_min
-  week_max = week_max
-  week_num = week_num
-  obs_data = obs_data
-  colnums = colnums
+  # ts = rbind(1:20,21:40)
+  # week_avg = week_avg
+  # week_min = week_min
+  # week_max = week_max
+  # week_num = week_num
+  # obs_data = obs_data
+  # colnums = colnums
 
-  if(model_name == "Seasonal_RandomWalk"){
-    if(week_num %in% c(1:16,21:36)){
-      for(j in 1:5){
-        #set initial conditions
-        if(j == 1){gloeo_prev <- IC}
-        #process model
-        proc.model[,j] = rnorm(Nmc,gloeo_prev,params$sd_proc)
-        #data model
-        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
-        #update IC
-        gloeo_prev <- out[,j]
-      }}
-
-    if(week_num %in% c(17,37)){
+  if(model_name == "RW"){
+    if(wk %in% c(1:17)){
       for(j in 1:4){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -42,7 +35,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(18,38)){
+    if(wk == 18){
       for(j in 1:3){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -54,7 +47,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(19,39)){
+    if(wk == 19){
       for(j in 1:2){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -66,7 +59,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(20,40)){
+    if(wk == 20){
       #set initial conditions
       gloeo_prev <- IC
       #process model
@@ -76,20 +69,8 @@ run_hindcast <- function(model_name, params, Nmc, IC){
     }
   }
 
-  if(model_name == "Seasonal_RandomWalk_Obs_error"){
-    if(week_num %in% c(1:16,21:36)){
-      for(j in 1:5){
-        #set initial conditions
-        if(j == 1){gloeo_prev <- IC}
-        #process model
-        proc.model[,j] = rnorm(Nmc,gloeo_prev,params$sd_proc)
-        #data model
-        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
-        #update IC
-        gloeo_prev <- out[,j]
-      }}
-
-    if(week_num %in% c(17,37)){
+  if(model_name == "RW_obs"){
+    if(wk %in% c(1:17)){
       for(j in 1:4){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -101,7 +82,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(18,38)){
+    if(wk == 18){
       for(j in 1:3){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -113,7 +94,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(19,39)){
+    if(wk == 19){
       for(j in 1:2){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -125,7 +106,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(20,40)){
+    if(wk == 20){
       #set initial conditions
       gloeo_prev <- IC
       #process model
@@ -135,21 +116,8 @@ run_hindcast <- function(model_name, params, Nmc, IC){
     }
   }
 
-  if(model_name == "Seasonal_AR"){
-    if(week_num %in% c(1:16,21:36)){
-      for(j in 1:5){
-        #set initial conditions
-        if(j == 1){gloeo_prev <- IC}
-        #process model
-        gloeo_temp = params$beta1 + params$beta2*gloeo_prev
-        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
-        #data model
-        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
-        #update IC
-        gloeo_prev <- out[,j]
-      }}
-
-    if(week_num %in% c(17,37)){
+  if(model_name == "AR"){
+    if(wk %in% c(1:17)){
       for(j in 1:4){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -162,7 +130,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(18,38)){
+    if(wk == 18){
       for(j in 1:3){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -175,7 +143,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(19,39)){
+    if(wk == 19){
       for(j in 1:2){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -188,7 +156,7 @@ run_hindcast <- function(model_name, params, Nmc, IC){
         gloeo_prev <- out[,j]
       }}
 
-    if(week_num %in% c(20,40)){
+    if(wk == 20){
       #set initial conditions
       gloeo_prev <- IC
       #process model
