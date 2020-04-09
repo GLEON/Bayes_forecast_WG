@@ -3,7 +3,7 @@
 
 # Load packages ####
 # run this line if you do not have pacman installed
-install.packages('pacman')
+#install.packages('pacman')
 
 #load other packages
 pacman::p_load(tidyverse, lubridate, googledrive)
@@ -69,28 +69,16 @@ dat2 <- bind_rows(dat1, odd_obs) %>%
   mutate(week = week(date)) %>%
   filter(year %in% 2009:2016 & (week %in% 21:40 | dayofyr == 283))%>% #limit to study period
   arrange(date, site) %>%
-  select(date, site, coloniesperL, filbundperL, totalperL, year) %>%
+  select(date, site, coloniesperL, filbundperL, totalperL, year, dayofyr) %>% #keep day of year too
   mutate(season_week = rep(c(1:20),times = 8, each = 4))
 
-# Filter for Herrick Cove South site, add month and week columns, and filter for forecasting time period
+# Filter for Herrick Cove South site, add month and ln of gloeo column
 # Time period = 2009-2016, weeks 21-40 (last week of May to 1st week of Oct)
 
-hc_gloeo_data <- all_gloeo_data %>%
+hc_gloeo_data <- dat2 %>%
   filter(site == "HerrickCoveSouth") %>%
   mutate(month = month(date)) %>%
-  mutate(week = week(date)) %>% # week method matters! iso considers week beginning on monday, other week option is complete 7 day periods from Jan. 1st so varies depending on what day of week Jan. 1st is
-  select(site,date,year,month,week,dayofyr,coloniesperL,filbundperL,totalperL) %>%  # rearrange columns to have date items together
-  filter(year %in% 2009:2016) %>%
-  filter(week %in% 21:40)
-
-# Clean up multiple samples per week and per day
-# Locations with multiple samples per week:
-# 2009 - missing weeks 21, 24, 40
-# 2009, Week 28: 2009-07-09 & 2009-07-11 - keep July 9th sample since 1 week from surrounding samples
-#
-# 2010 - missing weeks 22
-
-# add ln of gloeo
-# # gloeo data for Total per L is Volume of 2, ~1 m net tows = 141.3707L
-# convert to natural log using just log + detection limit = 0.0036 which is 1/141.3707 divided by 2
+  select(date,year,month,dayofyr,season_week,site,coloniesperL,filbundperL,totalperL) %>% # rearrange columns to have date items together
+  mutate(ln_totalperL = log(totalperL + 0.0035))# add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
+# convert to natural log using  log + detection limit = 0.0035 which is 1/141.4 divided by 2
 
