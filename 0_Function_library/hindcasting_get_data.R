@@ -20,14 +20,14 @@ y0 <- log(as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinul
 
 #subset data depending on year and season_week
 if(year == 2015){
-  y <- y0[c(1:6),]
+  y <- y0[c(1:7),]
   y[7,] <- NA
 
   if(season_week %in% c(2:20)){
   y[7,1:(season_week-1)] <- y0[7,1:(season_week-1)]}
 
 } else {
-  y <- y0[c(1:7),]
+  y <- y0[c(1:8),]
   y[8,] <- NA
 
   if(season_week %in% c(2:20)){
