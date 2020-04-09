@@ -44,8 +44,8 @@ odd_obs$coloniesperL <- NA
 odd_obs$filbundperL <- NA
 odd_obs$totalperL <- NA
 
-#isolate and average duplicate samples on same day
-dup_days <- c("2010-06-10","2016-08-15")
+#isolate and average duplicate samples on same day -
+dup_days <- c("2008-8-14", "2010-06-10", "2012-02-16", "2016-08-15")
 
 for (i in 1:length(dup_days)){
   dup_sampling_day <- dat %>%
@@ -61,7 +61,7 @@ for (i in 1:length(dup_days)){
 
 #eliminate duplicate samples and extra sampling days from original data file
 dat1 <- dat %>%
-  filter(!date %in% as.Date(c("2009-07-11","2010-06-10","2015-09-20","2015-10-10","2016-08-15")))#get rid of extra sampling days
+  filter(!date %in% as.Date(c("2008-08-14","2009-07-11","2010-06-10","2012-02-16", "2015-09-20","2015-10-10","2016-08-15")))#get rid of extra sampling days
 
 #combine missing and averaged duplicate observations with original data file
 #assign "sampling season weeks" numbering 1-20 each year to dates
