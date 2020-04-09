@@ -16,7 +16,7 @@ year_no = as.numeric(as.factor(years))
 season_weeks = c(1:20)
 
 #read in Gloeo data
-y0 <- log(as.matrix(read_csv("./00_Data_files/Gechinulata_Site1.csv"))+0.0036)
+y0 <- log(as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))+0.0035)
 
 #subset data depending on year and season_week
 if(year == 2015){

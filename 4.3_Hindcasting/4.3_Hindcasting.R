@@ -1,0 +1,218 @@
+# Title: 4.3 Hindcasting and uncertainty partitioning
+# History:
+# adapted by JAZ from from the EcoForecast Activity
+# by Michael Dietze, with reference "Ecological Forecasting", chapter 11
+# updated and expanded by MEL
+
+##################################SET-UP##############################################
+
+#install to load and install other packages as needed
+#install.packages('pacman')
+
+#load packages
+pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
+
+#set a directory to use as a local file repository for plots if desire to write to file
+my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Code_publication"
+write_plots <- TRUE
+
+#make vector of model names for model for-loop
+my_models <- c("RW","RW_obs","AR")
+
+#set years and weeks for hindcasting for-loop
+yrs <- c(2015,2016)
+wks <- c(1:20)
+
+########################RUN HINDCASTS##############################################
+
+for (i in 1:length(my_models)){
+
+#1) Model options => pick model -----------------------------------------------------
+model_name = my_models[i] # options are found in 4.1_JAGS_models
+model=paste0("4.1_JAGS_models/",model_name, '.R') #Do not edit
+
+for (j in 1:length(yrs)){
+
+for (k in 1:length(wks)){
+
+#2) Source helper functions ---------------------------------------------------------
+source('0_Function_library/model_calibration_plug_n_play.R')
+source('0_Function_library/hindcasting_get_data.R')
+source('0_Function_library/model_calibration_plots.R')
+
+#How many times do you want to sample to get predictive interval for each sampling day?
+#Edit nsamp to reflect a subset of total number of samples
+nsamp = 5000
+
+#2) Read in data for model ----------------------------------------------------------
+
+#see 0_Function_library/hindcasting_get_data.R for this function
+hindcast_data <- get_hindcast_data(model_name = model_name,
+                                   year = yrs[j],
+                                   season_week = wks[k])
+
+#3) JAGS Plug-Ins => initial conditions, priors, data, etc. -------------------------
+
+#see 0_Function_library/model_calibration_plug_n_play.R for this function
+jags_plug_ins <- jags_plug_ins(model_name = model_name)
+
+#4) Re-calibrate model with data assimilation --------------------------------------
+j.model   <- jags.model (file = model,
+                         data = jags_plug_ins$data.model,
+                         inits = jags_plug_ins$init.model,
+                         n.chains = 3)
+
+jags.out <- run.jags(model = model,
+                     data = jags_plug_ins$data.model,
+                     adapt =  5000,
+                     burnin =  10000,
+                     sample = 100000,
+                     n.chains = 3,
+                     inits=jags_plug_ins$init.model,
+                     monitor = jags_plug_ins$variable.namesout.model)
+
+#convert to a matrix to sample posteriors for hindcasts
+out <- as.matrix(jags.out.mcmc)
+
+#5) Set up initial conditions for hindcasts
+
+#set up number of draws for initial condition distributions at beginning of season
+Nmc = 5000
+
+#sample rows from the re-calibrated model output for initial conditions during season
+prow = sample.int(nrow(out),5000,replace=TRUE)
+
+  if(wks[k]==1){ #first week of season uses initial conditions prior from Maine lakes
+
+    IC = rnorm(Nmc,-5,sqrt(1/100))
+
+  } else if(wks[k] %in% c(2:20) & yrs[j] == 2015) { #other weeks use last observed time point + observation error OR draws from imputed value distribution + observation error
+
+    if(!is.na(cal_data$y[7,wks[k-1]])){
+      IC = rnorm(Nmc,cal_data$y[7,wks[k-1]],1/sqrt(out[prow,"tau_obs"]))}
+    else{
+      mycol <- paste0("mu","[7,",wks[k-1],"]")
+      IC = rnorm(Nmc,out[prow,mycol],1/sqrt(out[prow,"tau_obs"]))}
+
+  } else {
+
+    if(!is.na(cal_data$y[8,wks[k-1]])){
+      IC = rnorm(Nmc,cal_data$y[8,wks[k-1]],1/sqrt(out[prow,"tau_obs"]))}
+    else{
+      mycol <- paste0("mu","[8,",wks[k-1],"]")
+      IC = rnorm(Nmc,out[prow,mycol],1/sqrt(out[prow,"tau_obs"]))}
+  }
+
+#6) Run deterministic hindcast (no sources of uncertainty included)
+
+#retrieve parameters for deterministic hindcast
+params.det <- get_params(model_name = model_name,
+                         forecast_type = "det", #choose from det, IC, IC.P, IC.P.Pa, IC.P.Pa.D, w_obs
+                         posteriors = out,
+                         num_draws = prow)
+
+#run deterministic hindcast
+det.prediction <- run_hindcast(model_name = model_name,
+                           params = params.det, #list of params necessary to run that model
+                           Nmc = 1,
+                           IC = mean(IC)) #list of settings including N_out, Nmc, and IC
+
+write.csv(det.prediction,file=file.path(my_directory,paste0(model_name,'_det.prediction_',N_weeks[i],'.csv')),row.names = FALSE)
+
+#6) Run hindcasts adding one source of uncertainty at a time
+
+######## initial condition uncertainty #######
+
+#retrieve parameters for hindcast
+params.IC <- get_params(model_name = model_name,
+                         forecast_type = "IC", #choose from det, IC, IC.P, IC.P.Pa, IC.P.Pa.D, w_obs
+                         posteriors = out,
+                         num_draws = prow)
+
+#run hindcast
+hindcast.IC <- run_hindcast(model_name = model_name,
+                               params = params.IC, #list of params necessary to run that model
+                               Nmc = Nmc,
+                               IC = IC) #list of settings including N_out, Nmc, and IC
+
+#write hindcast to file
+write.csv(hindcast.IC,file=file.path(my_directory,paste0(model_name,'_hindcast.IC_',N_weeks[i],'.csv')),row.names = FALSE)
+
+
+###### process uncertainty #########
+
+#retrieve parameters for hindcast
+params.IC.P <- get_params(model_name = model_name,
+                        forecast_type = "IC.P", #choose from det, IC, IC.P, IC.P.Pa, IC.P.Pa.D, w_obs
+                        posteriors = out,
+                        num_draws = prow)
+
+#run hindcast
+hindcast.IC.P <- run_hindcast(model_name = model_name,
+                            params = params.IC.P, #list of params necessary to run that model
+                            Nmc = Nmc,
+                            IC = IC) #list of settings including N_out, Nmc, and IC
+
+#write hindcast to file
+write.csv(hindcast.IC.P,file=file.path(my_directory,paste0(model_name,'_hindcast.IC.P_',N_weeks[i],'.csv')),row.names = FALSE)
+
+
+if(!model_name %in% c("Seasonal_RandomWalk","Seasonal_RandomWalk_Obs_error")){
+###### parameter uncertainty #######
+
+  #retrieve parameters for hindcast
+  params.IC.P.Pa <- get_params(model_name = model_name,
+                            forecast_type = "IC.P.Pa", #choose from det, IC, IC.P, IC.P.Pa, IC.P.Pa.D, w_obs
+                            posteriors = out,
+                            num_draws = prow)
+
+  #run hindcast
+  hindcast.IC.P.Pa <- run_hindcast(model_name = model_name,
+                                params = params.IC.P.Pa, #list of params necessary to run that model
+                                Nmc = Nmc,
+                                IC = IC) #list of settings including N_out, Nmc, and IC
+
+  #write hindcast to file
+  write.csv(hindcast.IC.P.Pa,file=file.path(my_directory,paste0(model_name,'_hindcast.IC.P.Pa_',N_weeks[i],'.csv')),row.names = FALSE)
+
+}
+
+if(!model_name %in% c("Seasonal_RandomWalk","Seasonal_RandomWalk_Obs_error","Seasonal_AR")){
+
+###### driver uncertainty ##########
+
+  #retrieve parameters for hindcast
+  params.IC.P.Pa.D <- get_params(model_name = model_name,
+                               forecast_type = "IC.P.Pa.D", #choose from det, IC, IC.P, IC.P.Pa, IC.P.Pa.D, w_obs
+                               posteriors = out,
+                               num_draws = prow)
+
+  #run hindcast
+  hindcast.IC.P.Pa.D <- run_hindcast(model_name = model_name,
+                                   params = params.IC.P.Pa.D, #list of params necessary to run that model
+                                   Nmc = Nmc,
+                                   IC = IC) #list of settings including N_out, Nmc, and IC
+
+  #write hindcast to file
+  write.csv(hindcast.IC.P.Pa.D,file=file.path(my_directory,paste0(model_name,'_hindcast.IC.P.Pa.D_',N_weeks[i],'.csv')),row.names = FALSE)
+
+}
+
+###### observation uncertainty #########
+
+#retrieve parameters for hindcast
+params.w_obs <- get_params(model_name = model_name,
+                               forecast_type = "w_obs", #choose from det, IC, IC.P, IC.P.Pa, IC.P.Pa.D, w_obs
+                               posteriors = out,
+                               num_draws = prow)
+
+#run hindcast
+hindcast.w_obs <- run_hindcast(model_name = model_name,
+                                   params = params.w_obs, #list of params necessary to run that model
+                                   Nmc = Nmc,
+                                   IC = IC) #list of settings including N_out, Nmc, and IC
+
+#write hindcast to file
+write.csv(hindcast.w_obs,file=file.path(my_directory,paste0(model_name,'_hindcast.w_obs_',N_weeks[i],'.csv')),row.names = FALSE)
+
+}}}
