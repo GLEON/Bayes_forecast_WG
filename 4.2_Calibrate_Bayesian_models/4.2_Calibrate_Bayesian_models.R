@@ -17,7 +17,7 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Code_publication"
 write_plots <- TRUE
 
 #make vector of model names for for-loop
-my_models <- c("RW","RW_obs","AR")
+my_models <- c("RW","RW_obs","AR","Linear_1var","Quad_1var","Linear_2var","Quad_2var")
 
 
 ########################CALIBRATE MODELS##############################################
