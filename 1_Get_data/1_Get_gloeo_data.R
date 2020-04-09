@@ -1,5 +1,5 @@
-# Script to get Gloeo data and all driver variables from EDI
-# Last updated 2020 April 3 - JB
+# Script to download and wrangle Gloeo data from EDI
+# Last updated 2020 April 9 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
@@ -72,7 +72,7 @@ dat2 <- bind_rows(dat1, odd_obs) %>%
   select(date, site, coloniesperL, filbundperL, totalperL, year, dayofyr) %>% #keep day of year too
   mutate(season_week = rep(c(1:20),times = 8, each = 4))
 
-# Filter for Herrick Cove South site, add month and ln of gloeo column
+# Filter for Herrick Cove South site, add month and ln of gloeo column ####
 # Time period = 2009-2016, weeks 21-40 (last week of May to 1st week of Oct)
 
 hc_gloeo_data <- dat2 %>%
@@ -80,5 +80,5 @@ hc_gloeo_data <- dat2 %>%
   mutate(month = month(date)) %>%
   select(date,year,month,dayofyr,season_week,site,coloniesperL,filbundperL,totalperL) %>% # rearrange columns to have date items together
   mutate(ln_totalperL = log(totalperL + 0.0035))# add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
-# convert to natural log using  log + detection limit = 0.0035 which is 1/141.4 divided by 2
+# convert to natural log using  log + detection limit = 0.0035 which is 0.5/141.4
 
