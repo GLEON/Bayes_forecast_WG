@@ -218,3 +218,59 @@ hist(exp(obs_pi[2,]),breaks = 20, main = "Mean predicted value w/ dm")
 
 dev.off()
 
+# #plot variances
+# dev.off(dev.list()["RStudioGD"])
+# plot_varMat(model_name = model_name)
+#
+# ## write stacked area plot to file
+# png(file=file.path(my_directory,paste(site,paste0(model_name,'_var_part.png'), sep = '_')), res=300, width=30, height=10, units='cm')
+# plot_varMat(model_name = model_name)
+# dev.off()
+#
+#
+# ##looking at percentile of obs in forecast distribution
+forecast_y <- log(as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Midge_year_by_week_totalperL_forecast_05OCT19.csv"))+0.003)
+forecast_y <- exp(forecast_y[7:8,])
+forecast_ys <- forecast_y[,-c(17:20)]
+
+obs_quantile <- NULL
+if(!model_names[j] %in% c("Seasonal_RandomWalk","Seasonal_RandomWalk_Obs_error")){
+  for (i in 1:length(forecast_ys)){
+    percentile1 <- ecdf(exp(vardat.IC.P.O.Pa[,i])) ##be sure to change this as needed - needs to be made into a function!!!
+    obs_quantile[i] <- percentile1(forecast_ys[i])
+  }} else if(!model_names[j] %in% c("Seasonal_RandomWalk","Seasonal_RandomWalk_Obs_error","Seasonal_AR")){
+    for (i in 1:length(forecast_ys)){
+      percentile1 <- ecdf(exp(vardat.IC.P.O.Pa.D[,i])) ##be sure to change this as needed - needs to be made into a function!!!
+      obs_quantile[i] <- percentile1(forecast_ys[i])
+    }} else{
+      for (i in 1:length(forecast_ys)){
+        percentile1 <- ecdf(exp(vardat.IC.P.O[,i])) ##be sure to change this as needed - needs to be made into a function!!!
+        obs_quantile[i] <- percentile1(forecast_ys[i])
+      }}
+
+
+#should add vertical line at 0.5 to this
+png(file=file.path(my_directory,paste(site,paste0(model_names[j],'_obs_decile_4wk.png'), sep = '_')), res=300, width=10, height=10, units='cm')
+hist(obs_quantile,xlab = "Quantile of obs. in forecast interval", main = "",
+     cex.axis = 1.2, cex.lab = 1.2, xlim = c(0,1), breaks = seq(0,1,0.1))
+dev.off()
+
+png(file=file.path(my_directory,paste(site,paste0(model_names[j],'_obs_quartile_4wk.png'), sep = '_')), res=300, width=10, height=10, units='cm')
+hist(obs_quantile,xlab = "Quantile of obs. in forecast interval", main = "",
+     cex.axis = 1.2, cex.lab = 1.2, xlim = c(0,1), breaks = seq(0,1,0.25))
+dev.off()
+}
+# #a perfect forecast
+# obs_quantile <- rep(0.5, 40)
+# png(file=file.path(my_directory,paste("perfect_forecast.png")), res=300, width=10, height=10, units='cm')
+# hist(obs_quantile,xlab = "Quantile of obs. in forecast interval", main = "",
+#      cex.axis = 1.2, cex.lab = 1.2, breaks = seq(0,1,0.1))
+# dev.off()
+#
+# #an extremely good forecast
+# obs_quantile <- c(0.2, 0.3, 0.3, 0.4, 0.4, 0.4, 0.4, rep(0.5,26), 0.6, 0.6, 0.6, 0.6, 0.7, 0.7, 0.8)
+# png(file=file.path(my_directory,paste("excellent_forecast.png")), res=300, width=10, height=10, units='cm')
+# hist(obs_quantile,xlab = "Quantile of obs. in forecast interval", main = "",
+#      cex.axis = 1.2, cex.lab = 1.2, breaks = seq(0,1,0.1))
+# dev.off()
+

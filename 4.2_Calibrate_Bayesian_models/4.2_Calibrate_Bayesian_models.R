@@ -80,9 +80,9 @@ crosscorr <- crosscorr(jags.out.mcmc[,c(as.numeric(as.factor(jags_plug_ins$param
 #save results
 sink(file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_param_summary.txt')))
 print("Parameter summary")
-sum
+print(sum)
 print("Parameter cross-correlations")
-crosscorr
+print(crosscorr)
 sink()
 
 
