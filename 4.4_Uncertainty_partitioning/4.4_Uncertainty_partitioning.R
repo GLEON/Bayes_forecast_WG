@@ -1,8 +1,20 @@
-##############CALCULATING TOTAL AND RELATIVE VARIANCE FROM FORECASTS
-model_names <- c("Seasonal_RandomWalk","Seasonal_RandomWalk_Obs_error",
-                 "Seasonal_AR","Seasonal_AR_Mintemp",
-                 "Seasonal_DayLength_Quad","Seasonal_DayLength_Quad_Mintemp")
-forecast_week = 4
+# Title: 4.4_Uncertainty_partitioning
+# History:
+# adapted by JAZ from from the EcoForecast Activity
+# by Michael Dietze, with reference "Ecological Forecasting", chapter 11
+# updated and expanded by MEL
+
+##################################SET-UP##############################################
+
+#install to load and install other packages as needed
+#install.packages('pacman')
+
+#load packages
+pacman::p_load(tidyverse)
+
+model_names <- c("RW","RW_obs","AR")
+
+forecast_weeks = c(1:4)
 
 for (j in 1:length(model_names)){
   my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Final_analysis/Data_assim"
