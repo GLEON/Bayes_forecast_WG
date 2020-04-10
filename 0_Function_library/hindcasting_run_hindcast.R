@@ -167,6 +167,11 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk){
     }
   }
 
+###############################################################################
+  ##REMEMBER TO UPDATE THIS TO INCLUDE BETTER WAY OF HINDCASTING DRIVERS!!
+###############################################################################
+
+
   # if(model_name == "Seasonal_AR_Mintemp"){
   #   if(week_num %in% c(1:16,21:36)){
   #     for(j in 1:5){
