@@ -1,5 +1,5 @@
-# Script to download and wrangle Sunapee GLEON buoy water temp string thermistor data from EDI
-# Last updated 2020 April 9 - JB
+# Script to download and wrangle Sunapee GLEON buoy water temp string thermistor data from EDI to get schmidt stability
+# Last updated 2020 April 10 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
@@ -365,5 +365,3 @@ schmidt_daily_summary6 <- full_join(schmidt_daily_summary5, schmidt_daily_summar
 
 # Write data for 2nd dataset with water temp holes filled in ####
 write_csv(schmidt_daily_summary6, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled.csv")
-
-
