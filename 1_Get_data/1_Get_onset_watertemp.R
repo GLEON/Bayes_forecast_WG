@@ -1,5 +1,5 @@
 # Script to download and wrangle Onset water temp data from EDI
-# Last updated 2020 April 9 - JB
+# Last updated 2020 April 10 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
@@ -133,4 +133,10 @@ dat7 <- full_join(dat6, dat4_subset4) %>%
 
 # Write data for 2nd dataset with water temp holes filled in ####
 write_csv(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled.csv")
+
+saveRDS()
+
+# Jake example
+saveRDS(sunapee_schmidt, 'Datasets/Sunapee/Stability_metrics/sunapee_schmidt_stability.rds')
+
 
