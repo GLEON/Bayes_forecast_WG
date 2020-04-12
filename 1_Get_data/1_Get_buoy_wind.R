@@ -6,7 +6,7 @@
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate, googledrive, rLakeAnalyzer, openair)
+pacman::p_load(tidyverse, lubridate, googledrive, openair)
 
 # Download data ####
 #download data file into appropriate local folder
@@ -23,7 +23,6 @@ as_id(drive_find(pattern = "buoy.met/2007-e2019_wind_L1.csv")$id)
 
 drive_download(file = as_id("1yQHeWihxC1C6wu4VR7boYo1bC9_GA123"),
                path = "./00_Data_files/EDI_data_clones/2007-e2019_wind_L1.csv", overwrite = TRUE)
-
 
 # Load buoy wind data into R ####
 buoy_wind <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_wind_L1.csv", col_types = cols(
@@ -84,7 +83,7 @@ windsp_hourly_mean <- timeAverage(buoy_wind3, avg.time = "hour", data.thresh = 7
 
 # Filter hourly wind direction ####
 windsp_hourly_mean_filter <- windsp_hourly_mean %>%
-  filter(WindDir_deg >= 180 & WindDir_deg < 360)
+  mutate(WindDir_cove = ifelse(WindDir_deg >= 180 & WindDir_deg < 360, 1, 0))
 
 # Calculate daily summaries from filtered wind direction and hourly average data ####
 windsp_daily_mean <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "mean", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
@@ -98,11 +97,11 @@ windsp_daily_max <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", dat
 windsp_daily_sd <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "sd", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
 
 #Bind summaries together
-windsp_daily_summary <- bind_cols(windsp_daily_mean, windsp_daily_median[,3], windsp_daily_min[,3], windsp_daily_max[,3], windsp_daily_sd[,3])
+windsp_daily_summary <- bind_cols(windsp_daily_mean, windsp_daily_median[,3:4], windsp_daily_min[,3], windsp_daily_max[,3], windsp_daily_sd[,3])
 
 # rename columns
 windsp_daily_summary2 <- windsp_daily_summary %>%
-  rename(windsp_mean = WindSp_ms, windsp_median = WindSp_ms1, windsp_min = WindSp_ms2, windsp_max = WindSp_ms3, windsp_sd = WindSp_ms4)
+  rename(windsp_mean = WindSp_ms, WindDir_cove_mean = WindDir_cove, windsp_median = WindSp_ms1, WindDir_cove_median = WindDir_cove1, windsp_min = WindSp_ms2, windsp_max = WindSp_ms3, windsp_sd = WindSp_ms4)
 
 # Limit wind speed data to sampling dates ####
 
