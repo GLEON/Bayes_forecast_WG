@@ -79,19 +79,37 @@ buoy1 <- buoy %>% mutate(date = date(datetime))
 
 #read in sampling dates
 sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+sampling_dates <- sampling_dates$date
 
 #limit buoy data to sampling dates
-buoy2 <- buoy1 %>% filter(date %in% sampling_dates$date)
+buoy2 <- buoy1 %>%
+  filter(date >= "2009-05-22" & date <= "2009-10-05")
+buoy3 <- buoy1 %>%
+  filter(date >= "2010-05-18" & date <= "2010-10-07")
+buoy4 <- buoy1 %>%
+  filter(date >= "2011-05-19" & date <= "2011-10-06")
+buoy5 <- buoy1 %>%
+  filter(date >= "2012-05-17" & date <= "2012-10-05")
+buoy6 <- buoy1 %>%
+  filter(date >= "2013-05-16" & date <= "2013-10-02")
+buoy7 <- buoy1 %>%
+  filter(date >= "2014-05-22" & date <= "2014-10-10")
+buoy8 <- buoy1 %>%
+  filter(date >= "2015-05-14" & date <= "2015-10-02")
+buoy9 <- buoy1 %>%
+  filter(date >= "2016-05-19" & date <= "2016-10-05")
+
+buoy10 <- bind_rows(buoy2, buoy3, buoy4, buoy5, buoy6, buoy7, buoy8, buoy9)
 
 #eliminate data where bottom water thermistors may have been in sediment
 #get in format for calculating Schmidt stability in rLakeAnalyzer
-buoy3 <- buoy2 %>%
+buoy11 <- buoy10 %>%
   mutate(TempC_11p5m = ifelse(temp_flag == "11.5b, 13.5b",NA,TempC_11p5m),
          TempC_13p5m = ifelse(temp_flag == "11.5b, 13.5b",NA,TempC_13p5m)) %>%
   select(-date, -location, -temp_flag)
 
 #set colnames for rLakeAnalyzer
-colnames(buoy3)[2:37] <- c("wtr_0.5","wtr_0.75","wtr_0.85","wtr_1","wtr_1.5","wtr_1.75",
+colnames(buoy11)[2:37] <- c("wtr_0.5","wtr_0.75","wtr_0.85","wtr_1","wtr_1.5","wtr_1.75",
                           "wtr_1.85","wtr_2","wtr_2.5","wtr_2.75","wtr_2.85","wtr_3",
                           "wtr_3.5","wtr_3.75","wtr_3.85","wtr_4.5","wtr_4.75","wtr_4.85",
                           "wtr_5.5","wtr_5.75","wtr_5.85","wtr_6.5","wtr_6.75","wtr_6.85",
@@ -105,7 +123,8 @@ hobo <- read_csv("./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv")
 hobo1 <- hobo %>% mutate(date = date(datetime))
 
 #limit buoy data to sampling dates
-hobo2 <- hobo1 %>% filter(date %in% sampling_dates$date) %>%
+hobo2 <- hobo1 %>%
+  filter(date >= "2015-05-14" & date <= "2015-10-02") %>%
   select(-date)
 
 #set colnames for rLakeAnalyzer
@@ -117,43 +136,79 @@ colnames(hobo2)[2:10] <- c("wtr_0.5","wtr_1.5","wtr_2.5",
 #calculate Schimdt stability
 bathy <- load.bathy("./00_Data_files/Sunapee.bth")
 
-schmidt_buoy <- ts.schmidt.stability(buoy3, bathy, na.rm = TRUE)
+schmidt_buoy <- ts.schmidt.stability(buoy11, bathy, na.rm = TRUE)
 
 schmidt_hobo <- ts.schmidt.stability(hobo2, bathy, na.rm = TRUE)
 
 schmidt <- bind_rows(schmidt_buoy, schmidt_hobo) %>%
-  arrange(datetime)
+  arrange(datetime) %>%
+  mutate(date = date(datetime))
 
-#get summary statistics of Schmidt stability
+#get summary statistics of Schmidt stability on sampling days
 schmidt1 <- schmidt %>%
-  mutate(date = date(datetime)) %>%
+  filter(date %in% sampling_dates) %>%
   group_by(date) %>%
   summarise(schmidt_mean = mean(schmidt.stability, na.rm = TRUE),
             schmidt_max = min(schmidt.stability, na.rm = TRUE),
             schmidt_min = max(schmidt.stability, na.rm = TRUE),
             schmidt_sd = sd(schmidt.stability, na.rm = TRUE))
 
-#add column with differences in schmidt stability week to week
-diff <- c(NA,diff(schmidt1$schmidt_mean))
-schmidt1$schmidt_diff <- diff
-
 schmidt1[schmidt1 == Inf] <- NA
 schmidt1[schmidt1 == -Inf] <- NA
 schmidt1[is.na(schmidt1)] <- NA
 schmidt1[schmidt1 < 0] <- 0
 
-#get in wide format (year by week) for seasonal for-loop in JAGS models
+#add column with differences in schmidt stability week to week
+diff <- c(NA,diff(schmidt1$schmidt_mean))
+schmidt1$schmidt_diff <- diff
 
-#Site 1 (focal site for analysis)
-schmidt2 <- schmidt1 %>%
-  mutate(season_week = rep(c(1:20),times = 8),
-         year = year(date)) %>%
-  select(year, season_week, schmidt_mean) %>%
-  spread(key = season_week, value = schmidt_mean) %>%
-  select(-year)
+#get summary statistics of Schmidt stability in week prior to sampling
+schmidt2 <- schmidt
+weekly_summary <- matrix(NA, length(sampling_dates),4)
 
-colnames(schmidt2) <- paste("wk", colnames(schmidt2), sep = "_")
+for (i in 1:length(sampling_dates)){
+  week <- schmidt2 %>%
+    filter(date <= sampling_dates[i])
+  week1 <- week %>%
+    summarise(weekly_schmidt_mean = mean(schmidt.stability, na.rm = TRUE),
+              weekly_schmidt_max = min(schmidt.stability, na.rm = TRUE),
+              weekly_schmidt_min = max(schmidt.stability, na.rm = TRUE),
+              weekly_schmidt_sd = sd(schmidt.stability, na.rm = TRUE))
+  weekly_summary[i,] <- c(week1$weekly_schmidt_mean,
+                          week1$weekly_schmidt_max,
+                          week1$weekly_schmidt_min,
+                          week1$weekly_schmidt_sd)
+  schmidt2 <- schmidt2 %>% filter(!date %in% week$date)
+}
 
-write.csv(schmidt2, "./00_Data_files/Bayesian_model_input_data/schmidt_mean.csv", row.names = FALSE)
+weekly_summary <- data.frame(weekly_summary)
+colnames(weekly_summary) <- c("weekly_schmidt_mean","weekly_schmidt_max","weekly_schmidt_min","Weekly_schmidt_sd")
+weekly_summary$date <- sampling_dates
 
+weekly_summary[weekly_summary == Inf] <- NA
+weekly_summary[weekly_summary == -Inf] <- NA
+weekly_summary[is.na(weekly_summary)] <- NA
+weekly_summary[weekly_summary < 0] <- 0
+
+#add column with differences in schmidt stability week to week
+diff <- c(NA,diff(weekly_summary$weekly_schmidt_mean))
+weekly_summary$weekly_schmidt_diff <- diff
+
+#combine daily and weekly summaries
+schmidt3 <- left_join(schmidt1, weekly_summary, by = "date")
+write.csv(schmidt3,"./00_Data_files/Correlation_analysis_input_data/Schmidt_stability_summary.csv", row.names = FALSE)
+
+# #get in wide format (year by week) for seasonal for-loop in JAGS models
+#
+# #Site 1 (focal site for analysis)
+# schmidt2 <- schmidt1 %>%
+#   mutate(season_week = rep(c(1:20),times = 8),
+#          year = year(date)) %>%
+#   select(year, season_week, schmidt_mean) %>%
+#   spread(key = season_week, value = schmidt_mean) %>%
+#   select(-year)
+#
+# colnames(schmidt2) <- paste("wk", colnames(schmidt2), sep = "_")
+#
+# write.csv(schmidt2, "./00_Data_files/Bayesian_model_input_data/schmidt_mean.csv", row.names = FALSE)
 
