@@ -47,27 +47,32 @@ buoy_wind1 <- buoy_wind %>%
 
 print(unique(buoy_wind1$wind_flag)) #NA, so no flags to worry about
 
-# Use instantaneous data for 2009-2014
-buoy_wind_2009_2014 <- buoy_wind1 %>%
-  filter(year %in% 2009:2014) %>%
-  select(1,10:12,2:4)
+# Use instantaneous data for 2011-2012 - no Avg wind speed data
+buoy_wind_inst <- buoy_wind1 %>%
+  filter(year %in% 2011:2012) %>%
+  select(1,10:12,2:4) %>%
+  rename(AveWindSp_ms = WindSp_ms, AveWindDir_deg = WindDir_deg) # rename to be able to join columns
 
-sum(is.na(buoy_wind_2009_2014$WindSp_ms)) #Inst less missing data than Ave
 
-# Use average wind data - no instantaneous data
-buoy_wind_2015_2016 <- buoy_wind1 %>%
-  filter(year %in% 2015:2016) %>%
-  select(1,10:12,2,5:6) %>%
-  rename(WindSp_ms = AveWindSp_ms, WindDir_deg = AveWindDir_deg)
+plot(WindSp_ms ~ datetime, data = buoy_wind_inst)
+points(AveWindSp_ms ~ datetime, data = buoy_wind_inst, col = "red")
+
+sum(is.na(buoy_wind_inst$WindSp_ms))
+
+# Use average wind data - no instantaneous data for 2015-2016
+buoy_wind_avg <- buoy_wind1 %>%
+  filter(year %in% c(2009:2010, 2013:2016)) %>%
+  select(1,10:12,2,5:6)
 
 sum(is.na(buoy_wind_2015_2016$AveWindSp_ms))
 
 # Join wind datasets
-buoy_wind2 <- bind_rows(buoy_wind_2009_2014, buoy_wind_2015_2016) %>%
+buoy_wind2 <- bind_rows(buoy_wind_inst, buoy_wind_avg) %>%
   select(-c(date, year, month))
 
 # check data
-plot(WindSp_ms ~ datetime, data = buoy_wind2)
+plot(AveWindSp_ms ~ datetime, data = buoy_wind2)
+which.max(buoy_wind2$AveWindSp_ms)
 
 # Combine wind data with full time series ####
 
@@ -83,7 +88,7 @@ windsp_hourly_mean <- timeAverage(buoy_wind3, avg.time = "hour", data.thresh = 7
 
 # Filter hourly wind direction ####
 windsp_hourly_mean_filter <- windsp_hourly_mean %>%
-  mutate(WindDir_cove = ifelse(WindDir_deg >= 180 & WindDir_deg < 360, 1, 0))
+  mutate(AveWindDir_cove = ifelse(AveWindDir_deg >= 180 & AveWindDir_deg < 360, 1, 0))
 
 # Calculate daily summaries from filtered wind direction and hourly average data ####
 windsp_daily_mean <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "mean", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
@@ -101,7 +106,7 @@ windsp_daily_summary <- bind_cols(windsp_daily_mean, windsp_daily_median[,3:4], 
 
 # rename columns
 windsp_daily_summary2 <- windsp_daily_summary %>%
-  rename(windsp_mean = WindSp_ms, WindDir_cove_mean = WindDir_cove, windsp_median = WindSp_ms1, WindDir_cove_median = WindDir_cove1, windsp_min = WindSp_ms2, windsp_max = WindSp_ms3, windsp_sd = WindSp_ms4)
+  rename(AveWindSp_ms_mean = AveWindSp_ms, AveWindDir_cove_mean = AveWindDir_cove, AveWindSp_ms_median = AveWindSp_ms1, AveWindDir_cove_median = AveWindDir_cove1, AveWindSp_ms_min = AveWindSp_ms2, AveWindSp_ms_max = AveWindSp_ms3, AveWindSp_ms_sd = AveWindSp_ms4)
 
 # Limit wind speed data to sampling dates ####
 
