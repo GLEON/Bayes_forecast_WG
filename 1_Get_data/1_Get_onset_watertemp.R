@@ -6,7 +6,7 @@
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate, googledrive, openair)
+pacman::p_load(tidyverse, lubridate, googledrive, openair, zoo)
 
 # Download data ####
 #download data file into appropriate local folder
@@ -46,10 +46,7 @@ dat1 <- dat %>%
   select(-min) %>%
   select(datetime, date, year, dayofyr, time, HCS_tempC)
 
-# check HCS_flag - all NA
-sum(!is.na(dat1$HCS_flag))
-
-# plot data to check - data look good
+# plot data to check
 plot(HCS_tempC ~ datetime, data = dat1)
 
 # Add full time series to data to be able to calculate daily averages but cut-off days with water temp for only part of day
@@ -94,7 +91,7 @@ dat5 <- dat4 %>%
   mutate(date = date(date)) %>%
   filter(date %in% sampling_dates$date)
 
-# Write data ####
+# Write water temp daily summary data ####
 write_csv(dat5, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary.csv")
 
 # Gap fill with water temp for gloeo sample days within 1 or 2 days ####
@@ -136,7 +133,201 @@ write_csv(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_s
 
 saveRDS()
 
-# Jake example
-saveRDS(sunapee_schmidt, 'Datasets/Sunapee/Stability_metrics/sunapee_schmidt_stability.rds')
+saveRDS(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled.rds")
+
+# Create 1 week lag water temp dataset ####
+
+# Create sampling dates lag for 1 week, 1-3 days
+sampling_dates_lag <- sampling_dates %>%
+  mutate(date_1weeklag = date - dweeks(1)) %>%
+  mutate(date_1daylag = date - ddays(1)) %>%
+  mutate(date_2daylag = date - ddays(2)) %>%
+  mutate(date_3daylag = date - ddays(3))
+
+write_csv(sampling_dates_lag, "./00_Data_files/Covariate_analysis_data/sampling_dates_lag.csv")
+
+# Fill full time series data for water temp holes @ start & end gloeo data
+dat4_fill <- dat4 %>%
+  mutate(date = date(date)) %>%
+  filter(!date %in% dat4_subset4$date)
+
+# full join for more complete water temp data
+dat4_fill2 <- full_join(dat4_fill, dat4_subset4) %>%
+  arrange(date)
+
+#Join water temp with 1 week lag date
+dat4_lag <- dat4_fill2 %>%
+  mutate(date_1weeklag = date(date)) %>%
+  select(-c(date,year,dayofyr))
+
+
+dat4_lag1 <- left_join(sampling_dates_lag, dat4_lag, by = "date_1weeklag") %>%
+  rename(HCS.tempC_mean_lag = HCS.tempC_mean, HCS.tempC_median_lag = HCS.tempC_median, HCS.tempC_min_lag = HCS.tempC_min, HCS.tempC_max_lag = HCS.tempC_max,HCS.tempC_sd_lag = HCS.tempC_sd)
+
+# Write water temp lag data
+write_csv(dat4_lag1, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weeklag.csv")
+
+# Calculate 1 week difference in water temp ####
+
+dat4_fill3 <- dat4_fill2 %>%
+  mutate(month = month(date)) %>%
+  filter(month %in% 5:10) #shorten dataset to sampling time period
+
+# Make vectors for output
+wtr_mean_diff <- vector("double", nrow(dat4_fill3))
+wtr_median_diff <- vector("double", nrow(dat4_fill3))
+wtr_min_diff <- vector("double", nrow(dat4_fill3))
+wtr_max_diff <- vector("double", nrow(dat4_fill3))
+wtr_sd_diff <- vector("double", nrow(dat4_fill3))
+
+for (i in 1:nrow(dat4_fill3)) {
+  wtr_mean_diff[i] <- dat4_fill3$HCS.tempC_mean[i+7] - dat4_fill3$HCS.tempC_mean[i]
+  wtr_median_diff[i] <- dat4_fill3$HCS.tempC_median[i+7] - dat4_fill3$HCS.tempC_median[i]
+  wtr_min_diff[i] <- dat4_fill3$HCS.tempC_min[i+7] - dat4_fill3$HCS.tempC_min[i]
+  wtr_max_diff[i] <- dat4_fill3$HCS.tempC_max[i+7] - dat4_fill3$HCS.tempC_max[i]
+  wtr_sd_diff[i] <- dat4_fill3$HCS.tempC_sd[i+7] - dat4_fill3$HCS.tempC_sd[i]
+
+  wtr_diff_output <- data.frame(date = dat4_fill3$date + ddays(7), wtr_mean_diff, wtr_median_diff, wtr_max_diff, wtr_min_diff, wtr_sd_diff)
+}
+
+# Filter water temp 1 week difference data for sampling dates
+wtr_diff_output2 <- wtr_diff_output %>%
+  filter(date %in% sampling_dates$date)
+
+# Write water temp 1 week difference data
+write_csv(wtr_diff_output2, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_1weekdiff.csv")
+
+# Growing Degree Days ####
+
+# set base temp to 4°C - KLC suggestion
+base_temp <- 4
+
+gdd0
+
+gdd1 <- dat4_fill3 %>% # use daily water temp data summary for May-Sep
+  mutate(gdd = ((HCS.tempC_max + HCS.tempC_min)/2) - base_temp) %>%
+  mutate(dayofyr = yday(date)) %>%
+  select(year,dayofyr,gdd) %>%
+  filter(gdd!="NA") %>%
+  spread(key = year, value = gdd) # make wide to do each year separately
+
+# Calculate gdd as column sum of daily data - separate each year since different number of missing points
+# Note could also try rollsum
+gdd_sum1 <- as_tibble_col(cumsum(na.omit(gdd1$`2009`)), column_name = "gdd_sum09")
+gdd_sum2 <- as_tibble_col(cumsum(na.omit(gdd1$`2010`)), column_name = "gdd_sum10")
+gdd_sum3 <- as_tibble_col(cumsum(na.omit(gdd1$`2011`)), column_name = "gdd_sum11")
+gdd_sum4 <- as_tibble_col(cumsum(na.omit(gdd1$`2012`)), column_name = "gdd_sum12")
+gdd_sum5 <- as_tibble_col(cumsum(na.omit(gdd1$`2013`)), column_name = "gdd_sum13")
+gdd_sum6 <- as_tibble_col(cumsum(na.omit(gdd1$`2014`)), column_name = "gdd_sum14")
+gdd_sum7 <- as_tibble_col(cumsum(na.omit(gdd1$`2015`)), column_name = "gdd_sum15")
+gdd_sum8 <- as_tibble_col(cumsum(na.omit(gdd1$`2016`)), column_name = "gdd_sum16")
+
+y1 <- gdd1[1:123,1]
+y2 <- gdd1[7:124,1]
+y3 <- gdd1[12:124,1]
+y4 <- gdd1[4:130,1]
+y5 <- gdd1[2:127,1]
+y6 <- gdd1[8:127,1]
+y7 <- gdd1[15:126,1]
+y8 <- gdd1[12:131,1]
+
+gdd_sum09 <- bind_cols(y1, gdd_sum1)
+gdd_sum10 <- bind_cols(y2, gdd_sum2)
+gdd_sum11 <- bind_cols(y3, gdd_sum3)
+gdd_sum12 <- bind_cols(y4, gdd_sum4)
+gdd_sum13 <- bind_cols(y5, gdd_sum5)
+gdd_sum14 <- bind_cols(y6, gdd_sum6)
+gdd_sum15 <- bind_cols(y7, gdd_sum7)
+gdd_sum16 <- bind_cols(y8, gdd_sum8)
+
+# Left join with origina data
+gdd2 <- left_join(gdd1,gdd_sum09,by = "dayofyr")
+gdd3 <- left_join(gdd2,gdd_sum10,by = "dayofyr")
+gdd4 <- left_join(gdd3,gdd_sum11,by = "dayofyr")
+gdd5 <- left_join(gdd4,gdd_sum12,by = "dayofyr")
+gdd6 <- left_join(gdd5,gdd_sum13,by = "dayofyr")
+gdd7 <- left_join(gdd6,gdd_sum14,by = "dayofyr")
+gdd8 <- left_join(gdd7,gdd_sum15,by = "dayofyr")
+gdd_sum_all <- left_join(gdd8,gdd_sum16,by = "dayofyr")
+
+
+# Fix 2010
+gdd_sum_all[124,11] <- NA
+gdd_sum_all[125,11] <- 2149.890
+
+# Convert back to long
+gdd_all2 <- gdd_sum_all %>%
+  select(1:9) %>%
+  gather(key = "year", value = "gdd", -dayofyr)
+
+gdd_all3 <- gdd_sum_all %>%
+  select(1,10:17) %>%
+  gather(key = "year", value = "gdd_sum", -dayofyr)
+
+gdd_all4 <- bind_cols(gdd_all2,gdd_all3[,3]) %>%
+  mutate(year = as.numeric(year))
+
+# Join with original water temp data to get dates back
+
+gdd_all5 <- dat4_fill3 %>%
+  mutate(dayofyr = yday(date)) %>%
+  mutate(year = year(date)) %>%
+  select(-month)
+
+gdd_all6 <- left_join(gdd_all5, gdd_all4, by = c("dayofyr", "year")) %>%
+  select(date, gdd, gdd_sum)
+
+# Filter water temp 1 week difference data for sampling dates
+gdd_all7 <- gdd_all6 %>%
+  filter(date %in% sampling_dates$date)
+
+# Write growing degree days data
+write_csv(gdd_all7, "./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
+
+
+# Water Temp Moving Avg ####
+# Use hourly water temp full time dataset
+
+dat3_ma <- dat3[-c(1:24),] #start with complete day of water temp data
+
+dat3_ma1 <- dat3_ma %>%
+  mutate(ma_3 = rollmean(HCS_tempC, k = 72, fill = NA, align = "right")) %>% #k = hours; 72 hours = 3 days
+  mutate(ma_5 = rollmean(HCS_tempC, k = 120, fill = NA, align = "right")) %>%
+  mutate(ma_7 = rollmean(HCS_tempC, k = 168, fill = NA, align = "right")) %>%
+  mutate(ma_10 = rollmean(HCS_tempC, k = 240, fill = NA, align = "right")) %>%
+  mutate(ma_14 = rollmean(HCS_tempC, k = 336, fill = NA, align = "right"))
+
+# filter for value @ end of day
+dat3_ma2 <-  dat3_ma1 %>%
+  mutate(hour = hour(time)) %>%
+  filter(hour == 23) %>%
+  select(-hour)
+
+# Find end periods of moving avg
+dat3_ma3 <- dat3_ma1 %>%
+  #mutate(year = year(date)) %>%
+  group_by(year) %>%
+  summarize(date = max(date)) %>%
+  filter(year!="NA")
+
+str(dat3_ma3)
+
+dat3_ma4 <- dat3_ma1 %>%
+  filter(date %in% dat3_ma3$date)
+
+# Bind datasets together
+
+dat3_ma5 <- bind_rows(dat3_ma2, dat3_ma4) %>%
+  arrange(date)
+
+# Filter water temp moving avg data for sampling dates
+dat3_ma6 <- dat3_ma5 %>%
+  mutate(date = date(date))
+
+dat3_ma7 <- left_join(sampling_dates, dat3_ma6) %>%
+  select(date, ma_3:ma_14)
+
+# Write water temp moving average data
+write_csv(dat3_ma7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg.csv")
 
 
