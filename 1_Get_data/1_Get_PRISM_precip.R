@@ -76,7 +76,7 @@ precip_lag_week1 <- left_join(sampling_dates_lag[,1:2], precip_lag_week, by = "d
 # Write precip 1 week lag data
 write_csv(precip_lag_week1, "./00_Data_files/Covariate_analysis_data/PRISM_precip_daily_sum_1weeklag.csv")
 
-# Combine all precip data ###
+# Combine all precip data ####
 precip_all <- bind_cols(precip2,precip_lag_day1[,3], precip_lag_week1[,3])
 
 write_csv(precip_all, "./00_Data_files/Covariate_analysis_data/PRISM_precip_all.csv")
