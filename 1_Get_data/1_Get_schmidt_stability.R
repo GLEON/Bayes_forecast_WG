@@ -385,8 +385,7 @@ schmidt_weeklag <- schmidt_daily_summary3_fill2 %>%
 
 schmidt_weeklag1 <- left_join(sampling_dates_lag[,1:2], schmidt_weeklag, by = "date_1weeklag")
 
-colnames(schmidt_weeklag1)[-c(1:2)] = paste0(
-                                      colnames(schmidt_weeklag1)[-c(1:2)], '_lag')
+colnames(schmidt_weeklag1)[-c(1:2)] = paste0(colnames(schmidt_weeklag1)[-c(1:2)], '_lag')
 
 # Write schmidt 1 week lag data
 write_csv(schmidt_weeklag1, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weeklag.csv")
