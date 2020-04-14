@@ -195,7 +195,53 @@ wtr_diff_output2 <- wtr_diff_output %>%
   filter(date %in% sampling_dates$date)
 
 # Write water temp 1 week difference data
-write_csv(wtr_diff_output2, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_1weekdiff.csv")
+write_csv(wtr_diff_output2, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weekdiff.csv")
+
+# Water Temp Moving Avg ####
+# Use hourly water temp full time dataset
+
+dat3_ma <- dat3[-c(1:24),] #start with complete day of water temp data
+
+dat3_ma1 <- dat3_ma %>%
+  mutate(ma_3 = rollmean(HCS_tempC, k = 72, fill = NA, align = "right")) %>% #k = hours; 72 hours = 3 days
+  mutate(ma_5 = rollmean(HCS_tempC, k = 120, fill = NA, align = "right")) %>%
+  mutate(ma_7 = rollmean(HCS_tempC, k = 168, fill = NA, align = "right")) %>%
+  mutate(ma_10 = rollmean(HCS_tempC, k = 240, fill = NA, align = "right")) %>%
+  mutate(ma_14 = rollmean(HCS_tempC, k = 336, fill = NA, align = "right"))
+
+# filter for value @ end of day
+dat3_ma2 <-  dat3_ma1 %>%
+  mutate(hour = hour(time)) %>%
+  filter(hour == 23) %>%
+  select(-hour)
+
+# Find end periods of moving avg
+dat3_ma3 <- dat3_ma1 %>%
+  #mutate(year = year(date)) %>%
+  group_by(year) %>%
+  summarize(date = max(date)) %>%
+  filter(year!="NA")
+
+str(dat3_ma3)
+
+dat3_ma4 <- dat3_ma1 %>%
+  filter(date %in% dat3_ma3$date)
+
+# Bind datasets together
+
+dat3_ma5 <- bind_rows(dat3_ma2, dat3_ma4) %>%
+  arrange(date)
+
+# Filter water temp moving avg data for sampling dates
+dat3_ma6 <- dat3_ma5 %>%
+  mutate(date = date(date))
+
+dat3_ma7 <- left_join(sampling_dates, dat3_ma6) %>%
+  select(date, ma_3:ma_14)
+
+# Write water temp moving average data
+write_csv(dat3_ma7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg.csv")
+
 
 # Growing Degree Days ####
 
@@ -285,49 +331,14 @@ gdd_all7 <- gdd_all6 %>%
 write_csv(gdd_all7, "./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
 
 
-# Water Temp Moving Avg ####
-# Use hourly water temp full time dataset
+# Combine all water temp files (except growing degree days) ####
+watertemp <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled.csv")
+watertemp_lag <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weeklag.csv")
+watertemp_diff <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weekdiff.csv")
+movingavg <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg.csv")
 
-dat3_ma <- dat3[-c(1:24),] #start with complete day of water temp data
+watertemp_all <- bind_cols(watertemp[,c(1,4:8)], watertemp_lag[,3:7], watertemp_diff[,-1], movingavg[,-1])
 
-dat3_ma1 <- dat3_ma %>%
-  mutate(ma_3 = rollmean(HCS_tempC, k = 72, fill = NA, align = "right")) %>% #k = hours; 72 hours = 3 days
-  mutate(ma_5 = rollmean(HCS_tempC, k = 120, fill = NA, align = "right")) %>%
-  mutate(ma_7 = rollmean(HCS_tempC, k = 168, fill = NA, align = "right")) %>%
-  mutate(ma_10 = rollmean(HCS_tempC, k = 240, fill = NA, align = "right")) %>%
-  mutate(ma_14 = rollmean(HCS_tempC, k = 336, fill = NA, align = "right"))
-
-# filter for value @ end of day
-dat3_ma2 <-  dat3_ma1 %>%
-  mutate(hour = hour(time)) %>%
-  filter(hour == 23) %>%
-  select(-hour)
-
-# Find end periods of moving avg
-dat3_ma3 <- dat3_ma1 %>%
-  #mutate(year = year(date)) %>%
-  group_by(year) %>%
-  summarize(date = max(date)) %>%
-  filter(year!="NA")
-
-str(dat3_ma3)
-
-dat3_ma4 <- dat3_ma1 %>%
-  filter(date %in% dat3_ma3$date)
-
-# Bind datasets together
-
-dat3_ma5 <- bind_rows(dat3_ma2, dat3_ma4) %>%
-  arrange(date)
-
-# Filter water temp moving avg data for sampling dates
-dat3_ma6 <- dat3_ma5 %>%
-  mutate(date = date(date))
-
-dat3_ma7 <- left_join(sampling_dates, dat3_ma6) %>%
-  select(date, ma_3:ma_14)
-
-# Write water temp moving average data
-write_csv(dat3_ma7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg.csv")
-
+# Write growing degree days data
+write_csv(watertemp_all, "./00_Data_files/Covariate_analysis_data/onset_watertemp_all.csv")
 
