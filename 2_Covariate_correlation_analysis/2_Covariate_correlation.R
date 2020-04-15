@@ -143,3 +143,17 @@ colnames(output) <- c("covariate_name","global_r2","global_Pearsons_r","global_S
                       "2014_r2","2014_Pearsons_r","2014_Spearmans_r","2014_quad_r2")
 write.csv(output, file = "./2_Covariate_correlation_analysis/output.csv",row.names = FALSE)
 
+#####################FILTERING FOR VARIABLES TO INCLUDE IN BAYES MODELS################
+bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output.csv")
+
+hist(bayes_variables$global_Spearmans_r)
+
+bayes_variables1 <- bayes_variables %>%
+  filter(abs(global_Spearmans_r)>=0.3 & abs(global_Pearsons_r)>=0.3)
+
+#this is where judgment comes in - we chose the following summary statistics:
+#1. HCS.tempC_min
+#2. HCS_tempC_min_lag
+#3. ma_7 (7-day moving average of water temp.)
+#4. schmidt.stability_median_diff
+#5. gdd_sum
