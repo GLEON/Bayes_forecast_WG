@@ -22,8 +22,9 @@ write.csv(gloeo, "./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.cs
 
 ############format water temp data
 wtr <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all.csv")
+wtr2 <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
 
-#min water temp
+#min water temp for Site 1
 mintemp <- wtr %>%
   select(date, HCS.tempC_min) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -35,6 +36,19 @@ mintemp <- wtr %>%
 colnames(mintemp) <- paste("wk", colnames(mintemp), sep = "_")
 
 write.csv(mintemp, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv", row.names = FALSE)
+
+#min water temp for Site 2
+mintemp2 <- wtr2 %>%
+  select(date, SOTF.tempC_min) %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(-date) %>%
+  spread(key = season_week, value = SOTF.tempC_min) %>%
+  select(-year)
+
+colnames(mintemp2) <- paste("wk", colnames(mintemp2), sep = "_")
+
+write.csv(mintemp2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv", row.names = FALSE)
 
 #min water temp lag
 mintemp_lag <- wtr %>%
@@ -49,6 +63,19 @@ colnames(mintemp_lag) <- paste("wk", colnames(mintemp_lag), sep = "_")
 
 write.csv(mintemp_lag, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_lag_Site1.csv", row.names = FALSE)
 
+#min water temp lag
+mintemp_lag2 <- wtr2 %>%
+  select(date, SOTF.tempC_min_lag) %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(-date) %>%
+  spread(key = season_week, value = SOTF.tempC_min_lag) %>%
+  select(-year)
+
+colnames(mintemp_lag2) <- paste("wk", colnames(mintemp_lag2), sep = "_")
+
+write.csv(mintemp_lag2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_lag_Site2.csv", row.names = FALSE)
+
 #7 day moving avg water temp
 ma7 <- wtr %>%
   select(date, ma_7) %>%
@@ -61,6 +88,18 @@ ma7 <- wtr %>%
 colnames(ma7) <- paste("wk", colnames(ma7), sep = "_")
 
 write.csv(ma7, "./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv", row.names = FALSE)
+
+ma7_2 <- wtr2 %>%
+  select(date, ma_7) %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(-date) %>%
+  spread(key = season_week, value = ma_7) %>%
+  select(-year)
+
+colnames(ma7_2) <- paste("wk", colnames(ma7_2), sep = "_")
+
+write.csv(ma7_2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv", row.names = FALSE)
 
 ############format Schmidt stability data
 schmidt <- read_csv("./00_Data_files/Covariate_analysis_data/schmidt_stability_all.csv")
@@ -80,6 +119,7 @@ write.csv(med_diff, "./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.
 
 ############format GDD data
 gdd <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
+gdd2 <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days_SOTF.csv")
 
 #min water temp
 gdd1 <- gdd %>%
@@ -93,3 +133,16 @@ gdd1 <- gdd %>%
 colnames(gdd1) <- paste("wk", colnames(gdd1), sep = "_")
 
 write.csv(gdd1, "./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv", row.names = FALSE)
+
+#min water temp
+gdd3 <- gdd2 %>%
+  select(date, gdd_sum) %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(-date) %>%
+  spread(key = season_week, value = gdd_sum) %>%
+  select(-year)
+
+colnames(gdd3) <- paste("wk", colnames(gdd3), sep = "_")
+
+write.csv(gdd3, "./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv", row.names = FALSE)

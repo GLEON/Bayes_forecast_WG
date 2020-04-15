@@ -15,10 +15,10 @@ model{
 
     #process model for Gloeo
     mu[k,j]~dnorm(lambda[k,j],tau_proc)
-    lambda[k,j] <- beta1  + beta2*mu[k,j-1] + beta3*Temp[k,j]
+    lambda[k,j] <- beta1  + beta2*mu[k,j-1] + beta3*covar[k,j]
 
     #gap-filling model for covariate
-    Temp[k,j]~dnorm(week_avg[j],tau_T_proc)
+    covar[k,j]~dnorm(week_avg[j],tau_C_proc)
 
   }
 
@@ -32,6 +32,6 @@ model{
   beta2 ~ dnorm(beta.m2,beta.v2)
   beta3 ~ dnorm(beta.m3,beta.v3)
   tau_obs ~ dgamma(a_obs,r_obs)
-  tau_T_proc ~ dgamma(0.01, 0.01)
+  tau_C_proc ~ dgamma(0.01, 0.01)
 
 }

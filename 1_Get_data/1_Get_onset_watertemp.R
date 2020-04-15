@@ -645,7 +645,7 @@ watertemp_lag <- read_csv("./00_Data_files/Covariate_analysis_data/onset_waterte
 watertemp_diff <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weekdiff_SOTF.csv")
 movingavg <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg_SOTF.csv")
 
-watertemp_all <- bind_cols(watertemp[,c(1,4:8)], watertemp_lag[,3:7], watertemp_diff[,-1], movingavg[,-1])
+watertemp_all <- bind_cols(watertemp[,c(1,4:8)], watertemp_lag[,-1], watertemp_diff[,-1], movingavg[,-1])
 
 # Write growing degree days data
 write_csv(watertemp_all, "./00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
