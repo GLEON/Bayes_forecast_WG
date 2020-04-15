@@ -13,11 +13,11 @@
 pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #set a directory to use as a local file repository for plots if desire to write to file
-my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Code_publication"
+my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output"
 write_plots <- TRUE
 
 #make vector of model names for for-loop
-my_models <- c("RW","RW_obs","AR","Linear_1var","Quad_1var","Linear_2var","Quad_2var")
+my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD")
 
 
 ########################CALIBRATE MODELS##############################################
@@ -75,7 +75,7 @@ plot_parameters(params = jags_plug_ins$params.model,
 
 #calculate parameter summaries, effective sample size, and cross-correlations
 sum <- summary(jags.out, vars = jags_plug_ins$variable.names.model)
-crosscorr <- crosscorr(jags.out.mcmc[,c(as.numeric(as.factor(jags_plug_ins$params.model)))])
+crosscorr <- crosscorr(jags.out.mcmc[,c(jags_plug_ins$params.model)])
 
 #save results
 sink(file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_param_summary.txt')))
