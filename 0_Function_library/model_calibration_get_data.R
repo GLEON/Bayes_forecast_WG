@@ -25,8 +25,8 @@ if(model_name %in% c("RW","RW_obs","AR")){
   return(list(year_no = year_no, season_weeks = season_weeks, y = y))
 }
 
-#for Linear_1var model
-if(model_name == "Linear_1var"){
+#for wtrtemp_min model
+if(model_name == "wtrtemp_min"){
 
   #read in covariate data
   Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
@@ -48,7 +48,7 @@ if(model_name == "Linear_1var"){
   #calculate weekly average of covariate from past years for gap filling
   week_avg = colMeans(Temp_prior, na.rm = TRUE)
   #use weekly average from last sampled week (18) to serve as prior for weeks 19 & 20
-  week_avg[is.na(week_avg)] <- week_avg[18]
+  week_avg[is.na(week_avg)] <- week_avg[19]
 
   return(list(year_no = year_no, season_weeks = season_weeks, y = y, Temp = Temp, week_avg = week_avg))
 }

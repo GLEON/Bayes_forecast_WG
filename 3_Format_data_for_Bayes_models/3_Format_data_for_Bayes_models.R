@@ -34,7 +34,7 @@ mintemp <- wtr %>%
 
 colnames(mintemp) <- paste("wk", colnames(mintemp), sep = "_")
 
-write.csv(mintemp, "./00_Data_files/Bayesian_model_input_data/Min_watertemp_Site1.csv", row.names = FALSE)
+write.csv(mintemp, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv", row.names = FALSE)
 
 #min water temp lag
 mintemp_lag <- wtr %>%
@@ -47,7 +47,7 @@ mintemp_lag <- wtr %>%
 
 colnames(mintemp_lag) <- paste("wk", colnames(mintemp_lag), sep = "_")
 
-write.csv(mintemp_lag, "./00_Data_files/Bayesian_model_input_data/Min_watertemp_lag_Site1.csv", row.names = FALSE)
+write.csv(mintemp_lag, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_lag_Site1.csv", row.names = FALSE)
 
 #7 day moving avg water temp
 ma7 <- wtr %>%
@@ -60,7 +60,7 @@ ma7 <- wtr %>%
 
 colnames(ma7) <- paste("wk", colnames(ma7), sep = "_")
 
-write.csv(ma7, "./00_Data_files/Bayesian_model_input_data/MA_watertemp_7day_Site1.csv", row.names = FALSE)
+write.csv(ma7, "./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv", row.names = FALSE)
 
 ############format Schmidt stability data
 schmidt <- read_csv("./00_Data_files/Covariate_analysis_data/schmidt_stability_all.csv")
@@ -76,7 +76,7 @@ med_diff <- schmidt %>%
 
 colnames(med_diff) <- paste("wk", colnames(med_diff), sep = "_")
 
-write.csv(med_diff, "./00_Data_files/Bayesian_model_input_data/Med_diff_Schmidt_Site1.csv", row.names = FALSE)
+write.csv(med_diff, "./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv", row.names = FALSE)
 
 ############format GDD data
 gdd <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
