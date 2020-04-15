@@ -62,7 +62,7 @@ covariates_all_filter2 <- covariates_all_filter[,c(6:44)]
 
 # Set-up output matrix
 
-output <- matrix(NA,nrow = length(covariates_all_filter1), ncol = 21) #42 rows
+output <- matrix(NA,nrow = length(covariates_all_filter1), ncol = 24) #42 rows
 length(covariates_all_filter1)
 
 for(i in 1:ncol(covariates_all_filter1)) {
@@ -80,8 +80,8 @@ for(i in 1:ncol(covariates_all_filter1)) {
    mod_year_matrix <- as.matrix(mod_year)
    mod2 <- lm(ln_totalperL ~ mod_year_matrix[,i], data = mod_year)
    output[i, j +6] <- round(cor(mod_year$ln_totalperL, mod_year[,i], method = "pearson", use = "complete.obs"),2)
-   output[i, j +6] <- round(cor(mod_year$ln_totalperL, mod_year[,i], method = "spearman", use = "complete.obs"),2)
-   output[i, j +6] <- summary(mod2)$adj.r.squared
+   output[i, j +12] <- round(cor(mod_year$ln_totalperL, mod_year[,i], method = "spearman", use = "complete.obs"),2)
+   output[i, j + 18] <- summary(mod2)$adj.r.squared
 
   }
 
@@ -97,7 +97,7 @@ mod <- lm(ln_totalperL ~ 	precip_mm_1weeklag, data = covariates_all_filter2)
 summary(mod)
 
 
-mod_year <- subset(covariates_all_filter1, year==years[5])
+mod_year <- subset(covariates_all_filter1, year==years[1])
 cor(mod_year$ln_totalperL, mod_year[,3], method = "pearson", use = "complete.obs")
 
 
