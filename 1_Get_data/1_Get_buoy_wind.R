@@ -332,3 +332,88 @@ write_csv(wind_cum_sum_all1, "./00_Data_files/Covariate_analysis_data/wind_speed
 windsp_all <- bind_cols(windsp_daily_summary3,windsp_daily_summary2_lag_1day_join[,-c(1:2)], windsp_daily_summary2_lag_2day_join[,-c(1:2)],windsp_daily_summary2_lag_3day_join[,-c(1:2)],windsp_daily_summary2_lag_1week_join[,-c(1:2)], wind_cum_sum_all1[,-1])
 
 write_csv(windsp_all, "./00_Data_files/Covariate_analysis_data/wind_speed_all.csv")
+
+# Extra filtering for all wind speed data ####
+
+wind_speed_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_all.csv")
+
+# keep winddir cove mean for all data but exclude median
+wind_speed_data_no_windsp_filter <- wind_speed_data %>%
+  select(-starts_with(c("AveWindDir_deg","AveWindDir_cove_median"))) %>%
+  select(-ends_with(c("in","out")))
+
+write_csv(wind_speed_data_no_windsp_filter, "./00_Data_files/Covariate_analysis_data/wind_speed_all_no_windsp_filter.csv")
+
+
+# Filter for wind direction blowing into cove
+wind_speed_data_in <- wind_speed_data %>%
+  select(1:9) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean >=0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_1day_wind_speed_data_in <- wind_speed_data %>%
+  select(ends_with("1daylag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1daylag >=0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_2day_wind_speed_data_in <- wind_speed_data %>%
+  select(ends_with("2daylag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_2daylag >=0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_3day_wind_speed_data_in <- wind_speed_data %>%
+  select(ends_with("3daylag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_3daylag >=0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_3day_wind_speed_data_in <- wind_speed_data %>%
+  select(ends_with("3daylag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_3daylag >=0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_1week_wind_speed_data_in <- wind_speed_data %>%
+  select(ends_with("1weeklag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1weeklag >=0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+# combine all wind speed filtered for directions blowing into cove together and cummulative sum wind speed data in - removed 3 day sum since too much missing data
+wind_speed_data_in_all <- bind_cols(wind_speed_data_in,lag_1day_wind_speed_data_in,lag_2day_wind_speed_data_in,lag_3day_wind_speed_data_in,lag_1week_wind_speed_data_in,wind_speed_data[,49:50])
+
+# Add 'in' to column names to differentiate
+colnames(wind_speed_data_in_all)[-c(1,27:28)] = paste0(colnames(wind_speed_data_in_all)[-c(1,27:28)], '_in')
+
+# Filter for wind direction blowing away from cove
+wind_speed_data_out <- wind_speed_data %>%
+  select(1:9) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean < 0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_1day_wind_speed_data_out <- wind_speed_data %>%
+  select(ends_with("1daylag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1daylag < 0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_2day_wind_speed_data_out <- wind_speed_data %>%
+  select(ends_with("2daylag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_2daylag < 0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_3day_wind_speed_data_out <- wind_speed_data %>%
+  select(ends_with("3daylag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_3daylag < 0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+lag_1week_wind_speed_data_out <- wind_speed_data %>%
+  select(ends_with("1weeklag")) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1weeklag < 0.5,.,NA))) %>%
+  select(-starts_with("AveWindDir"))
+
+# combine all wind speed filtered for directions blowing out of cove together and cummulative sum wind speed data out - removed 2 day sum since too much missing data
+
+wind_speed_data_out_all <- bind_cols(wind_speed_data_out,lag_1day_wind_speed_data_out,lag_2day_wind_speed_data_out,lag_3day_wind_speed_data_out,lag_1week_wind_speed_data_out,wind_speed_data[,52])
+
+colnames(wind_speed_data_out_all)[-c(1,27)] = paste0(colnames(wind_speed_data_out_all)[-c(1,27)], '_out')
+
+# combine all wind speed - no filtering and wind speed in/wind speed out
+
+wind_speed_data_all <- bind_cols(wind_speed_data_no_windsp_filter, wind_speed_data_in_all, wind_speed_data_out_all)
