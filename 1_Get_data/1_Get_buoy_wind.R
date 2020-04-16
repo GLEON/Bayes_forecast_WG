@@ -342,8 +342,13 @@ wind_speed_data_no_windsp_filter <- wind_speed_data %>%
   select(-starts_with(c("AveWindDir_deg","AveWindDir_cove_median"))) %>%
   select(-ends_with(c("in","out")))
 
-write_csv(wind_speed_data_no_windsp_filter, "./00_Data_files/Covariate_analysis_data/wind_speed_all_no_windsp_filter.csv")
+# Recombine min data
+wind_speed_data_no_windsp_filter$AveWindSp_ms_min <- wind_speed_data$AveWindSp_ms_min
 
+wind_speed_data_no_windsp_filter2 <- wind_speed_data_no_windsp_filter %>%
+  select(1:4,"AveWindSp_ms_min", 5:37)
+
+write_csv(wind_speed_data_no_windsp_filter2, "./00_Data_files/Covariate_analysis_data/wind_speed_all_no_windsp_filter.csv")
 
 # Filter for wind direction blowing into cove
 wind_speed_data_in <- wind_speed_data %>%
@@ -413,7 +418,10 @@ lag_1week_wind_speed_data_out <- wind_speed_data %>%
 wind_speed_data_out_all <- bind_cols(wind_speed_data_out,lag_1day_wind_speed_data_out,lag_2day_wind_speed_data_out,lag_3day_wind_speed_data_out,lag_1week_wind_speed_data_out,wind_speed_data[,52])
 
 colnames(wind_speed_data_out_all)[-c(1,27)] = paste0(colnames(wind_speed_data_out_all)[-c(1,27)], '_out')
+head(wind_speed_data_out_all)
 
 # combine all wind speed - no filtering and wind speed in/wind speed out
 
-wind_speed_data_all <- bind_cols(wind_speed_data_no_windsp_filter, wind_speed_data_in_all, wind_speed_data_out_all)
+wind_speed_data_all <- bind_cols(wind_speed_data_no_windsp_filter2, wind_speed_data_in_all[,-1], wind_speed_data_out_all[,-1])
+
+write_csv(wind_speed_data_all, "./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
