@@ -122,7 +122,7 @@ if(model_name == "schmidt_med_diff"){
 ###############################SINGLE COVARIATE QUADRATIC MODELS#####################################
 
 #for GDD model
-if(model_name == "GDD"){
+if(model_name == "GDD" | model_name == "GDD_test"){
 
   #read in covariate data
   GDD <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv"))

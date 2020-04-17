@@ -1,11 +1,11 @@
 [1] "Parameter summary"
-           Lower95    Median  Upper95     Mean        SD Mode       MCerr MC%ofSD SSeff
-tau_proc 0.4273413 0.7283983 1.122198 0.752367 0.1850094   NA 0.001045117     0.6 31337
-tau_obs  0.7547735 1.4409367 2.408443 1.516826 0.4541098   NA 0.002829505     0.6 25757
+           Lower95    Median  Upper95      Mean        SD Mode       MCerr MC%ofSD SSeff
+tau_proc 0.4273595 0.7320466 1.123015 0.7553558 0.1853743   NA 0.001050580     0.6 31134
+tau_obs  0.7652045 1.4287478 2.425847 1.5083774 0.4557934   NA 0.002847882     0.6 25615
              AC.10     psrf
-tau_proc 0.1037993 1.000023
-tau_obs  0.1608609 1.000181
+tau_proc 0.1066382 1.000032
+tau_obs  0.1575466 1.000004
 [1] "Parameter cross-correlations"
            tau_proc    tau_obs
-tau_proc  1.0000000 -0.4591194
-tau_obs  -0.4591194  1.0000000
+tau_proc  1.0000000 -0.4597904
+tau_obs  -0.4597904  1.0000000
