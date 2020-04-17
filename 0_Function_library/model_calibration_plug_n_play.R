@@ -22,6 +22,9 @@ jags_plug_ins <- function(model_name){
   if(model_name %in% c("GDD")){
     model_type <- "Quad_1var"
   }
+  if(model_name %in% c("GDD_test")){
+    model_type <- "Quad_1var_test"
+  }
 
 #RW
   data.RW <- list(y=cal_data$y, year_no = cal_data$year_no,season_weeks=cal_data$season_weeks,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 0.001, r_obs = 0.001)
@@ -57,6 +60,13 @@ jags_plug_ins <- function(model_name){
   variable.namesout.Quad_1var <- c("tau_proc", "beta1", "beta2","beta3","beta4",  "mu", "tau_obs", "tau_C_proc")
   init.Quad_1var <- list(list(tau_proc=0.001, tau_obs = 0.1,  tau_C_proc = 0.01, beta1=-0.5, beta2=-0.5, beta3=-0.5, beta4=-0.5), list(tau_proc=0.1,  tau_obs = 1,tau_C_proc = 0.1, beta1=0, beta2=0, beta3=0, beta4=0), list(tau_proc=1, tau_obs = 5,tau_C_proc = 1, beta1=0.5,beta2=0.5, beta3=0.5, beta4=0.5))
   params.Quad_1var <- c("tau_proc","beta1", "beta2", "beta3","beta4","tau_obs","tau_C_proc")
+
+#Quad_1var_test
+  data.Quad_1var_test <- list(y=cal_data$y, year_no = cal_data$year_no, season_weeks=cal_data$season_weeks,covar=cal_data$covar, week_avg=cal_data$week_avg, beta.m1=0,  beta.m2=0,beta.m3=0,beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.Quad_1var_test <- c("tau_proc", "beta1","beta2", "beta3", "tau_obs","tau_C_proc")
+  variable.namesout.Quad_1var_test <- c("tau_proc", "beta1", "beta2","beta3",  "mu", "tau_obs", "tau_C_proc")
+  init.Quad_1var_test <- list(list(tau_proc=0.001, tau_obs = 0.1,  tau_C_proc = 0.01, beta1=-0.5, beta2=-0.5, beta3=-0.5), list(tau_proc=0.1,  tau_obs = 1,tau_C_proc = 0.1, beta1=0, beta2=0, beta3=0), list(tau_proc=1, tau_obs = 5,tau_C_proc = 1, beta1=0.5,beta2=0.5, beta3=0.5))
+  params.Quad_1var_test <- c("tau_proc","beta1", "beta2", "beta3","tau_obs","tau_C_proc")
 
 # #Linear_2var
 #   data.Linear_2var <- list(y=cal_data$y, year_no = cal_data$year_no, season_weeks=cal_data$season_weeks,Temp=cal_data$Temp, Schmidt=cal_data$Schmidt, week_avg_T=cal_data$week_avg_T,week_avg_S=cal_data$week_avg_S, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
