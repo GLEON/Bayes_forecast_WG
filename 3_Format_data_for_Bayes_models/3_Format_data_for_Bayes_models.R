@@ -50,7 +50,7 @@ colnames(mintemp2) <- paste("wk", colnames(mintemp2), sep = "_")
 
 write.csv(mintemp2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv", row.names = FALSE)
 
-#min water temp lag
+#min water temp lag for Site 1
 mintemp_lag <- wtr %>%
   select(date, HCS.tempC_min_lag) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -63,7 +63,7 @@ colnames(mintemp_lag) <- paste("wk", colnames(mintemp_lag), sep = "_")
 
 write.csv(mintemp_lag, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_lag_Site1.csv", row.names = FALSE)
 
-#min water temp lag
+#min water temp lag for Site 2
 mintemp_lag2 <- wtr2 %>%
   select(date, SOTF.tempC_min_lag) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -77,6 +77,7 @@ colnames(mintemp_lag2) <- paste("wk", colnames(mintemp_lag2), sep = "_")
 write.csv(mintemp_lag2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_lag_Site2.csv", row.names = FALSE)
 
 #7 day moving avg water temp
+#Site 1
 ma7 <- wtr %>%
   select(date, ma_7) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -89,6 +90,7 @@ colnames(ma7) <- paste("wk", colnames(ma7), sep = "_")
 
 write.csv(ma7, "./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv", row.names = FALSE)
 
+#Site 2
 ma7_2 <- wtr2 %>%
   select(date, ma_7) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -104,7 +106,7 @@ write.csv(ma7_2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.cs
 ############format Schmidt stability data
 schmidt <- read_csv("./00_Data_files/Covariate_analysis_data/schmidt_stability_all.csv")
 
-#min water temp
+#1 week difference in median Schmidt stability
 med_diff <- schmidt %>%
   select(date, schmidt.stability_median_diff) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -121,7 +123,7 @@ write.csv(med_diff, "./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.
 gdd <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
 gdd2 <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days_SOTF.csv")
 
-#min water temp
+#GDD for Site 1
 gdd1 <- gdd %>%
   select(date, gdd_sum) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -134,7 +136,7 @@ colnames(gdd1) <- paste("wk", colnames(gdd1), sep = "_")
 
 write.csv(gdd1, "./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv", row.names = FALSE)
 
-#min water temp
+#GDD for Site 2
 gdd3 <- gdd2 %>%
   select(date, gdd_sum) %>%
   mutate(season_week = rep(c(1:20),times = 8),
@@ -146,3 +148,20 @@ gdd3 <- gdd2 %>%
 colnames(gdd3) <- paste("wk", colnames(gdd3), sep = "_")
 
 write.csv(gdd3, "./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv", row.names = FALSE)
+
+############format wind data
+wnd <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
+
+#avg. wind direction with a 2 day lag
+wnd1 <- wnd %>%
+  select(date, AveWindDir_cove_mean_2daylag) %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(-date) %>%
+  spread(key = season_week, value = AveWindDir_cove_mean_2daylag) %>%
+  select(-year)
+
+colnames(wnd1) <- paste("wk", colnames(wnd1), sep = "_")
+
+write.csv(wnd1, "./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv", row.names = FALSE)
+

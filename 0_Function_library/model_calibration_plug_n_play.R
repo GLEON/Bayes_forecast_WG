@@ -16,7 +16,7 @@ jags_plug_ins <- function(model_name){
   if(model_name == "RW"){model_type = "RW"}
   if(model_name == "RW_obs"){model_type = "RW_obs"}
   if(model_name == "AR"){model_type = "AR"}
-  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff")){
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag")){
     model_type <- "Linear_1var"
   }
   if(model_name %in% c("GDD")){

@@ -119,6 +119,22 @@ if(model_name == "schmidt_med_diff"){
   return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = Schmidt, week_avg = week_avg))
 }
 
+#for wnd_dir_2day_lag model
+if(model_name == "wnd_dir_2day_lag"){
+
+  #read in covariate data
+  Wnd <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+  #remove 2015-2016 data
+  Wnd <- Wnd[-c(7:8),]
+  #center covariate data
+  Wnd <- (Wnd - mean(Wnd, na.rm = TRUE))/sd(Wnd, na.rm = TRUE)
+
+  #calculate weekly average of covariate from past years for gap filling
+  week_avg = colMeans(Wnd, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = Wnd, week_avg = week_avg))
+}
+
 ###############################SINGLE COVARIATE QUADRATIC MODELS#####################################
 
 #for GDD model

@@ -17,7 +17,7 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output
 write_plots <- TRUE
 
 #make vector of model names for for-loop
-my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","GDD_test")
+my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")
 
 
 ########################CALIBRATE MODELS##############################################
