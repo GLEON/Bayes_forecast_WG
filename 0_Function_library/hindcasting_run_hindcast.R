@@ -2,17 +2,30 @@
 #Author:Mary Lofton
 #Date: 05OCT19
 
-run_hindcast <- function(model_name, params, Nmc, IC, wk){
+run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
 
   #check that model is set up for hindcasting
-  if(!model_name %in% c("RW","RW_obs","AR")){
+  if(!model_name %in% c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")){
     print("This model is not included in the hindcasting functions.")
+  }
+
+  #assign same model name for models with the same structure
+  if(model_name == "RW"){model_type = "RW"}
+  if(model_name == "RW_obs"){model_type = "RW_obs"}
+  if(model_name == "AR"){model_type = "AR"}
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag")){
+    model_type <- "Linear_1var"
+  }
+  if(model_name %in% c("GDD")){
+    model_type <- "Quad_1var"
+  }
+  if(model_name %in% c("GDD_test")){
+    model_type <- "Quad_1var_test"
   }
 
   #set up output matrices
   proc.model <- matrix(NA, Nmc, 4)
   out <- matrix(NA, Nmc, 4)
-
 
   # ts = rbind(1:20,21:40)
   # week_avg = week_avg
@@ -22,7 +35,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk){
   # obs_data = obs_data
   # colnums = colnums
 
-  if(model_name == "RW"){
+  if(model_type == "RW"){
     if(wk %in% c(1:17)){
       for(j in 1:4){
         #set initial conditions
@@ -69,7 +82,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk){
     }
   }
 
-  if(model_name == "RW_obs"){
+  if(model_type == "RW_obs"){
     if(wk %in% c(1:17)){
       for(j in 1:4){
         #set initial conditions
@@ -116,7 +129,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk){
     }
   }
 
-  if(model_name == "AR"){
+  if(model_type == "AR"){
     if(wk %in% c(1:17)){
       for(j in 1:4){
         #set initial conditions
@@ -171,82 +184,173 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk){
   ##REMEMBER TO UPDATE THIS TO INCLUDE BETTER WAY OF HINDCASTING DRIVERS!!
 ###############################################################################
 
+  if(model_type == "Linear_1var"){
 
-  # if(model_name == "Seasonal_AR_Mintemp"){
-  #   if(week_num %in% c(1:16,21:36)){
-  #     for(j in 1:5){
-  #       #set initial conditions
-  #       if(j == 1){gloeo_prev <- IC}
-  #       #temp model
-  #       Temp = rnorm(Nmc,week_min[colnums[week_num]],params$sd_T)
-  #       #process model
-  #       gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*Temp
-  #       proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
-  #       #data model
-  #       out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
-  #       #update IC
-  #       gloeo_prev <- out[,j]
-  #     }}
-  #
-  #   if(week_num %in% c(17,37)){
-  #     for(j in 1:4){
-  #       #set initial conditions
-  #       if(j == 1){gloeo_prev <- IC}
-  #       #temp model
-  #       Temp = rnorm(Nmc,week_min[colnums[week_num]],params$sd_T)
-  #       #process model
-  #       gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*Temp
-  #       proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
-  #       #data model
-  #       out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
-  #       #update IC
-  #       gloeo_prev <- out[,j]
-  #     }}
-  #
-  #   if(week_num %in% c(18,38)){
-  #     for(j in 1:3){
-  #       #set initial conditions
-  #       if(j == 1){gloeo_prev <- IC}
-  #       #temp model
-  #       Temp = rnorm(Nmc,week_min[colnums[week_num]],params$sd_T)
-  #       #process model
-  #       gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*Temp
-  #       proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
-  #       #data model
-  #       out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
-  #       #update IC
-  #       gloeo_prev <- out[,j]
-  #     }}
-  #
-  #   if(week_num %in% c(19,39)){
-  #     for(j in 1:2){
-  #       #set initial conditions
-  #       if(j == 1){gloeo_prev <- IC}
-  #       #temp model
-  #       Temp = rnorm(Nmc,week_min[colnums[week_num]],params$sd_T)
-  #       #process model
-  #       gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*Temp
-  #       proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
-  #       #data model
-  #       out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
-  #       #update IC
-  #       gloeo_prev <- out[,j]
-  #     }}
-  #
-  #   if(week_num %in% c(20,40)){
-  #     #set initial conditions
-  #     gloeo_prev <- IC
-  #     #temp model
-  #     Temp = rnorm(Nmc,week_min[colnums[week_num]],params$sd_T)
-  #     #process model
-  #     gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*Temp
-  #     proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
-  #     #data model
-  #     out[,1] = rnorm(Nmc,proc.model[,1],params$sd_obs)
-  #   }
-  # }
-  #
-  # if(model_name == "Seasonal_DayLength_Quad"){
+    if(wk %in% c(1:17)){
+      for(j in 1:4){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk %in% c(18)){
+      for(j in 1:3){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk %in% c(19)){
+      for(j in 1:2){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk %in% c(20)){
+      #set initial conditions
+      gloeo_prev <- IC
+      #covar model
+      covar <- covar_hindcast[,j]
+      #process model
+      gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar
+      proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+      #data model
+      out[,1] = rnorm(Nmc,proc.model[,1],params$sd_obs)
+    }
+  }
+
+  if(model_type == "Quad_1var"){
+
+    if(wk %in% c(1:17)){
+      for(j in 1:4){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar + params$beta4*covar^2
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk %in% c(18)){
+      for(j in 1:3){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar + params$beta4*covar^2
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk %in% c(19)){
+      for(j in 1:2){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar + params$beta4*covar^2
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk %in% c(20)){
+      #set initial conditions
+      gloeo_prev <- IC
+      #covar model
+      covar <- covar_hindcast[,j]
+      #process model
+      gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar + params$beta4*covar^2
+      proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+      #data model
+      out[,1] = rnorm(Nmc,proc.model[,1],params$sd_obs)
+    }
+  }
+
+  if(model_type == "Quad_1var_test"){
+
+    if(wk %in% c(1:17)){
+      for(j in 1:4){
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*covar + params$beta3*covar^2
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+      }}
+
+    if(wk %in% c(18)){
+      for(j in 1:3){
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*covar + params$beta3*covar^2
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+      }}
+
+    if(wk %in% c(19)){
+      for(j in 1:2){
+        #covar model
+        covar <- covar_hindcast[,j]
+        #process model
+        gloeo_temp = params$beta1 + params$beta2*covar + params$beta3*covar^2
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+      }}
+
+    if(wk %in% c(20)){
+      #covar model
+      covar <- covar_hindcast[,j]
+      #process model
+      gloeo_temp = params$beta1 + params$beta2*covar + params$beta3*covar^2
+      proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+      #data model
+      out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+    }
+  }
+
+  # if(model_type == "Seasonal_DayLength_Quad"){
   #   if(week_num %in% c(1:16,21:36)){
   #     for(j in 1:5){
   #       #set initial conditions
@@ -320,7 +424,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk){
   #   }
   # }
   #
-  # if(model_name == "Seasonal_AR_Minwind_MinSchmidt_Diff"){
+  # if(model_type == "Seasonal_AR_Minwind_MinSchmidt_Diff"){
   #   if(week_num %in% c(1:16,21:36)){
   #     for(j in 1:5){
   #       #set initial conditions
@@ -409,7 +513,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk){
   #   }
   # }
   #
-  # if(model_name == "Seasonal_DayLength_Quad_Mintemp"){
+  # if(model_type == "Seasonal_DayLength_Quad_Mintemp"){
   #   if(week_num %in% c(1:16,21:36)){
   #     for(j in 1:5){
   #       #set initial conditions

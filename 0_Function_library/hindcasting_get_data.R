@@ -10,6 +10,8 @@ pacman::p_load(tidyverse)
 
 get_hindcast_data <- function(model_name, year, season_week){
 
+###############################FOR ALL MODELS#####################################
+
 #set calibration years and weeks of season - do not edit
 if(year == 2015){years <- c(2009:2015)} else {years <- c(2009:2016)}
 year_no = as.numeric(as.factor(years))
@@ -35,139 +37,227 @@ if(year == 2015){
 
 }
 
-# #for watertemp_min
-# Temp <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Midge_year_by_week_watertemp_min_16AUG19.csv"))
-# Temp <- scale(Temp, center = TRUE, scale = TRUE)
-# Temp_prior <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Fichter_year_by_week_watertemp_min_16AUG19.csv"))
-# Temp_prior <- scale(Temp_prior, center = TRUE, scale = TRUE)
-#
-# #for DayLength
-# DayLength <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/daylength_year_by_week_28JAN20.csv"))
-#
-# #for max Schmidt
-# Schmidt <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Buoy_year_by_week_max_Schmidt_28JAN20.csv"))
-#
-# #for Ppt
-# Ppt <- as.matrix(read_csv("./Datasets/Sunapee/Bayes_Covariates_Data/midge_weekly_summed_precip_10OCT19.csv"))
-#
-# #for underwater light from HOBOs
-# Light <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/UnderwaterLight_year_by_week_02FEB20.csv"))
-#
-# #for Wnd
-# Wnd <- as.matrix(read_csv("./Datasets/Sunapee/Bayes_Covariates_Data/midge_wind_perc90_14OCT19.csv"))
-#
-# #for GDD
-# GDD <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/GDD_year_by_week_28JAN20.csv"))
-#
-# years <- c(2009:2016)
-# forecast_years <- c(2015:2016)
-# year_no = as.numeric(as.factor(years))
-# season_weeks = c(1:20)
-# site = "Midge"
-#
-# #for min water temp
-# week_min = colMeans(Temp_prior, na.rm = TRUE)
-#
-# #for DayLength
-# week_avg = colMeans(DayLength, na.rm = TRUE)
-#
-# #for max Schmidt
-# week_max = colMeans(Schmidt, na.rm = TRUE)
-#
-# #for cv Wnd
-# week_cv = colMeans(Wnd, na.rm = TRUE)
-#
-# #for combined covariate model
-# week_avg_T = colMeans(Temp_prior, na.rm = TRUE)
-# week_avg_S = colMeans(Schmidt, na.rm = TRUE)
-#
-# #for combined covariate model
-# week_min_T = colMeans(Temp_prior, na.rm = TRUE)
-# week_min_S = colMeans(Schmidt, na.rm = TRUE)
-# week_min_W = colMeans(Wnd, na.rm = TRUE)
+###############################GLOEO-ONLY MODELS#####################################
+#for RW, RW_obs, and AR models
+if(model_name %in% c("RW","RW_obs","AR")){
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y))
+}
 
-# ## Forward Simulation
-# N_weeks <- c(1:40)
-# observ <- c(forecast_y[1,],forecast_y[2,])
-# y <- log(as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Midge_year_by_week_totalperL_forecast_05OCT19.csv"))+0.003)
-#
-# Temp <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Midge_year_by_week_watertemp_min_forecast_05OCT19.csv"))
-# Temp <- scale(Temp, center = TRUE, scale = TRUE)
-# observ_Temp <- c(Temp[7,],Temp[8,])
-#
-# SW <- as.matrix(read_csv("./Datasets/Sunapee/Bayes_Covariates_Data/Midge_year_by_week_SW_forecast_03MAR20.csv"))
-# SW <- scale(SW, center = TRUE, scale = TRUE)
-# observ_SW <- c(SW[7,],SW[8,])
-#
-# GDD <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/GDD_year_by_week_forecast_03MAR20.csv"))
-# GDD <- scale(GDD, center = TRUE, scale = TRUE)
-# observ_GDD <- c(GDD[7,],GDD[8,])
+###############################READ IN DATA FOR SINGLE COVAR MODELS#####################################
+if (model_name == "wtrtemp_min"){
+  #read in covar data
+  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
+  #read in prior data
+  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
+}
+if (model_name == "wtrtemp_min_lag"){
+  #read in covar data
+  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_lag_Site1.csv"))
+  #read in prior data
+  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_lag_Site2.csv"))
+}
+if (model_name == "wtrtemp_MA7"){
+  #read in covar data
+  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv"))
+  #read in prior data
+  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv"))
+}
+if (model_name == "schmidt_med_diff"){
+  #read in covar data
+  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+  #read in prior data
+  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+}
+if (model_name == "wnd_dir_2day_lag"){
+  #read in covar data
+  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+  #read in prior data
+  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+}
+if (model_name == "GDD" | model_name == "GDD_test"){
+  #read in covar data
+  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv"))
+  #read in prior data
+  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv"))
+}
 
-# N_weeks <- c(1:40)
-# observ <- c(forecast_y[1,],forecast_y[2,])
-# y <- log(as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Midge_year_by_week_totalperL_forecast_05OCT19.csv"))+0.003)
-#
-# Temp <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/Midge_year_by_week_watertemp_min_forecast_05OCT19.csv"))
-# Temp <- scale(Temp, center = TRUE, scale = TRUE)
-# observ_Temp <- c(Temp[7,],Temp[8,])
-#
-# SW <- as.matrix(read_csv("./Datasets/Sunapee/Bayes_Covariates_Data/Midge_year_by_week_SW_forecast_03MAR20.csv"))
-# SW <- scale(SW, center = TRUE, scale = TRUE)
-# observ_SW <- c(SW[7,],SW[8,])
-#
-# GDD <- as.matrix(read_csv("./Datasets/Sunapee/SummarizedData/GDD_year_by_week_forecast_03MAR20.csv"))
-# GDD <- scale(GDD, center = TRUE, scale = TRUE)
-# observ_GDD <- c(GDD[7,],GDD[8,])
-#
-# if(i == 1){
-#   obs_data <- rep(NA,40)
-#   obs_Temp <- rep(NA,40)
-#   obs_SW <- rep(NA,40)
-#   obs_GDD <- rep(NA,40)
-# } else{
-#   obs_data <- rep(NA,40)
-#   obs_data[1:N_weeks[i-1]] <- observ[1:N_weeks[i-1]]
-#
-#   obs_Temp <- rep(NA,40)
-#   obs_Temp[1:N_weeks[i-1]] <- observ_Temp[1:N_weeks[i-1]]
-#
-#   obs_SW <- rep(NA,40)
-#   obs_SW[1:N_weeks[i-1]] <- observ_SW[1:N_weeks[i-1]]
-#
-#   obs_GDD <- rep(NA,40)
-#   obs_GDD[1:N_weeks[i-1]] <- observ_GDD[1:N_weeks[i-1]]
-#
-# }
-#
-# y[7,] <- obs_data[1:20]
-# y[8,] <- obs_data[21:40]
-#
-# Temp[7,] <- obs_Temp[1:20]
-# Temp[8,] <- obs_Temp[21:40]
-#
-# SW[7,] <- obs_SW[1:20]
-# SW[8,] <- obs_SW[21:40]
-#
-# GDD[7,] <- obs_GDD[1:20]
-# GDD[8,] <- obs_GDD[21:40]
-#
-# if(N_weeks[i] %in% c(1:20)){
-#   y <- y[1:7,]
-#   Temp <- Temp[1:7,]
-#   SW <- SW[1:7,]
-#   GDD <- GDD[1:7,]
-#   year_no = as.numeric(as.factor(c(2009:2015)))
-# } else {
-#   y <- y[1:8,]
-#   Temp <- Temp[1:8,]
-#   SW <- SW[1:8,]
-#   GDD <- GDD[1:8,]
-#   year_no = as.numeric(as.factor(c(2009:2016)))
-# }
+###############################WRANGLE DATA FOR SINGLE COVAR MODELS#####################################
 
+#subset covar data depending on year and season_week
+if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7")){
+  if(year == 2015){
 
+    #create covar timeseries
+    covar <- covar0[c(1:7),]
+    covar[7,] <- NA
 
+    #create covar hindcast
+    covar_hindcast <- covar0[c(1:6),]
+    #standardize covar hindcast
+    covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
 
-return(list(year_no = year_no, season_weeks = season_weeks, y = y))
+    #standardize gap-filling dataset
+    prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg = colMeans(prior[c(1:6),], na.rm = TRUE)
+    week_avg[is.na(week_avg)] <- week_avg[19]
+
+    if(season_week %in% c(2:20)){
+      #populate covar timeseries according to season_week
+      covar[7,1:(season_week-1)] <- covar0[7,1:(season_week-1)]}
+
+  } else {
+
+    #create covar timeseries
+    covar <- covar0[c(1:8),]
+    covar[8,] <- NA
+
+    #create covar hindcast
+    covar_hindcast <- covar0[c(1:7),]
+    #standardize covar_hindcast
+    covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+
+    #standardize gap-filling dataset
+    prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg = colMeans(prior[c(1:7),], na.rm = TRUE)
+    week_avg[is.na(week_avg)] <- week_avg[19]
+
+    if(season_week %in% c(2:20)){
+      #populate covar timeseries according to season_week
+      covar[8,1:(season_week-1)] <- covar0[8,1:(season_week-1)]}
+
+  }
+
+  #standardize covar timeseries
+  covar <- (covar - mean(covar, na.rm = TRUE))/sd(covar, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = covar, covar_hindcast = covar_hindcast, week_avg = week_avg))
+
+}
+
+#subset covar data depending on year and season_week
+if(model_name %in% c("schmidt_med_diff","wnd_dir_2day_lag")){
+  if(year == 2015){
+
+    #create covar timeseries
+    covar <- covar0[c(1:7),]
+    covar[7,] <- NA
+
+    #create covar hindcast
+    covar_hindcast <- covar0[c(1:6),]
+    #standardize covar hindcast
+    covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+
+    #standardize gap-filling dataset
+    prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg = colMeans(prior[c(1:6),], na.rm = TRUE)
+
+    if(season_week %in% c(2:20)){
+      #populate covar timeseries according to season_week
+      covar[7,1:(season_week-1)] <- covar0[7,1:(season_week-1)]}
+
+  } else {
+
+    #create covar timeseries
+    covar <- covar0[c(1:8),]
+    covar[8,] <- NA
+
+    #create covar hindcast
+    covar_hindcast <- covar0[c(1:7),]
+    #standardize covar_hindcast
+    covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+
+    #standardize gap-filling dataset
+    prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg = colMeans(prior[c(1:7),], na.rm = TRUE)
+
+    if(season_week %in% c(2:20)){
+      #populate covar timeseries according to season_week
+      covar[8,1:(season_week-1)] <- covar0[8,1:(season_week-1)]}
+
+  }
+
+  #standardize covar timeseries
+  covar <- (covar - mean(covar, na.rm = TRUE))/sd(covar, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = covar, covar_hindcast = covar_hindcast, week_avg = week_avg))
+
+}
+
+#subset covar data depending on year and season_week
+if(model_name %in% c("GDD","GDD_test")){
+  if(year == 2015){
+
+    #create covar timeseries
+    covar <- covar0[c(1:7),]
+    covar[7,] <- NA
+
+    #create covar hindcast
+    covar_hindcast <- covar0[c(1:6),]
+    #standardize within year to account for different start dates in different years
+    covar_hindcast <- apply(covar_hindcast,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+    #transpose
+    covar_hindcast <- t(covar_hindcast)
+    #standardize covar hindcast
+    covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+
+    #standardize within year to account for different start dates in different years
+    prior <- apply(prior,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+    #transpose
+    prior <- t(prior)
+    #standardize gap-filling dataset
+    prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg = colMeans(prior[c(1:6),], na.rm = TRUE)
+    week_avg[is.na(week_avg)] <- week_avg[19]
+
+    if(season_week %in% c(2:20)){
+      #populate covar timeseries according to season_week
+      covar[7,1:(season_week-1)] <- covar0[7,1:(season_week-1)]}
+
+  } else {
+
+    #create covar timeseries
+    covar <- covar0[c(1:8),]
+    covar[8,] <- NA
+
+    #create covar hindcast
+    covar_hindcast <- covar0[c(1:7),]
+    #standardize within year to account for different start dates in different years
+    covar_hindcast <- apply(covar_hindcast,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+    #transpose
+    covar_hindcast <- t(covar_hindcast)
+    #standardize covar_hindcast
+    covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+
+    #standardize within year to account for different start dates in different years
+    prior <- apply(prior,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+    #transpose
+    prior <- t(prior)
+    #standardize gap-filling dataset
+    prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg = colMeans(prior[c(1:7),], na.rm = TRUE)
+    week_avg[is.na(week_avg)] <- week_avg[19]
+
+    if(season_week %in% c(2:20)){
+      #populate covar timeseries according to season_week
+      covar[8,1:(season_week-1)] <- covar0[8,1:(season_week-1)]}
+
+  }
+
+  #standardize within year to account for different start dates in different years
+  covar <- apply(covar,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+  #transpose
+  covar <- t(covar)
+  #standardize covar timeseries
+  covar <- (covar - mean(covar, na.rm = TRUE))/sd(covar, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = covar, covar_hindcast = covar_hindcast, week_avg = week_avg))
+
+}
 
 }

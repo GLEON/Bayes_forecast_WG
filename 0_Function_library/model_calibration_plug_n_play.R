@@ -50,7 +50,7 @@ jags_plug_ins <- function(model_name){
 #Linear_1var
   data.Linear_1var <- list(y=cal_data$y, year_no = cal_data$year_no, season_weeks=cal_data$season_weeks,covar=cal_data$covar, week_avg=cal_data$week_avg, beta.m1=0,  beta.m2=0,beta.m3=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
   variable.names.Linear_1var <- c("tau_proc", "beta1","beta2", "beta3", "tau_obs","tau_C_proc")
-  variable.namesout.Linear_1var <- c("tau_proc", "beta1", "beta2","beta3",  "mu", "tau_obs", "tau_C_proc")
+  variable.namesout.Linear_1var <- c("tau_proc", "beta1", "beta2","beta3",  "mu", "tau_obs", "tau_C_proc","covar")
   init.Linear_1var <- list(list(tau_proc=0.001, tau_obs = 0.1,  tau_C_proc = 0.01, beta1=-0.5, beta2=-0.5, beta3=-0.5), list(tau_proc=0.1,  tau_obs = 1,tau_C_proc = 0.1, beta1=0, beta2=0, beta3=0), list(tau_proc=1, tau_obs = 5,tau_C_proc = 1, beta1=0.5,beta2=0.5, beta3=0.5))
   params.Linear_1var <- c("tau_proc","beta1", "beta2", "beta3","tau_obs","tau_C_proc")
 
