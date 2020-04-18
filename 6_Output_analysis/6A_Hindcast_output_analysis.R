@@ -19,8 +19,7 @@
 
 ##**metrics that are not in log space
 #######################################################################################
-#Note: be sure to transform all ensemble members then calculate the mean
-#when calculating metrics on not-log scale
+
 
 ##################################SET-UP##############################################
 
@@ -94,11 +93,11 @@ for (n in 1:length(forecast_weeks)){
     #1. RMSE of log(totalperL)
     mean_pred_log <- colMeans(vardat)
     RMSE <- rmse(mean_pred_log, obs_log)
-    hoa[i,2] <- RMSE
+    hoa[i,2] <- round(RMSE,2)
 
     #2. predictive variance of log(totalperL)
     pred_var <- mean(varMat[nrow(varMat),])
-    hoa[i,3] <- pred_var
+    hoa[i,3] <- round(pred_var,2)
 
     #3. coverage (% of values falling within 95% predictive interval)
     cov <- coverage(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
@@ -112,31 +111,39 @@ for (n in 1:length(forecast_weeks)){
 
     #5. Mean quantile of observations in distribution of predictions
     mean_quant <- mean_quantile(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[i,6] <- mean_quant
+    hoa[i,6] <- round(mean_quant,2)
 
     #6. Quantile of 2015 max. density in predictive interval
     max_quant <- max_quantile(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[i,7] <- max_quant
+    hoa[i,7] <- round(max_quant,2)
 
     #7. Pearson's r btwn predicted and observed in log space
     corr <- cor(mean_pred_log, c(obs_log[1,],obs_log[2,]), method = "pearson", use = "complete.obs")
-    hoa[i,8] <- corr
+    hoa[i,8] <- round(corr,2)
 
     #8. **Mean diff. in predicted-observed in total per L
     bi <- bias(pred_dist = exp(vardat), obs = c(obs_not_log[1,],obs_not_log[2,]))
-    hoa[i,9] <- bi
+    hoa[i,9] <- round(bi,2)
 
     #9. **Bias in predictions during highest density point in 2015
     max_bi <- max_bias(pred_dist = exp(vardat), obs = c(obs_not_log[1,],obs_not_log[2,]))
-    hoa[i,10] <- max_bi
+    hoa[i,10] <- round(max_bi,2)
 
     #10. **Mean range of 95% predictive interval in total per L
     mr <- mean_range(pred_dist = exp(vardat))
-    hoa[i,11] <- mr
+    hoa[i,11] <- round(mr,2)
+
 }
     #set column names for matrix and write to file
     hoa <- data.frame(hoa)
     colnames(hoa) <- c("model_name","RMSE","pred_var","coverage","peak_timing","mean_quantile",
                        "max_quantile","Pearsons_r","mean_bias","max_bias","mean_range")
-    write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'))),row.names = FALSE)
+    write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
 }
+
+
+###############LOOK AT OUTPUT ANALYSIS#######################################
+wk1 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_1.csv")
+wk2 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_2.csv")
+wk3 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_3.csv")
+wk4 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_4.csv")
