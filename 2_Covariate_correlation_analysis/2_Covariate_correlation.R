@@ -41,9 +41,7 @@ wind_speed_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_
 
 
 # Join all covariate data with gloeo
-
 covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], gdd[,3], swrad[,-1], par[,-1], wind_speed_data[,-1])
-
 
 # Filter for just 2009-2014
 covariates_all_filter <- covariates_all %>%
@@ -168,9 +166,6 @@ spearman_mean <- spearman %>%
 
 # Bind back to original dataset
 bayes_variables_means <- bind_cols(bayes_variables, pearson_mean[,7], spearman_mean[,7])
-
-hist(bayes_variables$global_Pearsons_r)
-hist(bayes_variables$global_Spearmans_r)
 
 bayes_variables_keep <- bayes_variables_means %>%
   filter(abs(global_Spearmans_r)>=0.3 & abs(global_Pearsons_r)>=0.3)

@@ -119,6 +119,19 @@ colnames(med_diff) <- paste("wk", colnames(med_diff), sep = "_")
 
 write.csv(med_diff, "./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv", row.names = FALSE)
 
+#1 week lag in maximum Schmidt stability
+max_lag <- schmidt %>%
+  select(date, schmidt.stability_max_lag) %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(-date) %>%
+  spread(key = season_week, value = schmidt.stability_max_lag) %>%
+  select(-year)
+
+colnames(max_lag) <- paste("wk", colnames(max_lag), sep = "_")
+
+write.csv(max_lag, "./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv", row.names = FALSE)
+
 ############format GDD data
 gdd <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
 gdd2 <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days_SOTF.csv")
@@ -164,4 +177,19 @@ wnd1 <- wnd %>%
 colnames(wnd1) <- paste("wk", colnames(wnd1), sep = "_")
 
 write.csv(wnd1, "./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv", row.names = FALSE)
+
+wnd <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
+
+#min. wind speed with a 3 day lag
+wnd2 <- wnd %>%
+  select(date, AveWindSp_ms_min_3daylag) %>%
+  mutate(season_week = rep(c(1:20),times = 8),
+         year = year(date)) %>%
+  select(-date) %>%
+  spread(key = season_week, value = AveWindSp_ms_min_3daylag) %>%
+  select(-year)
+
+colnames(wnd2) <- paste("wk", colnames(wnd2), sep = "_")
+
+write.csv(wnd2, "./00_Data_files/Bayesian_model_input_data/wnd_sp_mean_3daylag.csv", row.names = FALSE)
 
