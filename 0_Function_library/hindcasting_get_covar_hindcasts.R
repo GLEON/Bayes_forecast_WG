@@ -12,9 +12,15 @@ pacman::p_load(tidyverse)
 get_covar_hindcasts <- function(forecast_type, wk, yrsamp, Nmc, covar_ensemble){
 
   #make vector of columns corresponding to week of hindcast
-  hindcast_wks <- c(wk,wk+1,wk+2,wk+3)
+  if(wk %in% c(1:17)){
+    hindcast_wks <- c(wk,wk+1,wk+2,wk+3)
+    } else if (wk == 18){
+    hindcast_wks <- c(wk,wk+1,wk+2)
+    } else if (wk == 19){
+    hindcast_wks <- c(wk,wk+1)
+    } else {hindcast_wks <- c(wk)}
   #set up output matrices
-  covar <- matrix(NA, Nmc, 4)
+  covar <- matrix(NA, Nmc, length(hindcast_wks))
 
   if(forecast_type %in% c("det","IC","IC.P","IC.P.Pa")){
     for(i in 1:length(hindcast_wks)){

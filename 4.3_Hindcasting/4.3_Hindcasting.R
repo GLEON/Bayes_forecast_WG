@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #make vector of model names for model for-loop
-my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","GDD_test")
+my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")
 
 #set years and weeks for hindcasting for-loop
 yrs <- c(2015,2016)
@@ -21,7 +21,7 @@ wks <- c(1:20)
 
 ########################RUN HINDCASTS##############################################
 
-for (i in 1:length(my_models)){
+for (i in 9:length(my_models)){
 
 #1) Model options => pick model -----------------------------------------------------
 model_name = my_models[i] # options are found in 4.1_JAGS_models

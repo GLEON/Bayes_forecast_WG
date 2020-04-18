@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR")
+model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")
 yrs <- c(2015:2016)
 wks <- c(1:20)
 forecast_weeks <- c(1:4)

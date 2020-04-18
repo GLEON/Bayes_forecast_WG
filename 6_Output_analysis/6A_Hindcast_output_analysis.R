@@ -31,17 +31,17 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR")
+model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")
 forecast_weeks <- c(1:4)
 
 ########################CALCULATE ASSESSMENT METRICS#####################################
 for (n in 1:length(forecast_weeks)){
 
   #read in observed data
-  obs_log <- log(as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))+0.0035)
+  obs_log <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))
   obs_log <- obs_log[7:8,]
 
-  obs_not_log <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))
+  obs_not_log <- exp(as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv")))-0.0035
   obs_not_log <- obs_not_log[7:8,]
 
   #subset observed data according to forecast week

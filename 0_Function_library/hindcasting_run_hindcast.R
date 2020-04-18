@@ -201,7 +201,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         gloeo_prev <- out[,j]
       }}
 
-    if(wk %in% c(18)){
+    if(wk ==18){
       for(j in 1:3){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -216,7 +216,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         gloeo_prev <- out[,j]
       }}
 
-    if(wk %in% c(19)){
+    if(wk ==19){
       for(j in 1:2){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -231,11 +231,11 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         gloeo_prev <- out[,j]
       }}
 
-    if(wk %in% c(20)){
+    if(wk ==20){
       #set initial conditions
       gloeo_prev <- IC
       #covar model
-      covar <- covar_hindcast[,j]
+      covar <- covar_hindcast[,1]
       #process model
       gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar
       proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
@@ -261,7 +261,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         gloeo_prev <- out[,j]
       }}
 
-    if(wk %in% c(18)){
+    if(wk ==18){
       for(j in 1:3){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -276,7 +276,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         gloeo_prev <- out[,j]
       }}
 
-    if(wk %in% c(19)){
+    if(wk ==19){
       for(j in 1:2){
         #set initial conditions
         if(j == 1){gloeo_prev <- IC}
@@ -291,11 +291,11 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         gloeo_prev <- out[,j]
       }}
 
-    if(wk %in% c(20)){
+    if(wk ==20){
       #set initial conditions
       gloeo_prev <- IC
       #covar model
-      covar <- covar_hindcast[,j]
+      covar <- covar_hindcast[,1]
       #process model
       gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar + params$beta4*covar^2
       proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
@@ -317,7 +317,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
       }}
 
-    if(wk %in% c(18)){
+    if(wk ==18){
       for(j in 1:3){
         #covar model
         covar <- covar_hindcast[,j]
@@ -328,7 +328,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
       }}
 
-    if(wk %in% c(19)){
+    if(wk ==19){
       for(j in 1:2){
         #covar model
         covar <- covar_hindcast[,j]
@@ -339,14 +339,14 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
         out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
       }}
 
-    if(wk %in% c(20)){
+    if(wk ==20){
       #covar model
-      covar <- covar_hindcast[,j]
+      covar <- covar_hindcast[,1]
       #process model
       gloeo_temp = params$beta1 + params$beta2*covar + params$beta3*covar^2
-      proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+      proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
       #data model
-      out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+      out[,1] = rnorm(Nmc,proc.model[,1],params$sd_obs)
     }
   }
 
