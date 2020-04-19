@@ -1,4 +1,4 @@
-# Title: 6A_Hindcast_output_analysis
+# Title: 6A_Hindcast_output_analysis_w_obs (observation error)
 # History:
 # State-space model diagnostics - revised by S. LaDeau (11/2017) from the
 # EcoForecast Activity by Michael Dietze, with reference to
@@ -68,13 +68,9 @@ for (n in 1:length(forecast_weeks)){
     source('0_Function_library/output_analysis_assessment_metrics.R')
 
     #read in appropriate hindcast summary files
-    if(model_names[i] %in% c("RW","RW_obs")){
-      vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P_',forecast_weeks[n],'.csv')))))}
-    else if(model_names[i] == "AR"){
-      vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P.Pa_',forecast_weeks[n],'.csv')))))}
-    else{vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P.Pa.D_',forecast_weeks[n],'.csv')))))}
+    vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.w_obs_',forecast_weeks[n],'.csv')))))
 
-    varMat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_varMat_',forecast_weeks[n],'.csv')))))
+    varMat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_varMat.w_obs',forecast_weeks[n],'.csv')))))
 
     #subset vardat and varMat according to forecast week
     if(forecast_weeks[n] == 4){
@@ -138,13 +134,13 @@ for (n in 1:length(forecast_weeks)){
     hoa <- data.frame(hoa)
     colnames(hoa) <- c("model_name","RMSE","pred_var","coverage","peak_timing","mean_quantile",
                        "max_quantile","Pearsons_r","mean_bias","max_bias","mean_range")
-    write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
+    write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_w_obs_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
 }
 
 
 ###############LOOK AT OUTPUT ANALYSIS#######################################
-wk1 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_1.csv")
-wk2 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_2.csv")
-wk3 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_3.csv")
-wk4 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_4.csv")
+wk1 <- read_csv("./6_Output_analysis/hindcast_output_analysis_w_obs_wk_1.csv")
+wk2 <- read_csv("./6_Output_analysis/hindcast_output_analysis_w_obs_wk_2.csv")
+wk3 <- read_csv("./6_Output_analysis/hindcast_output_analysis_w_obs_wk_3.csv")
+wk4 <- read_csv("./6_Output_analysis/hindcast_output_analysis_w_obs_wk_4.csv")
 
