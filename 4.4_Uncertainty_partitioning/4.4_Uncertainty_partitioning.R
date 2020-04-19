@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")
+model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
 yrs <- c(2015:2016)
 wks <- c(1:20)
 forecast_weeks <- c(1:4)
@@ -23,7 +23,7 @@ N_weeks[2,] <- c(21:40)
 
 ###########################UNCERTAINTY PARTITIONING###################################
 
-for (i in 1:length(model_names)){
+for (i in 11:length(model_names)){
 
   for (n in 1:length(forecast_weeks)){
 
