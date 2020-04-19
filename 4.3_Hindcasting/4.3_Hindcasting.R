@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #make vector of model names for model for-loop
-my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")
+my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
 
 #set years and weeks for hindcasting for-loop
 yrs <- c(2015,2016)
@@ -21,7 +21,7 @@ wks <- c(1:20)
 
 ########################RUN HINDCASTS##############################################
 
-for (i in 9:length(my_models)){
+for (i in 12:length(my_models)){
 
 #1) Model options => pick model -----------------------------------------------------
 model_name = my_models[i] # options are found in 4.1_JAGS_models
@@ -94,12 +94,29 @@ prow = sample.int(nrow(out),Nmc,replace=TRUE)
   }
 
 ###gap-fill missing covariate values using latent states from calibrated model
+if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")){
 covar_ls <- out[,grep("covar", colnames(out))]
 missing <- which(is.na(hindcast_data$covar_hindcast))
 
 for (m in 1:length(missing)){
   hindcast_data$covar_hindcast[missing[m]] <- mean(covar_ls[,missing[m]],na.rm = TRUE)
+  }
 }
+if(model_name %in% c("schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")){
+  covar_ls1 <- out[,grep("covar1", colnames(out))]
+  missing1 <- which(is.na(hindcast_data$covar1_hindcast))
+
+  covar_ls2 <- out[,grep("covar2", colnames(out))]
+  missing2 <- which(is.na(hindcast_data$covar2_hindcast))
+
+  for (m in 1:length(missing1)){
+    hindcast_data$covar1_hindcast[missing1[m]] <- mean(covar_ls1[,missing1[m]],na.rm = TRUE)
+  }
+  for (m in 1:length(missing2)){
+    hindcast_data$covar2_hindcast[missing2[m]] <- mean(covar_ls2[,missing2[m]],na.rm = TRUE)
+  }
+}
+
 
 #set up sampling of covariate hindcasting ensemble for models with covariates
 if(!model_name %in% c("RW","RW_obs","AR")){
@@ -119,12 +136,20 @@ params.det <- get_params(model_name = model_name,
 #get hindcasted covariates
 if(model_name %in% c("RW","RW_obs","AR")){
   covar.hindcast.det <- NA
-} else {
-  covar.hindcast.det <- get_covar_hindcasts(forecast_type = "det",
+} else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")) {
+  covar.hindcast.det <- get_covar_hindcasts(model_name = model_name,
+                                            forecast_type = "det",
                                            wk = wks[k],
                                            yrsamp = yrsamp,
                                            Nmc = 1,
-                                           covar_ensemble = hindcast_data$covar_hindcast)
+                                           covar_ensemble = list(covar = hindcast_data$covar_hindcast))
+} else {
+  covar.hindcast.det <- get_covar_hindcasts(model_name = model_name,
+                                            forecast_type = "det",
+                                            wk = wks[k],
+                                            yrsamp = yrsamp,
+                                            Nmc = 1,
+                                            covar_ensemble = list(covar1 = hindcast_data$covar1_hindcast, covar2 = hindcast_data$covar2_hindcast))
 }
 
 #run deterministic hindcast
@@ -150,12 +175,20 @@ params.IC <- get_params(model_name = model_name,
 #get hindcasted covariates
 if(model_name %in% c("RW","RW_obs","AR")){
   covar.hindcast.IC <- NA
+} else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")) {
+  covar.hindcast.IC <- get_covar_hindcasts(model_name = model_name,
+                                           forecast_type = "IC",
+                                            wk = wks[k],
+                                            yrsamp = yrsamp,
+                                            Nmc = 1,
+                                            covar_ensemble = list(covar = hindcast_data$covar_hindcast))
 } else {
-  covar.hindcast.IC <- get_covar_hindcasts(forecast_type = "IC",
-                                             wk = wks[k],
-                                             yrsamp = yrsamp,
-                                             Nmc = 1,
-                                             covar_ensemble = hindcast_data$covar_hindcast)
+  covar.hindcast.IC <- get_covar_hindcasts(model_name = model_name,
+                                           forecast_type = "IC",
+                                            wk = wks[k],
+                                            yrsamp = yrsamp,
+                                            Nmc = 1,
+                                            covar_ensemble = list(covar1 = hindcast_data$covar1_hindcast, covar2 = hindcast_data$covar2_hindcast))
 }
 
 #run hindcast
@@ -181,14 +214,21 @@ params.IC.P <- get_params(model_name = model_name,
 #get hindcasted covariates
 if(model_name %in% c("RW","RW_obs","AR")){
   covar.hindcast.IC.P <- NA
+} else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")) {
+  covar.hindcast.IC.P <- get_covar_hindcasts(model_name = model_name,
+                                             forecast_type = "IC.P",
+                                            wk = wks[k],
+                                            yrsamp = yrsamp,
+                                            Nmc = 1,
+                                            covar_ensemble = list(covar = hindcast_data$covar_hindcast))
 } else {
-  covar.hindcast.IC.P <- get_covar_hindcasts(forecast_type = "IC.P",
-                                                wk = wks[k],
-                                                yrsamp = yrsamp,
-                                                Nmc = 1,
-                                                covar_ensemble = hindcast_data$covar_hindcast)
+  covar.hindcast.IC.P <- get_covar_hindcasts(model_name = model_name,
+                                             forecast_type = "IC.P",
+                                            wk = wks[k],
+                                            yrsamp = yrsamp,
+                                            Nmc = 1,
+                                            covar_ensemble = list(covar1 = hindcast_data$covar1_hindcast, covar2 = hindcast_data$covar2_hindcast))
 }
-
 #run hindcast
 hindcast.IC.P <- run_hindcast(model_name = model_name,
                             params = params.IC.P, #list of params necessary to run that model
@@ -213,12 +253,20 @@ if(!model_name %in% c("RW","RW_obs")){
   #get hindcasted covariates
   if(model_name %in% c("RW","RW_obs","AR")){
     covar.hindcast.IC.P.Pa <- NA
+  } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")) {
+    covar.hindcast.IC.P.Pa <- get_covar_hindcasts(model_name = model_name,
+                                                  forecast_type = "IC.P.Pa",
+                                              wk = wks[k],
+                                              yrsamp = yrsamp,
+                                              Nmc = 1,
+                                              covar_ensemble = list(covar = hindcast_data$covar_hindcast))
   } else {
-    covar.hindcast.IC.P.Pa <- get_covar_hindcasts(forecast_type = "IC.P.Pa",
-                                                  wk = wks[k],
-                                                  yrsamp = yrsamp,
-                                                  Nmc = 1,
-                                                  covar_ensemble = hindcast_data$covar_hindcast)
+    covar.hindcast.IC.P.Pa <- get_covar_hindcasts(model_name = model_name,
+                                                  forecast_type = "IC.P.Pa",
+                                              wk = wks[k],
+                                              yrsamp = yrsamp,
+                                              Nmc = 1,
+                                              covar_ensemble = list(covar1 = hindcast_data$covar1_hindcast, covar2 = hindcast_data$covar2_hindcast))
   }
 
   #run hindcast
@@ -245,12 +293,21 @@ if(!model_name %in% c("RW","RW_obs","AR")){
                                num_draws = prow)
 
   #get hindcasted covariates
-  covar.hindcast.IC.P.Pa.D <- get_covar_hindcasts(forecast_type = "IC.P.Pa.D",
-                                                wk = wks[k],
-                                                yrsamp = yrsamp,
-                                                Nmc = Nmc,
-                                                covar_ensemble = hindcast_data$covar_hindcast)
-
+  if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")) {
+    covar.hindcast.IC.P.Pa.D <- get_covar_hindcasts(model_name = model_name,
+                                                    forecast_type = "IC.P.Pa.D",
+                                                  wk = wks[k],
+                                                  yrsamp = yrsamp,
+                                                  Nmc = Nmc,
+                                                  covar_ensemble = list(covar = hindcast_data$covar_hindcast))
+  } else {
+    covar.hindcast.IC.P.Pa.D <- get_covar_hindcasts(model_name = model_name,
+                                                    forecast_type = "IC.P.Pa.D",
+                                                  wk = wks[k],
+                                                  yrsamp = yrsamp,
+                                                  Nmc = Nmc,
+                                                  covar_ensemble = list(covar1 = hindcast_data$covar1_hindcast, covar2 = hindcast_data$covar2_hindcast))
+  }
   #run hindcast
   hindcast.IC.P.Pa.D <- run_hindcast(model_name = model_name,
                                    params = params.IC.P.Pa.D, #list of params necessary to run that model
@@ -275,12 +332,20 @@ params.w_obs <- get_params(model_name = model_name,
 #get hindcasted covariates
 if(model_name %in% c("RW","RW_obs","AR")){
   covar.hindcast.w_obs <- NA
-} else {
-  covar.hindcast.w_obs <- get_covar_hindcasts(forecast_type = "w_obs",
+} else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test")) {
+  covar.hindcast.w_obs <- get_covar_hindcasts(model_name = model_name,
+                                              forecast_type = "w_obs",
                                                 wk = wks[k],
                                                 yrsamp = yrsamp,
                                                 Nmc = Nmc,
-                                                covar_ensemble = hindcast_data$covar_hindcast)
+                                                covar_ensemble = list(covar = hindcast_data$covar_hindcast))
+} else {
+  covar.hindcast.w_obs <- get_covar_hindcasts(model_name = model_name,
+                                              forecast_type = "w_obs",
+                                                wk = wks[k],
+                                                yrsamp = yrsamp,
+                                                Nmc = Nmc,
+                                                covar_ensemble = list(covar1 = hindcast_data$covar1_hindcast, covar2 = hindcast_data$covar2_hindcast))
 }
 
 #run hindcast

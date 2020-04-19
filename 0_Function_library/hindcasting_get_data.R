@@ -80,6 +80,40 @@ if (model_name == "GDD" | model_name == "GDD_test"){
   #read in prior data
   prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv"))
 }
+if (model_name == "schmidt_and_wnd"){
+  #read in covar1 data
+  covar01 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+  #read in prior1 data
+  prior1 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+
+  #read in covar2 data
+  covar02 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+  #read in prior2 data
+  prior2 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+
+}
+if (model_name == "schmidt_diff_and_max"){
+  #read in covar1 data
+  covar01 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+  #read in prior1 data
+  prior1 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+
+  #read in covar2 data
+  covar02 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv"))
+  #read in prior2 data
+  prior2 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv"))
+}
+if (model_name == "wnd_dir_and_speed"){
+  #read in covar1 data
+  covar01 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+  #read in prior1 data
+  prior1 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+
+  #read in covar2 data
+  covar02 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_sp_mean_3daylag.csv"))
+  #read in prior2 data
+  prior2 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_sp_mean_3daylag.csv"))
+}
 
 ###############################WRANGLE DATA FOR SINGLE COVAR MODELS#####################################
 
@@ -257,6 +291,94 @@ if(model_name %in% c("GDD","GDD_test")){
   covar <- (covar - mean(covar, na.rm = TRUE))/sd(covar, na.rm = TRUE)
 
   return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = covar, covar_hindcast = covar_hindcast, week_avg = week_avg))
+
+}
+
+#subset covar data depending on year and season_week
+if(model_name %in% c("schmidt_and_wnd","wnd_dir_and_speed","schmidt_diff_and_max")){
+  if(year == 2015){
+
+    #create covar1 timeseries
+    covar1 <- covar01[c(1:7),]
+    covar1[7,] <- NA
+
+    #create covar1 hindcast
+    covar1_hindcast <- covar01[c(1:6),]
+    #standardize covar hindcast
+    covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+
+    #standardize covar1 gap-filling dataset
+    prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg1 = colMeans(prior1[c(1:6),], na.rm = TRUE)
+
+    if(season_week %in% c(2:20)){
+      #populate covar1 timeseries according to season_week
+      covar1[7,1:(season_week-1)] <- covar01[7,1:(season_week-1)]}
+
+    #create covar2 timeseries
+    covar2 <- covar02[c(1:7),]
+    covar2[7,] <- NA
+
+    #create covar1 hindcast
+    covar2_hindcast <- covar02[c(1:6),]
+    #standardize covar hindcast
+    covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+
+    #standardize covar1 gap-filling dataset
+    prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg2 = colMeans(prior2[c(1:6),], na.rm = TRUE)
+
+    if(season_week %in% c(2:20)){
+      #populate covar1 timeseries according to season_week
+      covar2[7,1:(season_week-1)] <- covar02[7,1:(season_week-1)]}
+
+  } else {
+
+    #create covar1 timeseries
+    covar1 <- covar01[c(1:8),]
+    covar1[8,] <- NA
+
+    #create covar1 hindcast
+    covar1_hindcast <- covar01[c(1:7),]
+    #standardize covar_hindcast
+    covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+
+    #standardize covar1 gap-filling dataset
+    prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg1 = colMeans(prior1[c(1:7),], na.rm = TRUE)
+
+    if(season_week %in% c(2:20)){
+      #populate covar1 timeseries according to season_week
+      covar1[8,1:(season_week-1)] <- covar01[8,1:(season_week-1)]}
+
+    #create covar2 timeseries
+    covar2 <- covar02[c(1:8),]
+    covar2[8,] <- NA
+
+    #create covar2 hindcast
+    covar2_hindcast <- covar02[c(1:7),]
+    #standardize covar2_hindcast
+    covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+
+    #standardize covar2 gap-filling dataset
+    prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
+    #create gap-filling weekly avg
+    week_avg2 = colMeans(prior2[c(1:7),], na.rm = TRUE)
+
+    if(season_week %in% c(2:20)){
+      #populate covar2 timeseries according to season_week
+      covar2[8,1:(season_week-1)] <- covar02[8,1:(season_week-1)]}
+
+  }
+
+  #standardize covar timeseries
+  covar1 <- (covar1 - mean(covar1, na.rm = TRUE))/sd(covar1, na.rm = TRUE)
+  covar2 <- (covar2 - mean(covar2, na.rm = TRUE))/sd(covar2, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = covar1, covar2 = covar2, covar1_hindcast = covar1_hindcast, covar2_hindcast = covar2_hindcast, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
 }
 

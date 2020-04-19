@@ -9,7 +9,15 @@
 pacman::p_load(tidyverse)
 
 #function
-get_covar_hindcasts <- function(forecast_type, wk, yrsamp, Nmc, covar_ensemble){
+get_covar_hindcasts <- function(model_name, forecast_type, wk, yrsamp, Nmc, covar_ensemble){
+
+  #assign same model name for models with the same structure
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")){
+    model_type <- "1var"
+  }
+  if(model_name %in% c("schmidt_diff_and_max","wnd_dir_and_speed","schmidt_and_wnd")){
+    model_type <- "2var"
+  }
 
   #make vector of columns corresponding to week of hindcast
   if(wk %in% c(1:17)){
@@ -19,22 +27,47 @@ get_covar_hindcasts <- function(forecast_type, wk, yrsamp, Nmc, covar_ensemble){
     } else if (wk == 19){
     hindcast_wks <- c(wk,wk+1)
     } else {hindcast_wks <- c(wk)}
+
+  if(model_type == "1var"){
   #set up output matrices
   covar <- matrix(NA, Nmc, length(hindcast_wks))
 
   if(forecast_type %in% c("det","IC","IC.P","IC.P.Pa")){
     for(i in 1:length(hindcast_wks)){
-    covar[,i] <- mean(covar_ensemble[yrsamp,hindcast_wks[i]], na.rm = TRUE)
+    covar[,i] <- mean(covar_ensemble$covar[yrsamp,hindcast_wks[i]], na.rm = TRUE)
 
     }
   } else {
     for(i in 1:length(hindcast_wks)){
-      covar[,i] <- covar_ensemble[yrsamp,hindcast_wks[i]]
+      covar[,i] <- covar_ensemble$covar[yrsamp,hindcast_wks[i]]
 
+      }
     }
+
+  return(list(covar = covar))
+
   }
 
-  return(covar)
+  if(model_type == "2var"){
+    #set up output matrices
+    covar1 <- matrix(NA, Nmc, length(hindcast_wks))
+    covar2 <- matrix(NA, Nmc, length(hindcast_wks))
+
+    if(forecast_type %in% c("det","IC","IC.P","IC.P.Pa")){
+      for(i in 1:length(hindcast_wks)){
+        covar1[,i] <- mean(covar_ensemble$covar1[yrsamp,hindcast_wks[i]], na.rm = TRUE)
+        covar2[,i] <- mean(covar_ensemble$covar2[yrsamp,hindcast_wks[i]], na.rm = TRUE)
+      }
+    } else {
+      for(i in 1:length(hindcast_wks)){
+        covar1[,i] <- covar_ensemble$covar1[yrsamp,hindcast_wks[i]]
+        covar2[,i] <- covar_ensemble$covar2[yrsamp,hindcast_wks[i]]
+      }
+    }
+
+    return(list(covar1 = covar1, covar2 = covar2))
+  }
+
 }
 
 
