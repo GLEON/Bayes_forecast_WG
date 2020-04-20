@@ -32,7 +32,7 @@ get_covar_hindcasts <- function(model_name, forecast_type, wk, yrsamp, Nmc, cova
   #set up output matrices
   covar <- matrix(NA, Nmc, length(hindcast_wks))
 
-  if(forecast_type %in% c("det","IC","IC.P","IC.P.Pa")){
+  if(forecast_type %in% c("det","IC","IC.Pa")){
     for(i in 1:length(hindcast_wks)){
     covar[,i] <- mean(covar_ensemble$covar[yrsamp,hindcast_wks[i]], na.rm = TRUE)
 
@@ -53,7 +53,7 @@ get_covar_hindcasts <- function(model_name, forecast_type, wk, yrsamp, Nmc, cova
     covar1 <- matrix(NA, Nmc, length(hindcast_wks))
     covar2 <- matrix(NA, Nmc, length(hindcast_wks))
 
-    if(forecast_type %in% c("det","IC","IC.P","IC.P.Pa")){
+    if(forecast_type %in% c("det","IC","IC.Pa")){
       for(i in 1:length(hindcast_wks)){
         covar1[,i] <- mean(covar_ensemble$covar1[yrsamp,hindcast_wks[i]], na.rm = TRUE)
         covar2[,i] <- mean(covar_ensemble$covar2[yrsamp,hindcast_wks[i]], na.rm = TRUE)
