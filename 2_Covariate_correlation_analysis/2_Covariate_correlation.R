@@ -41,9 +41,7 @@ wind_speed_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_
 
 
 # Join all covariate data with gloeo
-
 covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], gdd[,3], swrad[,-1], par[,-1], wind_speed_data[,-1])
-
 
 # Filter for just 2009-2014
 covariates_all_filter <- covariates_all %>%
@@ -169,12 +167,8 @@ spearman_mean <- spearman %>%
 # Bind back to original dataset
 bayes_variables_means <- bind_cols(bayes_variables, pearson_mean[,7], spearman_mean[,7])
 
-hist(bayes_variables$global_Pearsons_r)
-hist(bayes_variables$global_Spearmans_r)
-
 bayes_variables_keep <- bayes_variables_means %>%
-  filter(abs(global_Spearmans_r)>=0.3 & abs(global_Pearsons_r)>=0.3) %>%
-  select(1:5,30:31)
+  filter(abs(global_Spearmans_r)>=0.3 & abs(global_Pearsons_r)>=0.3)
 
 bayes_variables_keep2 <- bayes_variables_means %>%
   filter(abs(Pearson_2009_2014_mean)>=0.3 & abs(Spearman_2009_2014_mean)>=0.3) %>%
@@ -190,6 +184,7 @@ bayes_variables_keep2 <- bayes_variables_means %>%
 #JB thoughts using global Pearsons & Spearmans for wind data:
 #6. AveWindDir_cove_mean_2daylag - positive relationship with wind direction indicator variable
 #7. AveWindSp_ms_min_3daylag_in - wind blowing in positive relationship, wind speed in less missing data than out (negative relationship)
+#MEL: 44 seems like a lot of missing data too? going with #6 if that's ok...
 # **Ignore windsp_cumsum_2day_in - too much missing data
 
 # Missing data

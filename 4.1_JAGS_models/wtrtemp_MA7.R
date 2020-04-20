@@ -7,6 +7,9 @@ model{
     #run this on logged data
     y[k,j] ~ dnorm(mu[k,j],tau_obs)
 
+    #gap-filling model for covariate
+    covar[k,j]~dnorm(week_avg[j],tau_C_proc)
+
   }
 
   #### Process Model
@@ -17,8 +20,6 @@ model{
     mu[k,j]~dnorm(lambda[k,j],tau_proc)
     lambda[k,j] <- beta1  + beta2*mu[k,j-1] + beta3*covar[k,j]
 
-    #gap-filling model for covariate
-    covar[k,j]~dnorm(week_avg[j],tau_C_proc)
 
   }
 
