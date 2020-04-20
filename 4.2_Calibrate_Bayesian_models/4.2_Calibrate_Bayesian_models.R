@@ -57,18 +57,24 @@ jags.out <- run.jags(model = model,
                      data = jags_plug_ins$data.model,
                      adapt =  5000,
                      burnin =  10000,
-                     sample = 100000,
+                     sample = 50000,
                      n.chains = 3,
                      inits=jags_plug_ins$init.model,
                      monitor = jags_plug_ins$variable.namesout.model)
 
 #convert to an MCMC list to calculate cross-correlation later
 jags.out.mcmc <- as.mcmc.list(jags.out)
-out <- as.matrix(jags.out.mcmc)
-mus <- out[,grep("mu//",colnames(out))]
 
 
 #6) Save output for calibration assessment
+
+#save predicted states
+Nmc = 10000
+out <- as.matrix(jags.out.mcmc)
+srow <- sample.int(nrow(out),Nmc,replace=TRUE)
+mus <- out[srow,grep("mu",colnames(out))]
+write.csv(mus,file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_predicted_states.csv')),row.names = FALSE)
+
 
 #plot parameters
 plot_parameters(params = jags_plug_ins$params.model,
