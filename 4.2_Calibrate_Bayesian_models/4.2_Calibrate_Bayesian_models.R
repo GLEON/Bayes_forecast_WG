@@ -22,7 +22,7 @@ length(my_models)
 
 ########################CALIBRATE MODELS##############################################
 
-for (i in 11:length(my_models)){
+for (i in 1:length(my_models)){
 
 #1) Source helper functions ---------------------------------------------------------
   source('0_Function_library/model_calibration_plug_n_play.R')
@@ -64,9 +64,11 @@ jags.out <- run.jags(model = model,
 
 #convert to an MCMC list to calculate cross-correlation later
 jags.out.mcmc <- as.mcmc.list(jags.out)
+out <- as.matrix(jags.out.mcmc)
+mus <- out[,grep("mu//",colnames(out))]
 
 
-#6) Assess calibration
+#6) Save output for calibration assessment
 
 #plot parameters
 plot_parameters(params = jags_plug_ins$params.model,

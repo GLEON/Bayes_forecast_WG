@@ -59,50 +59,121 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
 
   }
 
-  ##PROCESS UNCERTAINTY
-  if(forecast_type == "IC.P"){
-
-    if(model_type == "RW" | model_type == "RW_obs"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]))
-    }
-
-    if(model_type == "AR"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
-                     beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE))
-    }
-
-    if(model_type == "Linear_1var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
-                     beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
-                     sd_C = 0)
-    }
-
-    if(model_type == "Quad_1var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
-                     beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),beta4 = mean(posteriors[,grep("beta4",colnames(posteriors))],na.rm = TRUE),
-                     sd_C = 0)
-    }
-
-    if(model_type == "Quad_1var_test"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
-                     beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
-                     sd_C = 0)
-    }
-
-    if(model_type == "Linear_2var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
-                     beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
-                     beta4 = mean(posteriors[,grep("beta4",colnames(posteriors))],na.rm = TRUE), sd_C1 = 0, sd_C2 = 0)
-    }
-
-  }
+  # ##PROCESS UNCERTAINTY
+  # if(forecast_type == "IC.P"){
+  #
+  #
+  #   if(model_type == "AR"){
+  #     params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
+  #                    beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE))
+  #   }
+  #
+  #   if(model_type == "Linear_1var"){
+  #     params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
+  #                    beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
+  #                    sd_C = 0)
+  #   }
+  #
+  #   if(model_type == "Quad_1var"){
+  #     params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
+  #                    beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),beta4 = mean(posteriors[,grep("beta4",colnames(posteriors))],na.rm = TRUE),
+  #                    sd_C = 0)
+  #   }
+  #
+  #   if(model_type == "Quad_1var_test"){
+  #     params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
+  #                    beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
+  #                    sd_C = 0)
+  #   }
+  #
+  #   if(model_type == "Linear_2var"){
+  #     params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
+  #                    beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
+  #                    beta4 = mean(posteriors[,grep("beta4",colnames(posteriors))],na.rm = TRUE), sd_C1 = 0, sd_C2 = 0)
+  #   }
+  #
+  # }
 
   ##PARAMETER UNCERTAINTY
-  if(forecast_type == "IC.P.Pa"){
+  if(forecast_type == "IC.Pa"){
 
     if(model_type == "RW" | model_type == "RW_obs"){
       params <- NULL
       print("This type of uncertainty is invalid for model_type.")
+    }
+
+    if(model_type == "AR"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"])
+    }
+
+    if(model_type == "Linear_1var"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
+                     sd_C = 0)
+    }
+
+    if(model_type == "Quad_1var"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
+                     sd_C = 0)
+    }
+
+    if(model_type == "Quad_1var_test"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
+                     sd_C = 0)
+    }
+
+    if(model_type == "Linear_2var"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
+                     sd_C1 = 0, sd_C2 = 0)
+    }
+
+  }
+
+  ##DRIVER UNCERTAINTY
+  if(forecast_type == "IC.Pa.D"){
+
+    if(model_type == "RW" | model_type == "RW_obs" | model_type == "AR"){
+      params <- NULL
+      print("This type of uncertainty is invalid for model_type.")
+    }
+
+    if(model_type == "Linear_1var"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
+                     sd_C = 1/sqrt(posteriors[num_draws,"tau_C_proc"]))
+    }
+
+    if(model_type == "Quad_1var"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],beta4 = posteriors[num_draws,"beta4"],
+                     sd_C = 1/sqrt(posteriors[num_draws,"tau_C_proc"]))
+    }
+
+    if(model_type == "Quad_1var_test"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
+                     sd_C = 1/sqrt(posteriors[num_draws,"tau_C_proc"]))
+    }
+
+    if(model_type == "Linear_2var"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
+                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
+    }
+
+  }
+
+  ##PROCESS UNCERTAINTY
+  if(forecast_type == "IC.P" | forecast_type == "IC.Pa.P" | forecast_type == "IC.Pa.D.P"){
+
+    if(model_type == "RW" | model_type == "RW_obs"){
+      if(model_type == "RW" | model_type == "RW_obs"){
+        params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]))
+      }
     }
 
     if(model_type == "AR"){
@@ -111,59 +182,25 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
     }
 
     if(model_type == "Linear_1var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
-                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
-                     sd_C = 0)
-    }
-
-    if(model_type == "Quad_1var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
-                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
-                     sd_C = 0)
-    }
-
-    if(model_type == "Quad_1var_test"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
-                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
-                     sd_C = 0)
-    }
-
-    if(model_type == "Linear_2var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
-                     beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
-                     sd_C1 = 0, sd_C2 = 0)
-    }
-
-  }
-
-  ##DRIVER UNCERTAINTY
-  if(forecast_type == "IC.P.Pa.D"){
-
-    if(model_type == "RW" | model_type == "RW_obs" | model_type == "AR"){
-      params <- NULL
-      print("This type of uncertainty is invalid for model_type.")
-    }
-
-    if(model_type == "Linear_1var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
                      sd_C = 1/sqrt(posteriors[num_draws,"tau_C_proc"]))
     }
 
     if(model_type == "Quad_1var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],beta4 = posteriors[num_draws,"beta4"],
                      sd_C = 1/sqrt(posteriors[num_draws,"tau_C_proc"]))
     }
 
     if(model_type == "Quad_1var_test"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"],
                      sd_C = 1/sqrt(posteriors[num_draws,"tau_C_proc"]))
     }
 
     if(model_type == "Linear_2var"){
-      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
                      sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
     }
@@ -171,7 +208,7 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
   }
 
   ##OBSERVATION UNCERTAINTY
-  if(forecast_type == "w_obs"){
+  if(forecast_type == "IC.P.O" | forecast_type == "IC.Pa.P.O" | forecast_type == "IC.Pa.D.P.O"){
 
     if(model_type == "RW" | model_type == "RW_obs"){
       params <- list(sd_obs = 1/sqrt(posteriors[num_draws,"tau_obs"]), sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]))

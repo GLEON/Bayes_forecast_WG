@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #make vector of model names for model for-loop
-my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","GDD_test","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
+my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
 
 #set years and weeks for hindcasting for-loop
 yrs <- c(2015,2016)
@@ -21,7 +21,7 @@ wks <- c(1:20)
 
 ########################RUN HINDCASTS##############################################
 
-for (i in 12:length(my_models)){
+for (i in 1:length(my_models)){
 
 #1) Model options => pick model -----------------------------------------------------
 model_name = my_models[i] # options are found in 4.1_JAGS_models
@@ -61,7 +61,7 @@ jags.out <- run.jags(model = model,
                      data = jags_plug_ins$data.model,
                      adapt =  5000,
                      burnin =  10000,
-                     sample = 100000,
+                     sample = 50000,
                      n.chains = 3,
                      inits=jags_plug_ins$init.model,
                      monitor = jags_plug_ins$variable.namesout.model)
@@ -73,7 +73,7 @@ out <- as.matrix(jags.out.mcmc)
 #5) Set up initial conditions for hindcasts
 
 #set up number of draws for initial condition distributions at beginning of season
-Nmc = 5000
+Nmc = 10000
 
 #sample rows from the re-calibrated model output for initial conditions during season
 prow = sample.int(nrow(out),Nmc,replace=TRUE)
