@@ -1,4 +1,4 @@
-# Title: 6A_Hindcast_output_analysis
+# Title: 6A_Hindcast_output_analysis_w_obs (observation error)
 # History:
 # State-space model diagnostics - revised by S. LaDeau (11/2017) from the
 # EcoForecast Activity by Michael Dietze, with reference to
@@ -30,7 +30,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
+model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed","schmidt_max_lag","precip")
 forecast_weeks <- c(1:4)
 
 ########################CALCULATE ASSESSMENT METRICS#####################################
@@ -68,26 +68,17 @@ for (n in 1:length(forecast_weeks)){
     source('0_Function_library/output_analysis_assessment_metrics.R')
 
     #read in appropriate hindcast summary files
-    if(model_names[i] %in% c("RW","RW_obs")){
-      vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P_',forecast_weeks[n],'.csv')))))}
-    else if(model_names[i] == "AR"){
-      vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P.Pa_',forecast_weeks[n],'.csv')))))}
-    else{vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P.Pa.D_',forecast_weeks[n],'.csv')))))}
-
-    varMat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_varMat_',forecast_weeks[n],'.csv')))))
+    vardat <- as.matrix(read_csv(file=file.path(paste("./6_Output_analysis/6.1_Predictive_intervals/",paste0(model_names[i],'_PI_',forecast_weeks[n],'.csv')))))
 
     #subset vardat and varMat according to forecast week
     if(forecast_weeks[n] == 4){
       vardat <- vardat[,c(1:17,21:37)]
-      varMat <- varMat[,c(1:17,21:37)]
     }
     if(forecast_weeks[n] == 3){
       vardat <- vardat[,c(1:18,21:38)]
-      varMat <- varMat[,c(1:18,21:38)]
     }
     if(forecast_weeks[n] == 2){
       vardat <- vardat[,c(1:19,21:39)]
-      varMat <- varMat[,c(1:19,21:39)]
     }
 
     #1. RMSE of log(totalperL)
@@ -96,7 +87,7 @@ for (n in 1:length(forecast_weeks)){
     hoa[i,2] <- round(RMSE,2)
 
     #2. predictive variance of log(totalperL)
-    pred_var <- mean(varMat[nrow(varMat),])
+    pred_var <- mean(apply(vardat,2,var))
     hoa[i,3] <- round(pred_var,2)
 
     #3. coverage (% of values falling within 95% predictive interval)
