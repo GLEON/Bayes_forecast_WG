@@ -12,10 +12,10 @@ pacman::p_load(tidyverse)
 get_covar_hindcasts <- function(model_name, forecast_type, wk, yrsamp, Nmc, covar_ensemble){
 
   #assign same model name for models with the same structure
-  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")){
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test","schmidt_max_lag","precip")){
     model_type <- "1var"
   }
-  if(model_name %in% c("schmidt_diff_and_max","wnd_dir_and_speed","schmidt_and_wnd")){
+  if(model_name %in% c("schmidt_and_precip","wnd_and_precip","schmidt_and_wnd","wnd_and_GDD")){
     model_type <- "2var"
   }
 

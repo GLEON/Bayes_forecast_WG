@@ -10,7 +10,6 @@ pacman::p_load(tidyverse, lubridate, googledrive)
 
 # set local directory for plots
 my_directory <- ("C:/Users/Mary Lofton/Dropbox/Ch5/Covariate_analysis_output/")
-my_directory <- ("~/Desktop/Covariate Analysis Plots/")
 
 
 # Load all linear covariates ####
@@ -38,7 +37,8 @@ par <- read_csv("./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")
 
 # wind speed data
 wind_speed_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
-
+#limiting to columns that do not have filtered windspeed due to high proportion of missing data in filtered variables
+wind_speed_data <- wind_speed_data[,1:38]
 
 # Join all covariate data with gloeo
 covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], gdd[,3], swrad[,-1], par[,-1], wind_speed_data[,-1])
@@ -59,7 +59,7 @@ years <- c(2009:2014)
 # set up counter to help with year indexing
 col <- c(6,10,14,18,22,26)
 
-# par data columns
+# par data columns - special case b/c missing 2014 data
 colnames(covariates_all_filter[52:57])
 
 # Run for loop ####
@@ -68,13 +68,13 @@ for(i in 7:ncol(covariates_all_filter)) {
   # put variable name in output matrix
   output[i-6,1] <- colnames(covariates_all_filter[,i])
 
-  #prepare data to do exploratory viz plot
-  plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
+  # #prepare data to do exploratory viz plot
+  # plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
 
-  #write exploratory viz plot to file
-  png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
-  plot(plotdata)
-  dev.off()
+  # #write exploratory viz plot to file
+  # png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
+  # plot(plotdata)
+  # dev.off()
 
   #prepare data for regression and correlation
   y <- unlist(covariates_all_filter[,6])
@@ -144,50 +144,22 @@ colnames(output) <- c("covariate_name","global_linear_r2","global_Pearsons_r","g
                       "linear_r2_2013","Pearsons_r_2013","Spearmans_r_2013","quad_r2_2013",
                       "linear_r2_2014","Pearsons_r_2014","Spearmans_r_2014","quad_r2_2014")
 
-write.csv(output, file = "./2_Covariate_correlation_analysis/output_wind.csv",row.names = FALSE)
+write.csv(output, file = "./2_Covariate_correlation_analysis/output.csv",row.names = FALSE)
 
 #####################FILTERING FOR VARIABLES TO INCLUDE IN BAYES MODELS################
-bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output_wind.csv")
+bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output.csv")
 
-# Add row means for 2009-2014 for Pearsons & Spearmans
-
-# Add row means for Pearson & Spearmans
-pearson <- bayes_variables %>%
-  select(starts_with("Pearsons"))
-
-pearson_mean <- pearson %>%
-  mutate(Pearson_2009_2014_mean = round(rowMeans(pearson, na.rm = T),2))
-
-spearman <- bayes_variables %>%
-  select(starts_with("Spearmans"))
-
-spearman_mean <- spearman %>%
-  mutate(Spearman_2009_2014_mean = round(rowMeans(spearman, na.rm = T),2))
-
-# Bind back to original dataset
-bayes_variables_means <- bind_cols(bayes_variables, pearson_mean[,7], spearman_mean[,7])
-
-bayes_variables_keep <- bayes_variables_means %>%
-  filter(abs(global_Spearmans_r)>=0.3 & abs(global_Pearsons_r)>=0.3)
-
-bayes_variables_keep2 <- bayes_variables_means %>%
-  filter(abs(Pearson_2009_2014_mean)>=0.3 & abs(Spearman_2009_2014_mean)>=0.3) %>%
-  select(1:5,30:31)
-
+bayes_variables_keep <- bayes_variables %>%
+  filter(abs(global_Spearmans_r)>=0.3 | abs(global_quad_r2) >= 0.3)
 
 #this is where judgment comes in - we chose the following summary statistics:
 #1. HCS.tempC_min
 #2. HCS_tempC_min_lag
 #3. ma_7 (7-day moving average of water temp.)/ JB - ma 14 is close but ok with 7!
 #4. schmidt.stability_median_diff
-#5. gdd_sum
-#JB thoughts using global Pearsons & Spearmans for wind data:
-#6. AveWindDir_cove_mean_2daylag - positive relationship with wind direction indicator variable
-#7. AveWindSp_ms_min_3daylag_in - wind blowing in positive relationship, wind speed in less missing data than out (negative relationship)
-#MEL: 44 seems like a lot of missing data too? going with #6 if that's ok...
-# **Ignore windsp_cumsum_2day_in - too much missing data
+#5. schmidt.stability_max_lag
+#6. gdd_sum
+#7. precip_sum
+#8. AveWindDir_cove_mean_2daylag - positive relationship with wind direction indicator variable
 
-# Missing data
-sum(is.na(covariates_all_filter$AveWindSp_ms_min_3daylag_in)) #44
-sum(is.na(covariates_all_filter$AveWindDir_cove_mean_2daylag)) #12
-sum(is.na(covariates_all_filter$AveWindSp_ms_min_out)) #93
+
