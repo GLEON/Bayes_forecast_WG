@@ -126,7 +126,7 @@ for (n in 1:length(forecast_weeks)){
     arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2015,obs_log[1,],pch = 17, col = "red")
-    if(model_names[i] == "RW_obs" & forecast_weeks[n] == 1){
+    if(model_names[i] == "RW_obs"){
     legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
     legend("bottomright",legend = "2015",bty = "n")
 
@@ -267,7 +267,7 @@ mean_pred_not_log_2015 <- colMeans(exp(vardat2015) - 0.0035)
 mean_pred_not_log_2016 <- colMeans(exp(vardat2016) - 0.0035)
 
 #plot timeseries of pred and obs on log scale
-tiff(file = file.path(paste(my_directory,paste0(model_names[i],"_timeseries_pred_and_obs_log_",forecast_weeks[n],".tif"),sep = "")),
+tiff(file = file.path(paste(my_directory,paste0(model_name,"_timeseries_pred_and_obs_log_",forecast_weeks[n],".tif"),sep = "")),
      width = 8, height = 3, units = "in", res = 300)
 par(mfrow = c(1,2),mgp = c(2.5,1,0), mar = c(3,4,2,0)+0.1)
 
