@@ -1,2 +1,0 @@
-"model_name","RMSE","pred_var","coverage","peak_timing","mean_quantile","max_quantile","Pearsons_r","mean_bias","max_bias","mean_range"
-"ensemble","1.55","2.6","87.1","14","0.63","0.99","0.5","-0.24","-12.77","10.69"
