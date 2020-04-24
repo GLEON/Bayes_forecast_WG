@@ -13,17 +13,17 @@ make_varMat <- function(model_name){
 
   else if(model_name == "AR"){
     var.IC     <- apply(vardat.IC,2,var)
-    var.IC.P    <- apply(vardat.IC.P,2,var)
-    var.IC.P.Pa   <- apply(vardat.IC.P.Pa,2,var)
-    vm <- rbind(var.IC,var.IC.P,var.IC.P.Pa)
+    var.IC.Pa    <- apply(vardat.IC.Pa,2,var)
+    var.IC.Pa.P   <- apply(vardat.IC.Pa.P,2,var)
+    vm <- rbind(var.IC,var.IC.Pa,var.IC.Pa.P)
   }
 
   else{
     var.IC     <- apply(vardat.IC,2,var)
-    var.IC.P    <- apply(vardat.IC.P,2,var)
-    var.IC.P.Pa   <- apply(vardat.IC.P.Pa,2,var)
-    var.IC.P.Pa.D   <- apply(vardat.IC.P.Pa.D,2,var)
-    vm <- rbind(var.IC,var.IC.P,var.IC.P.Pa,var.IC.P.Pa.D)
+    var.IC.Pa    <- apply(vardat.IC.Pa,2,var)
+    var.IC.Pa.D   <- apply(vardat.IC.Pa.D,2,var)
+    var.IC.Pa.D.P   <- apply(vardat.IC.Pa.D.P,2,var)
+    vm <- rbind(var.IC,var.IC.Pa,var.IC.Pa.D,var.IC.Pa.D.P)
   }
 
   return(vm)

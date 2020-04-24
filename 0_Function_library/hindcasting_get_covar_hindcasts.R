@@ -12,10 +12,10 @@ pacman::p_load(tidyverse)
 get_covar_hindcasts <- function(model_name, forecast_type, wk, yrsamp, Nmc, covar_ensemble){
 
   #assign same model name for models with the same structure
-  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test")){
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test","schmidt_max_lag","precip")){
     model_type <- "1var"
   }
-  if(model_name %in% c("schmidt_diff_and_max","wnd_dir_and_speed","schmidt_and_wnd")){
+  if(model_name %in% c("schmidt_and_precip","wnd_and_precip","schmidt_and_wnd","wnd_and_GDD")){
     model_type <- "2var"
   }
 
@@ -32,7 +32,7 @@ get_covar_hindcasts <- function(model_name, forecast_type, wk, yrsamp, Nmc, cova
   #set up output matrices
   covar <- matrix(NA, Nmc, length(hindcast_wks))
 
-  if(forecast_type %in% c("det","IC","IC.P","IC.P.Pa")){
+  if(forecast_type %in% c("det","IC","IC.Pa")){
     for(i in 1:length(hindcast_wks)){
     covar[,i] <- mean(covar_ensemble$covar[yrsamp,hindcast_wks[i]], na.rm = TRUE)
 
@@ -53,7 +53,7 @@ get_covar_hindcasts <- function(model_name, forecast_type, wk, yrsamp, Nmc, cova
     covar1 <- matrix(NA, Nmc, length(hindcast_wks))
     covar2 <- matrix(NA, Nmc, length(hindcast_wks))
 
-    if(forecast_type %in% c("det","IC","IC.P","IC.P.Pa")){
+    if(forecast_type %in% c("det","IC","IC.Pa")){
       for(i in 1:length(hindcast_wks)){
         covar1[,i] <- mean(covar_ensemble$covar1[yrsamp,hindcast_wks[i]], na.rm = TRUE)
         covar2[,i] <- mean(covar_ensemble$covar2[yrsamp,hindcast_wks[i]], na.rm = TRUE)

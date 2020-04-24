@@ -22,9 +22,9 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
+model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
 forecast_weeks <- c(1:4)
-hindcast_types <- c("IC","IC.P","IC.P.Pa","IC.P.Pa.D")
+hindcast_types <- c("IC","IC.Pa","IC.Pa.D","IC.Pa.D.P")
 
 
 #1. Read in all vardat files for all models EXCEPT RW MODELS for each type of hindcast (IC, IC.P, etc.)
@@ -35,13 +35,26 @@ for (n in 1:length(forecast_weeks)){
 
     ensemble_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[1],'_vardat.',hindcast_types[j],'_',forecast_weeks[n],'.csv'))))
 
-  for (i in 2:length(model_names)){
+  for (i in 1:length(model_names)){
 
     #read in vardats for various hindcast types for each model
     vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.',hindcast_types[j],'_',forecast_weeks[n],'.csv'))))
     ensemble_vardat <- rbind(ensemble_vardat, vardat)
   }
 
+    #manually add in AR since has different vardat file names
+    if(hindcast_types[j] == "IC"){
+      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('AR_vardat.IC_',forecast_weeks[n],'.csv'))))
+      ensemble_vardat <- rbind(ensemble_vardat, AR_vardat)
+    }
+    if(hindcast_types[j] == "IC.Pa"){
+      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('AR_vardat.IC.Pa_',forecast_weeks[n],'.csv'))))
+      ensemble_vardat <- rbind(ensemble_vardat, AR_vardat)
+    }
+    if(hindcast_types[j] == "IC.Pa.D.P"){
+      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('AR_vardat.IC.Pa.P_',forecast_weeks[n],'.csv'))))
+      ensemble_vardat <- rbind(ensemble_vardat, AR_vardat)
+    }
     write.csv(ensemble_vardat,file=file.path(paste("./7_Model_ensemble/",paste0('ensemble.vardat.',hindcast_types[j],'_',forecast_weeks[n],'.csv'))),row.names = FALSE)
 
   }

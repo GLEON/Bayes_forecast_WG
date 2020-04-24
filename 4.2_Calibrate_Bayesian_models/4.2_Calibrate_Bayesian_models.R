@@ -17,12 +17,12 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output
 write_plots <- TRUE
 
 #make vector of model names for for-loop
-my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
+my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_wnd","schmidt_max_lag","precip","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
 length(my_models)
 
 ########################CALIBRATE MODELS##############################################
 
-for (i in 11:length(my_models)){
+for (i in 15:length(my_models)){
 
 #1) Source helper functions ---------------------------------------------------------
   source('0_Function_library/model_calibration_plug_n_play.R')
@@ -57,7 +57,7 @@ jags.out <- run.jags(model = model,
                      data = jags_plug_ins$data.model,
                      adapt =  5000,
                      burnin =  10000,
-                     sample = 100000,
+                     sample = 50000,
                      n.chains = 3,
                      inits=jags_plug_ins$init.model,
                      monitor = jags_plug_ins$variable.namesout.model)
@@ -66,7 +66,15 @@ jags.out <- run.jags(model = model,
 jags.out.mcmc <- as.mcmc.list(jags.out)
 
 
-#6) Assess calibration
+#6) Save output for calibration assessment
+
+#save predicted states
+Nmc = 10000
+out <- as.matrix(jags.out.mcmc)
+srow <- sample.int(nrow(out),Nmc,replace=TRUE)
+mus <- out[srow,grep("mu",colnames(out))]
+write.csv(mus,file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_predicted_states.csv')),row.names = FALSE)
+
 
 #plot parameters
 plot_parameters(params = jags_plug_ins$params.model,

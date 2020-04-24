@@ -425,3 +425,20 @@ head(wind_speed_data_out_all)
 wind_speed_data_all <- bind_cols(wind_speed_data_no_windsp_filter2, wind_speed_data_in_all[,-1], wind_speed_data_out_all[,-1])
 
 write_csv(wind_speed_data_all, "./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
+
+# wind speed data - a little data wrangling to fill filtered variables with 0 when
+# wind blowing away from cove
+wind_speed_data0 <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
+wind_speed_data1 <- wind_speed_data0 %>%
+  filter(!is.na(AveWindSp_ms_mean))
+wind_speed_data1[is.na(wind_speed_data1)] <- 0
+wind_speed_data2 <- wind_speed_data0 %>%
+  filter(is.na(AveWindSp_ms_mean))
+wind_speed_data3 <- bind_rows(wind_speed_data1, wind_speed_data2) %>%
+  arrange(date)
+#limiting to columns that have windspeed filtered for blowing into cove and wind direction
+wind_speed_data4 <- wind_speed_data3[,c(1,39:65)]
+wind_dir_data <- wind_speed_data0[,c(3,9,15,27)]
+#combining filtered wind speed and wind direction
+wind_data <- bind_cols(wind_speed_data4, wind_dir_data)
+write.csv(wind_data,"./00_Data_files/Covariate_analysis_data/wind_data.csv",row.names = FALSE)

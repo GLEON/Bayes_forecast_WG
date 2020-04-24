@@ -119,6 +119,22 @@ if(model_name == "schmidt_med_diff"){
   return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = Schmidt, week_avg = week_avg))
 }
 
+#for schmidt_max_lag model
+if(model_name == "schmidt_max_lag"){
+
+  #read in covariate data
+  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv"))
+  #remove 2015-2016 data
+  Schmidt <- Schmidt[-c(7:8),]
+  #center covariate data
+  Schmidt <- (Schmidt - mean(Schmidt, na.rm = TRUE))/sd(Schmidt, na.rm = TRUE)
+
+  #calculate weekly average of covariate from past years for gap filling
+  week_avg = colMeans(Schmidt, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = Schmidt, week_avg = week_avg))
+}
+
 #for wnd_dir_2day_lag model
 if(model_name == "wnd_dir_2day_lag"){
 
@@ -135,10 +151,26 @@ if(model_name == "wnd_dir_2day_lag"){
   return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = Wnd, week_avg = week_avg))
 }
 
+#for precip model
+if(model_name == "precip"){
+
+  #read in covariate data
+  Ppt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/precip_mm.csv"))
+  #remove 2015-2016 data
+  Ppt <- Ppt[-c(7:8),]
+  #center covariate data
+  Ppt <- (Ppt - mean(Ppt, na.rm = TRUE))/sd(Ppt, na.rm = TRUE)
+
+  #calculate weekly average of covariate from past years for gap filling
+  week_avg = colMeans(Ppt, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar = Ppt, week_avg = week_avg))
+}
+
 ###############################SINGLE COVARIATE QUADRATIC MODELS#####################################
 
 #for GDD model
-if(model_name == "GDD" | model_name == "GDD_test"){
+if(model_name == "GDD"){
 
   #read in covariate data
   GDD <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv"))
@@ -199,8 +231,36 @@ if(model_name == "schmidt_and_wnd"){
 
 }
 
-#for wnd_dir_and_speed
-if(model_name == "wnd_dir_and_speed"){
+#for schmidt_and_precip
+if(model_name == "schmidt_and_precip"){
+
+  #read in covariate 1 data
+  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+  #remove 2015-2016 data
+  Schmidt <- Schmidt[-c(7:8),]
+  #center covariate data
+  Schmidt <- (Schmidt - mean(Schmidt, na.rm = TRUE))/sd(Schmidt, na.rm = TRUE)
+
+  #calculate weekly average of covariate from past years for gap filling
+  week_avg1 = colMeans(Schmidt, na.rm = TRUE)
+
+  #read in covariate 2 data
+  Precip <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/precip_mm.csv"))
+  #remove 2015-2016 data
+  Precip <- Precip[-c(7:8),]
+  #center covariate data
+  Precip <- (Precip - mean(Precip, na.rm = TRUE))/sd(Precip, na.rm = TRUE)
+
+  #calculate weekly average of covariate from past years for gap filling
+  week_avg2 = colMeans(Precip, na.rm = TRUE)
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Schmidt, covar2 = Precip, week_avg1 = week_avg1, week_avg2 = week_avg2))
+
+}
+
+
+#for wnd_and_precip
+if(model_name == "wnd_and_precip"){
 
   #read in covariate 1 data
   Wnd <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
@@ -213,81 +273,63 @@ if(model_name == "wnd_dir_and_speed"){
   week_avg1 = colMeans(Wnd, na.rm = TRUE)
 
   #read in covariate 2 data
-  Wnd2 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_sp_mean_3daylag.csv"))
+  Precip <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/precip_mm.csv"))
   #remove 2015-2016 data
-  Wnd2 <- Wnd2[-c(7:8),]
+  Precip <- Precip[-c(7:8),]
   #center covariate data
-  Wnd2 <- (Wnd2 - mean(Wnd2, na.rm = TRUE))/sd(Wnd2, na.rm = TRUE)
+  Precip <- (Precip - mean(Precip, na.rm = TRUE))/sd(Precip, na.rm = TRUE)
 
   #calculate weekly average of covariate from past years for gap filling
-  week_avg2 = colMeans(Wnd2, na.rm = TRUE)
+  week_avg2 = colMeans(Precip, na.rm = TRUE)
 
-  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Wnd, covar2 = Wnd2, week_avg1 = week_avg1, week_avg2 = week_avg2))
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Wnd, covar2 = Precip, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
 }
 
-#for schmidt_diff_and_max
-if(model_name == "schmidt_diff_and_max"){
+###############################TWO COVARIATE QUADRATIC MODELS#####################################
+
+#for wnd_and_GDD
+if(model_name == "wnd_and_GDD"){
 
   #read in covariate 1 data
-  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+  Wnd <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
   #remove 2015-2016 data
-  Schmidt <- Schmidt[-c(7:8),]
+  Wnd <- Wnd[-c(7:8),]
   #center covariate data
-  Schmidt <- (Schmidt - mean(Schmidt, na.rm = TRUE))/sd(Schmidt, na.rm = TRUE)
+  Wnd <- (Wnd - mean(Wnd, na.rm = TRUE))/sd(Wnd, na.rm = TRUE)
 
   #calculate weekly average of covariate from past years for gap filling
-  week_avg1 = colMeans(Schmidt, na.rm = TRUE)
+  week_avg1 = colMeans(Wnd, na.rm = TRUE)
 
-  #read in covariate 1 data
-  Schmidt2 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv"))
+  #read in covariate 2 data
+  GDD <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv"))
   #remove 2015-2016 data
-  Schmidt2 <- Schmidt2[-c(7:8),]
-  #center covariate data
-  Schmidt2 <- (Schmidt2 - mean(Schmidt2, na.rm = TRUE))/sd(Schmidt2, na.rm = TRUE)
+  GDD <- GDD[-c(7:8),]
+  #standardize within year to account for different start dates in different years
+  GDD <- apply(GDD,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+  #transpose
+  GDD <- t(GDD)
+  #standardize across years
+  GDD <- (GDD - mean(GDD, na.rm = TRUE))/sd(GDD, na.rm = TRUE)
 
-  #calculate weekly average of covariate from past years for gap filling
-  week_avg2 = colMeans(Schmidt2, na.rm = TRUE)
+  #read in data from Site 2 for data gap-filling
+  GDD_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv"))
+  #remove 2015-2016 data
+  GDD_prior <- GDD_prior[-c(7:8),]
+  #standardize within year to account for different start dates in different years
+  GDD_prior <- apply(GDD_prior,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+  #transpose
+  GDD_prior <- t(GDD_prior)
+  #standardize across years
+  GDD_prior <- (GDD_prior - mean(GDD_prior, na.rm = TRUE))/sd(GDD_prior, na.rm = TRUE)
 
-  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Schmidt, covar2 = Schmidt2, week_avg1 = week_avg1, week_avg2 = week_avg2))
+  #calculate weekly average of covariate 2 from past years for gap filling
+  week_avg2 = colMeans(GDD_prior, na.rm = TRUE)
+  #use weekly average from last sampled week (18) to serve as prior for weeks 19 & 20
+  week_avg2[is.na(week_avg2)] <- week_avg2[19]
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Wnd, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
 }
-
-# #for Quad_2var model
-# if(model_name == "Quad_2var"){
-#
-#   #read in covariate data
-#   Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
-#   #remove 2015-2016 data
-#   Temp <- Temp[-c(7:8),]
-#   #center covariate data
-#   Temp <- (Temp - mean(Temp, na.rm = TRUE))/sd(Temp, na.rm = TRUE)
-#
-#   #read in data from Site 2 for data gap-filling
-#   Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
-#   #remove 2015-2016 data
-#   Temp_prior <- Temp_prior[-c(7:8),]
-#   #center water temp data
-#   Temp_prior <- (Temp_prior - mean(Temp_prior, na.rm = TRUE))/sd(Temp_prior, na.rm = TRUE)
-#
-#   #calculate weekly average of covariate from past years for gap filling
-#   week_avg_T = colMeans(Temp_prior, na.rm = TRUE)
-#   #use weekly average from last sampled week (18) to serve as gap-filler for weeks 19 & 20
-#   week_avg_T[is.na(week_avg_T)] <- week_avg_T[19]
-#
-#   #read in covariate data
-#   Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_mean.csv"))
-#   #remove 2015-2016 data
-#   Schmidt <- Schmidt[-c(7:8),]
-#   #center covariate data
-#   Schmidt <- (Schmidt - mean(Schmidt, na.rm = TRUE))/sd(Schmidt, na.rm = TRUE)
-#
-#   #calculate weekly average of covariate from past years for gap filling
-#   week_avg_S = colMeans(Schmidt, na.rm = TRUE)
-#
-#   return(list(year_no = year_no, season_weeks = season_weeks, y = y, Temp = Temp, Schmidt = Schmidt, week_avg_T = week_avg_T, week_avg_S = week_avg_S))
-#
-# }
-
 
 }

@@ -178,18 +178,18 @@ colnames(wnd1) <- paste("wk", colnames(wnd1), sep = "_")
 
 write.csv(wnd1, "./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv", row.names = FALSE)
 
-wnd <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
+##############format precip data
+ppt <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precip_all.csv")
 
-#min. wind speed with a 3 day lag
-wnd2 <- wnd %>%
-  select(date, AveWindSp_ms_min_3daylag) %>%
+#avg. wind direction with a 2 day lag
+ppt1 <- ppt %>%
+  select(date, precip_mm) %>%
   mutate(season_week = rep(c(1:20),times = 8),
          year = year(date)) %>%
   select(-date) %>%
-  spread(key = season_week, value = AveWindSp_ms_min_3daylag) %>%
+  spread(key = season_week, value = precip_mm) %>%
   select(-year)
 
-colnames(wnd2) <- paste("wk", colnames(wnd2), sep = "_")
+colnames(ppt1) <- paste("wk", colnames(ppt1), sep = "_")
 
-write.csv(wnd2, "./00_Data_files/Bayesian_model_input_data/wnd_sp_mean_3daylag.csv", row.names = FALSE)
-
+write.csv(ppt1, "./00_Data_files/Bayesian_model_input_data/precip_mm.csv", row.names = FALSE)
