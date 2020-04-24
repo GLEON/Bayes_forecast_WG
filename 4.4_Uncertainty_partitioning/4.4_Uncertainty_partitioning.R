@@ -97,7 +97,7 @@ for (i in 14:length(model_names)){
     #calculate relative uncertainty contributions and write to file
     source('0_Function_library/uncertainty_partitioning_make_varmat.R')
 
-    varMat   <- make_varMat(model_name = model_names[i])
+    varMat <- make_varMat(model_name = model_names[i])
     write.csv(varMat,file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_varMat_',forecast_weeks[n],'.csv'))),row.names = FALSE)
 
     varRelative <- apply(varMat,2,function(x) {x/max(x)})

@@ -35,13 +35,12 @@ swrad <- read_csv("./00_Data_files/Covariate_analysis_data/solar_radiation_daily
 # par
 par <- read_csv("./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")
 
-# wind speed data
-wind_speed_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
-#limiting to columns that do not have filtered windspeed due to high proportion of missing data in filtered variables
-wind_speed_data <- wind_speed_data[,1:38]
+# wind speed data - a little data wrangling to fill filtered variables with 0 when
+# wind blowing away from cove
+wind_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data.csv")
 
 # Join all covariate data with gloeo
-covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], gdd[,3], swrad[,-1], par[,-1], wind_speed_data[,-1])
+covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], gdd[,3], swrad[,-1], par[,-1], wind_data[-1])
 
 # Filter for just 2009-2014
 covariates_all_filter <- covariates_all %>%
@@ -162,4 +161,4 @@ bayes_variables_keep <- bayes_variables %>%
 #7. precip_sum
 #8. AveWindDir_cove_mean_2daylag - positive relationship with wind direction indicator variable
 
-
+sum(is.na(wind_speed_data0$AveWindSp_ms_mean))
