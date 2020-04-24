@@ -96,7 +96,7 @@ rm(list = ls())
 model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
 forecast_weeks <- c(1:4)
 
-for (n in 4:length(forecast_weeks)){
+for (n in 1:length(forecast_weeks)){
 
   ensemble_PI <- read_csv(file=file.path(paste("./6_Output_analysis/6.1_Predictive_intervals/",paste0(model_names[1],'_PI_',forecast_weeks[n],'.csv'))))
 
@@ -214,7 +214,7 @@ for (n in 1:length(forecast_weeks)){
   hoa <- data.frame(hoa)
   colnames(hoa) <- c("model_name","RMSE","pred_var","coverage","peak_timing","mean_quantile",
                      "max_quantile","Pearsons_r","mean_bias","max_bias","mean_range")
-  write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
+  write.csv(hoa,file=file.path(paste("./7_Model_ensemble/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
 }
 
 rm(list = ls())
@@ -254,17 +254,17 @@ for (n in 1:length(forecast_weeks)){
     upam[1,3] <- round(min(varRel[1,], na.rm = TRUE),2)
     upam[1,4] <- round(max(varRel[1,], na.rm = TRUE),2)
 
-    #Process
+    #Parameter
     upam[1,5] <- round(mean((varRel[2,] - varRel[1,]), na.rm = TRUE),2)
     upam[1,6] <- round(min((varRel[2,] - varRel[1,]), na.rm = TRUE),2)
     upam[1,7] <- round(max((varRel[2,] - varRel[1,]), na.rm = TRUE),2)
 
-    #Parameter
+    #Driver
       upam[1,8] <- round(mean((varRel[3,] - varRel[2,]), na.rm = TRUE),2)
       upam[1,9] <- round(min((varRel[3,] - varRel[2,]), na.rm = TRUE),2)
       upam[1,10] <- round(max((varRel[3,] - varRel[2,]), na.rm = TRUE),2)
 
-    #Driver
+    #Process
       upam[1,11] <- round(mean((varRel[4,] - varRel[3,]), na.rm = TRUE),2)
       upam[1,12] <- round(min((varRel[4,] - varRel[3,]), na.rm = TRUE),2)
       upam[1,13] <- round(max((varRel[4,] - varRel[3,]), na.rm = TRUE),2)
@@ -272,9 +272,9 @@ for (n in 1:length(forecast_weeks)){
   #build final data frame and write to file
   upam <- data.frame(upam)
   colnames(upam) <- c("model_name","mean.IC","min.IC","max.IC",
-                      "mean.P","min.P","max.P",
                       "mean.Pa","min.Pa","max.Pa",
-                      "mean.D","min.D","max.D")
+                      "mean.D","min.D","max.D",
+                      "mean.P","min.P","max.P")
 
   write.csv(upam,file=file.path(paste("./7_Model_ensemble/",paste0('uncertainty_partitioning_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
 
