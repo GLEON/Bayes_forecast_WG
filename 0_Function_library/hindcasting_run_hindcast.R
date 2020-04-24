@@ -5,7 +5,7 @@
 run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
 
   #check that model is set up for hindcasting
-  if(!model_name %in% c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test","schmidt_diff_and_max","wnd_dir_and_speed","schmidt_and_wnd","schmidt_max_lag","precip")){
+  if(!model_name %in% c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_wnd","schmidt_max_lag","precip","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")){
     print("This model is not included in the hindcasting functions.")
   }
 
@@ -19,7 +19,7 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
   if(model_name %in% c("GDD")){
     model_type <- "Quad_1var"
   }
-  if(model_name %in% c("schmidt_diff_and_max","wnd_dir_and_speed","schmidt_and_wnd")){
+  if(model_name %in% c("schmidt_and_precip","wnd_and_precip","schmidt_and_wnd")){
     model_type <- "Linear_2var"
   }
   if(model_name %in% c("wnd_and_GDD")){

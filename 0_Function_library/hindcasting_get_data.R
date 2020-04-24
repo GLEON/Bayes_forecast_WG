@@ -476,7 +476,7 @@ if(model_name %in% c("wnd_and_GDD")){
 
     #create covar2 timeseries
     covar2 <- covar02[c(1:8),]
-    covar[8,] <- NA
+    covar2[8,] <- NA
 
     #create covar2 hindcast
     covar2_hindcast <- covar02[c(1:7),]
