@@ -15,7 +15,9 @@ pacman::p_load(tidyverse, lubridate)
 my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","GDD_test","schmidt_and_wnd","schmidt_diff_and_max","wnd_dir_and_speed")
+model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
+model_labels <- c("RW","AR","MinWaterTemp","MinWaterTempLag","WaterTempMA","SchmidtMedDiff","SchmidtMaxLag","WindDir","Precip","GDD","SchmidtAndWind","SchmidtAndPrecip","WindAndPrecip","WindAndGDD")
+
 forecast_weeks <- c(1,4)
 
 ########################MAKE PLOTS#####################################
@@ -56,83 +58,106 @@ for (n in 1:length(forecast_weeks)){
     dates2016 <- dates[21:40]
   }
 
-  for (i in 11:length(model_names)){
+  for (i in 1:length(model_names)){
 
     #read in appropriate hindcast summary files
+
+    #confidence intervals
     if(model_names[i] %in% c("RW","RW_obs")){
       vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P_',forecast_weeks[n],'.csv')))))}
     else if(model_names[i] == "AR"){
-      vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P.Pa_',forecast_weeks[n],'.csv')))))}
-    else{vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P.Pa.D_',forecast_weeks[n],'.csv')))))}
+      vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.P_',forecast_weeks[n],'.csv')))))}
+    else{vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.D.P_',forecast_weeks[n],'.csv')))))}
+
+    #predictive intervals
+    PI <- as.matrix(read_csv(file=file.path(paste("./6_Output_analysis/6.1_Predictive_intervals/",paste0(model_names[i],'_PI_',forecast_weeks[n],'.csv')))))
 
     #subset vardat and varMat according to forecast week
     if(forecast_weeks[n] == 4){
       vardat2015 <- vardat[,1:17]
       vardat2016 <- vardat[,21:37]
+      PI2015 <- PI[,1:17]
+      PI2016 <- PI[,21:37]
     }
     if(forecast_weeks[n] == 3){
       vardat2015 <- vardat[,1:18]
       vardat2016 <- vardat[,21:38]
+      PI2015 <- PI[,1:18]
+      PI2016 <- PI[,21:38]
     }
     if(forecast_weeks[n] == 2){
       vardat2015 <- vardat[,1:19]
       vardat2016 <- vardat[,21:39]
+      PI2015 <- PI[,1:19]
+      PI2016 <- PI[,21:39]
     }
     if(forecast_weeks[n] == 1){
       vardat2015 <- vardat[,1:20]
       vardat2016 <- vardat[,21:40]
+      PI2015 <- PI[,1:20]
+      PI2016 <- PI[,21:40]
     }
 
     #calculate mean predicted values in log space
-    pi2015_log <- apply(vardat2015,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
-    pi2016_log <- apply(vardat2016,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+    ci2015_log <- apply(vardat2015,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+    ci2016_log <- apply(vardat2016,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+
+    pi2015_log <- apply(PI2015,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+    pi2016_log <- apply(PI2016,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
 
     mean_pred_log_2015 <- colMeans(vardat2015)
     mean_pred_log_2016 <- colMeans(vardat2016)
 
-    pi2015_not_log <- apply(exp(vardat2015)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
-    pi2016_not_log <- apply(exp(vardat2016)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+    ci2015_not_log <- apply(exp(vardat2015)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+    ci2016_not_log <- apply(exp(vardat2016)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+
+    pi2015_not_log <- apply(exp(PI2015)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+    pi2016_not_log <- apply(exp(PI2016)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
 
     mean_pred_not_log_2015 <- colMeans(exp(vardat2015) - 0.0035)
     mean_pred_not_log_2016 <- colMeans(exp(vardat2016) - 0.0035)
 
     #plot timeseries of pred and obs on log scale
     tiff(file = file.path(paste(my_directory,paste0(model_names[i],"_timeseries_pred_and_obs_log_",forecast_weeks[n],".tif"),sep = "")),
-         width = 5, height = 6, units = "in", res = 300)
-    par(mfrow = c(2,1),mgp = c(2.5,1,0), mar = c(3,4,0,0)+0.1)
+         width = 8, height = 3, units = "in", res = 300)
+    par(mfrow = c(1,2),mgp = c(2.5,1,0), mar = c(3,4,2,0)+0.1)
 
-    plot(dates2015,pi2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-    arrows(dates, pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,]), dates, pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+    plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_labels[i])
+    arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+    arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2015,obs_log[1,],pch = 17, col = "red")
-    legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
+    if(model_names[i] == "RW_obs"){
+    legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
     legend("bottomright",legend = "2015",bty = "n")
 
-    plot(dates2016,pi2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-    arrows(dates, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+    plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_labels[i])
+    arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+    arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2016,obs_log[2,],pch = 17, col = "red")
-    legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
     legend("bottomright",legend = "2016",bty = "n")
 
     dev.off()
 
-    #plot timeseries of pred and obs on not log scale
-    tiff(file = file.path(paste(my_directory,paste0(model_names[i],"_timeseries_pred_and_obs_not_log_",forecast_weeks[n],".tif"),sep = "")),
-         width = 5, height = 6, units = "in", res = 300)
-    par(mfrow = c(2,1),mgp = c(2.5,1,0), mar = c(3,4,0,0)+0.1)
-
-    plot(dates2015,pi2015_not_log[2,],pch = 16,ylim = c(min(pi2015_not_log[1,])-0.1,max(pi2015_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-    arrows(dates, pi2015_not_log[2,]-(pi2015_not_log[2,]-pi2015_not_log[1,]), dates, pi2015_not_log[2,]+(pi2015_not_log[3,]-pi2015_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
-    points(dates2015,obs_not_log[1,],pch = 17, col = "red")
-    legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
-    legend("topright",legend = "2015",bty = "n")
-
-    plot(dates2016,pi2016_not_log[2,],pch = 16,ylim = c(min(pi2016_not_log[1,])-0.1,max(pi2016_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-    arrows(dates, pi2016_not_log[2,]-(pi2016_not_log[2,]-pi2016_not_log[1,]), dates, pi2016_not_log[2,]+(pi2016_not_log[3,]-pi2016_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
-    points(dates2016,obs_not_log[2,],pch = 17, col = "red")
-    legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
-    legend("topright",legend = "2016",bty = "n")
-
-    dev.off()
+    # #plot timeseries of pred and obs on not log scale
+    # tiff(file = file.path(paste(my_directory,paste0(model_names[i],"_timeseries_pred_and_obs_not_log_",forecast_weeks[n],".tif"),sep = "")),
+    #      width = 5, height = 6, units = "in", res = 300)
+    # par(mfrow = c(2,1),mgp = c(2.5,1,0), mar = c(3,4,0,0)+0.1)
+    #
+    # plot(dates2015,pi2015_not_log[2,],pch = 16,ylim = c(min(pi2015_not_log[1,])-0.1,max(pi2015_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
+    # arrows(dates, pi2015_not_log[2,]-(pi2015_not_log[2,]-pi2015_not_log[1,]), dates, pi2015_not_log[2,]+(pi2015_not_log[3,]-pi2015_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+    # arrows(dates, ci2015_not_log[2,]-(ci2015_not_log[2,]-ci2015_not_log[1,]), dates, ci2015_not_log[2,]+(ci2015_not_log[3,]-ci2015_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+    # points(dates2015,obs_not_log[1,],pch = 17, col = "red")
+    # legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
+    # legend("topright",legend = "2015",bty = "n")
+    #
+    # plot(dates2016,pi2016_not_log[2,],pch = 16,ylim = c(min(pi2016_not_log[1,])-0.1,max(pi2016_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
+    # arrows(dates, pi2016_not_log[2,]-(pi2016_not_log[2,]-pi2016_not_log[1,]), dates, pi2016_not_log[2,]+(pi2016_not_log[3,]-pi2016_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+    # arrows(dates, ci2016_not_log[2,]-(ci2016_not_log[2,]-ci2016_not_log[1,]), dates, ci2016_not_log[2,]+(ci2016_not_log[3,]-ci2016_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+    # points(dates2016,obs_not_log[2,],pch = 17, col = "red")
+    # legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
+    # legend("topright",legend = "2016",bty = "n")
+    #
+    # dev.off()
 
     ##The next bracket is the end of the model loop
 
@@ -152,6 +177,7 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
 #set counters and vectors for for-loop
 forecast_weeks <- c(1,4)
 model_name = "ensemble"
+model_label = "Ensemble"
 
 #for-loop
 for (n in 1:length(forecast_weeks)){
@@ -192,76 +218,95 @@ for (n in 1:length(forecast_weeks)){
   }
 
 #read in appropriate hindcast summary files
-vardat <- as.matrix(read_csv(file=file.path(paste("./7_Model_ensemble/",paste0('ensemble.vardat.IC.P.Pa.D_',forecast_weeks[n],'.csv')))))
+vardat <- as.matrix(read_csv(file=file.path(paste("./7_Model_ensemble/",paste0('ensemble.vardat.IC.Pa.D.P_',forecast_weeks[n],'.csv')))))
+PI <- as.matrix(read_csv(file=file.path(paste("./7_Model_ensemble/",paste0('ensemble_PI_',forecast_weeks[n],'.csv')))))
 
 #subset vardat and varMat according to forecast week
 if(forecast_weeks[n] == 4){
   vardat2015 <- vardat[,1:17]
   vardat2016 <- vardat[,21:37]
+  PI2015 <- PI[,1:17]
+  PI2016 <- PI[,21:37]
 }
 if(forecast_weeks[n] == 3){
   vardat2015 <- vardat[,1:18]
   vardat2016 <- vardat[,21:38]
+  PI2015 <- PI[,1:18]
+  PI2016 <- PI[,21:38]
 }
 if(forecast_weeks[n] == 2){
   vardat2015 <- vardat[,1:19]
   vardat2016 <- vardat[,21:39]
+  PI2015 <- PI[,1:19]
+  PI2016 <- PI[,21:39]
 }
 if(forecast_weeks[n] == 1){
   vardat2015 <- vardat[,1:20]
   vardat2016 <- vardat[,21:40]
+  PI2015 <- PI[,1:20]
+  PI2016 <- PI[,21:40]
 }
 
 #calculate mean predicted values in log space
-pi2015_log <- apply(vardat2015,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
-pi2016_log <- apply(vardat2016,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+ci2015_log <- apply(vardat2015,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+ci2016_log <- apply(vardat2016,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+
+pi2015_log <- apply(PI2015,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+pi2016_log <- apply(PI2016,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
 
 mean_pred_log_2015 <- colMeans(vardat2015)
 mean_pred_log_2016 <- colMeans(vardat2016)
 
-pi2015_not_log <- apply(exp(vardat2015)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
-pi2016_not_log <- apply(exp(vardat2016)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+ci2015_not_log <- apply(exp(vardat2015)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+ci2016_not_log <- apply(exp(vardat2016)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+
+pi2015_not_log <- apply(exp(PI2015)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
+pi2016_not_log <- apply(exp(PI2016)-0.0035,2,quantile,c(0.025,0.5,0.975), na.rm=TRUE)
 
 mean_pred_not_log_2015 <- colMeans(exp(vardat2015) - 0.0035)
 mean_pred_not_log_2016 <- colMeans(exp(vardat2016) - 0.0035)
 
 #plot timeseries of pred and obs on log scale
 tiff(file = file.path(paste(my_directory,paste0(model_name,"_timeseries_pred_and_obs_log_",forecast_weeks[n],".tif"),sep = "")),
-     width = 5, height = 6, units = "in", res = 300)
-par(mfrow = c(2,1),mgp = c(2.5,1,0), mar = c(3,4,0,0)+0.1)
+     width = 8, height = 3, units = "in", res = 300)
+par(mfrow = c(1,2),mgp = c(2.5,1,0), mar = c(3,4,2,0)+0.1)
 
-plot(dates2015,pi2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-arrows(dates, pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,]), dates, pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_label)
+arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
 points(dates2015,obs_log[1,],pch = 17, col = "red")
-legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
+if(model_name == "RW_obs" & forecast_weeks[n] == 1){
+  legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
 legend("bottomright",legend = "2015",bty = "n")
 
-plot(dates2016,pi2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-arrows(dates, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_label)
+arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
 points(dates2016,obs_log[2,],pch = 17, col = "red")
-legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
 legend("bottomright",legend = "2016",bty = "n")
 
 dev.off()
 
-#plot timeseries of pred and obs on not log scale
-tiff(file = file.path(paste(my_directory,paste0(model_name,"_timeseries_pred_and_obs_not_log_",forecast_weeks[n],".tif"),sep = "")),
-     width = 5, height = 6, units = "in", res = 300)
-par(mfrow = c(2,1),mgp = c(2.5,1,0), mar = c(3,4,0,0)+0.1)
-
-plot(dates2015,pi2015_not_log[2,],pch = 16,ylim = c(min(pi2015_not_log[1,])-0.1,max(pi2015_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-arrows(dates, pi2015_not_log[2,]-(pi2015_not_log[2,]-pi2015_not_log[1,]), dates, pi2015_not_log[2,]+(pi2015_not_log[3,]-pi2015_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
-points(dates2015,obs_not_log[1,],pch = 17, col = "red")
-legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
-legend("topright",legend = "2015",bty = "n")
-
-plot(dates2016,pi2016_not_log[2,],pch = 16,ylim = c(min(pi2016_not_log[1,])-0.1,max(pi2016_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
-arrows(dates, pi2016_not_log[2,]-(pi2016_not_log[2,]-pi2016_not_log[1,]), dates, pi2016_not_log[2,]+(pi2016_not_log[3,]-pi2016_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
-points(dates2016,obs_not_log[2,],pch = 17, col = "red")
-legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
-legend("topright",legend = "2016",bty = "n")
-
-dev.off()
+# #plot timeseries of pred and obs on not log scale
+# tiff(file = file.path(paste(my_directory,paste0(model_name,"_timeseries_pred_and_obs_not_log_",forecast_weeks[n],".tif"),sep = "")),
+#      width = 5, height = 6, units = "in", res = 300)
+# par(mfrow = c(2,1),mgp = c(2.5,1,0), mar = c(3,4,0,0)+0.1)
+#
+# plot(dates2015,pi2015_not_log[2,],pch = 16,ylim = c(min(pi2015_not_log[1,])-0.1,max(pi2015_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
+# arrows(dates, pi2015_not_log[2,]-(pi2015_not_log[2,]-pi2015_not_log[1,]), dates, pi2015_not_log[2,]+(pi2015_not_log[3,]-pi2015_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+# arrows(dates, ci2015_not_log[2,]-(ci2015_not_log[2,]-ci2015_not_log[1,]), dates, ci2015_not_log[2,]+(ci2015_not_log[3,]-ci2015_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+# points(dates2015,obs_not_log[1,],pch = 17, col = "red")
+# legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
+# legend("topright",legend = "2015",bty = "n")
+#
+# plot(dates2016,pi2016_not_log[2,],pch = 16,ylim = c(min(pi2016_not_log[1,])-0.1,max(pi2016_not_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")))
+# arrows(dates, pi2016_not_log[2,]-(pi2016_not_log[2,]-pi2016_not_log[1,]), dates, pi2016_not_log[2,]+(pi2016_not_log[3,]-pi2016_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
+# arrows(dates, ci2016_not_log[2,]-(ci2016_not_log[2,]-ci2016_not_log[1,]), dates, ci2016_not_log[2,]+(ci2016_not_log[3,]-ci2016_not_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
+# points(dates2016,obs_not_log[2,],pch = 17, col = "red")
+# legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")
+# legend("topright",legend = "2016",bty = "n")
+#
+# dev.off()
 
 }
 
