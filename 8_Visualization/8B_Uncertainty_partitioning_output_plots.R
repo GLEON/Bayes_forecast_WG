@@ -16,8 +16,8 @@ pacman::p_load(tidyverse, lubridate,cowplot)
 my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Uncertainty_partitioning_analysis_output/"
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
-model_labels <- c("RW","AR","MinWaterTemp","MinWaterTempLag","WaterTempMA","SchmidtMedDiff","SchmidtMaxLag","WindDir","Precip","GDD","SchmidtAndWind","SchmidtAndPrecip","WindAndPrecip","WindAndGDD")
+model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD","ensemble")
+model_labels <- c("RW","AR","MinWaterTemp","MinWaterTempLag","WaterTempMA","SchmidtMedDiff","SchmidtMaxLag","WindDir","Precip","GDD","SchmidtAndWind","SchmidtAndPrecip","WindAndPrecip","WindAndGDD","Ensemble")
 forecast_weeks <- c(1:4)
 
 #set up ciEnvelope function
@@ -44,7 +44,11 @@ for(i in 1:length(model_names)){
 
 for(n in 1:length(forecast_weeks)){
 
-  varpart <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_varRelative_',forecast_weeks[n],'.csv'),sep = " "))))
+  if(model_names[i] == "ensemble"){
+    varpart <- as.matrix(read_csv(file=file.path(paste("./7_Model_ensemble/",paste0(model_names[i],'_varRelative_',forecast_weeks[n],'.csv'),sep = " "))))
+  } else {
+    varpart <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_varRelative_',forecast_weeks[n],'.csv'),sep = " "))))
+  }
   plotdata[1,n] <- mean(varpart[1,], na.rm = TRUE)
   plotdata[2,n] <- mean(varpart[2,], na.rm = TRUE)
 
@@ -60,7 +64,7 @@ for(n in 1:length(forecast_weeks)){
 
   if(model_names[i] %in% c("RW","RW_obs")){
   tiff(file = file.path(my_directory,paste0(model_names[i],"_V.pred.rel.tif")),
-       width = 8, height = 6, units = "in", res = 300)
+       width = 5, height = 3.5, units = "in", res = 300)
   layout(rbind(1,2), heights=c(7,1))
   par(mar=c(2, 4.1, 1, 1), mgp = c(3,1,0))
   plot(forecast_weeks, plotdata[1,], ylim=c(0,1), type='n', main="", ylab="Proportion of Variance", cex.lab = 1.5, cex.axis = 1.5, xaxs="i", yaxs="i", las = 1,xaxt = "n")
@@ -71,12 +75,12 @@ for(n in 1:length(forecast_weeks)){
   legend("topright",legend = model_labels[i],cex = 1.5,bg = "",bty = "n")
   par(mar=c(0, 2.1, 0, 0))
   plot.new()
-  legend("center", legend=c("Initial Cond","Process"), col=c(col[1],col[3]), lty=1, lwd=10, bg = 'white', cex = 1.2, ncol = 2, bty = "n", seg.len = 0.5)
+  legend("center", legend=c("IC","Proc."), col=c(col[1],col[3]), lty=1, lwd=10, bg = 'white', cex = 1.2, ncol = 2, bty = "n", seg.len = 0.5)
   dev.off()}
 
   if(model_names[i] == "AR"){
   tiff(file = file.path(my_directory,paste0(model_names[i],"_V.pred.rel.tif")),
-       width = 8, height = 6, units = "in", res = 300)
+       width = 5, height = 3.5, units = "in", res = 300)
   layout(rbind(1,2), heights=c(7,1))
   par(mar=c(2, 4.1, 1, 1), mgp = c(3,1,0))
   plot(forecast_weeks, plotdata[1,], ylim=c(0,1), type='n', main="", ylab="Proportion of Variance", cex.lab = 1.5, cex.axis = 1.5, xaxs="i", yaxs="i", las = 1,xaxt = "n")
@@ -88,12 +92,12 @@ for(n in 1:length(forecast_weeks)){
   legend("topright",legend = model_labels[i],cex = 1.5,bg = "",bty = "n")
   par(mar=c(0, 2.1, 0, 0))
   plot.new()
-  legend("center", legend=c("Initial Cond","Parameter","Process"), col=c(col[1],col[4],col[3]), lty=1, lwd=10, bg = 'white', cex = 1.2, ncol = 3, bty = "n", seg.len = 0.5)
+  legend("center", legend=c("IC","Para.","Proc."), col=c(col[1],col[4],col[3]), lty=1, lwd=10, bg = 'white', cex = 1.2, ncol = 3, bty = "n", seg.len = 0.5)
   dev.off()}
 
   if(!model_names[i] %in% c("RW","RW_obs","AR")){
   tiff(file = file.path(my_directory,paste0(model_names[i],"_V.pred.rel.tif")),
-       width = 8, height = 6, units = "in", res = 300)
+       width = 5, height = 3.5, units = "in", res = 300)
   layout(rbind(1,2), heights=c(7,1))
   par(mar=c(2, 4.1, 1, 1), mgp = c(3,1,0))
   plot(forecast_weeks, plotdata[1,], ylim=c(0,1), type='n', main="", ylab="Proportion of Variance", cex.lab = 1.5, cex.axis = 1.5, xaxs="i", yaxs="i", las = 1,xaxt = "n")
@@ -106,7 +110,7 @@ for(n in 1:length(forecast_weeks)){
   legend("topright",legend = model_labels[i],cex = 1.5,bg = "",bty = "n")
   par(mar=c(0, 2.1, 0, 0))
   plot.new()
-  legend("center", legend=c("Initial Cond","Parameter","Driver","Process"), col=c(col[1],col[4],col[2],col[3]), lty=1, lwd=10, bg = 'white', cex = 1.2, ncol = 4, bty = "n", seg.len = 0.5)
+  legend("center", legend=c("IC","Para.","Driv.","Proc."), col=c(col[1],col[4],col[2],col[3]), lty=1, lwd=10, bg = 'white', cex = 1.2, ncol = 4, bty = "n", seg.len = 0.5)
   dev.off()}
 
 }
@@ -227,7 +231,7 @@ final_plot <- plot_grid(allvar1, allvar4, align = "hv", nrow = 2, ncol = 1,
                         labels=c('a','b'), label_size = 26, rel_heights = c(1.5, 2))
 
 ggsave(final_plot, filename = file.path(my_directory,paste0("V.pred.rel.all.models.tif")),device = "tiff",
-       height = 9, width = 6, units = "in", scale = 1.1)
+       height = 9, width = 6, units = "in", scale = 1.1, dpi = 600)
 
 
 rm(list = ls())
