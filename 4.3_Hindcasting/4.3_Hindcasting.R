@@ -4,6 +4,10 @@
 # by Michael Dietze, with reference "Ecological Forecasting", chapter 11
 # updated and expanded by MEL
 
+##NOTE!! BEFORE YOU BEGIN:
+#this script takes many hours to run as hindcasts for all models with all
+#combinations of uncertainty are generated each week of 2015-2016 within the loop
+
 ##################################SET-UP##############################################
 
 #install to load and install other packages as needed
@@ -70,7 +74,7 @@ jags.out <- run.jags(model = model,
 jags.out.mcmc <- as.mcmc.list(jags.out)
 out <- as.matrix(jags.out.mcmc)
 
-#5) Set up initial conditions for hindcasts
+#5) Set up initial conditions and hindcasted drivers for hindcasts
 
 #set up number of draws for initial condition distributions at beginning of season
 Nmc = 10000
@@ -202,9 +206,9 @@ hindcast.IC <- run_hindcast(model_name = model_name,
 #write hindcast to file
 write.csv(hindcast.IC,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)
 
+###### parameter uncertainty #########
 
 if(!model_name %in% c("RW","RW_obs")){
-###### parameter uncertainty #########
 
 #retrieve parameters for hindcast
 params.IC.Pa <- get_params(model_name = model_name,
@@ -242,9 +246,9 @@ hindcast.IC.Pa <- run_hindcast(model_name = model_name,
 write.csv(hindcast.IC.Pa,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)
 }
 
-if(!model_name %in% c("RW","RW_obs","AR")){
-
 ###### driver uncertainty ##########
+
+if(!model_name %in% c("RW","RW_obs","AR")){
 
   #retrieve parameters for hindcast
   params.IC.Pa.D <- get_params(model_name = model_name,

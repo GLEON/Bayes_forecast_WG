@@ -27,25 +27,33 @@ for (i in 14:length(model_names)){
 
   for (n in 1:length(forecast_weeks)){
 
-    #create empty matrices to populate from hindcast variance for each week
+    #create empty matrices to populate with hindcast variance for each week
+
+    #deterministic hindcasts (no uncertainty)
     vardat.det <- matrix(NA, 10000, 40)
     vardat.det <- data.frame(vardat.det)
 
+    #initial conditions uncertainty only
     vardat.IC <- matrix(NA, 10000, 40)
     vardat.IC <- data.frame(vardat.IC)
 
+    #initial conditions and parameter uncertainty
     vardat.IC.Pa <- matrix(NA, 10000, 40)
     vardat.IC.Pa <- data.frame(vardat.IC.Pa)
 
+    #initial conditions, parameter, driver
     vardat.IC.Pa.D <- matrix(NA, 10000, 40)
     vardat.IC.Pa.D <- data.frame(vardat.IC.Pa.D)
 
+    #initial conditions, parameter, driver, process
     vardat.IC.Pa.D.P <- matrix(NA, 10000, 40)
     vardat.IC.Pa.D.P <- data.frame(vardat.IC.Pa.D.P)
 
+    #initial conditions and process (for models with no parameters/drivers)
     vardat.IC.P <- matrix(NA, 10000, 40)
     vardat.IC.P <- data.frame(vardat.IC.P)
 
+    #initial conditions, parameter, process (for AR model with no drivers)
     vardat.IC.Pa.P <- matrix(NA, 10000, 40)
     vardat.IC.Pa.P <- data.frame(vardat.IC.Pa.P)
 
