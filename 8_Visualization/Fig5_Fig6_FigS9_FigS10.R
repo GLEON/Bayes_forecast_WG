@@ -119,18 +119,20 @@ for (n in 1:length(forecast_weeks)){
 
     #plot timeseries of pred and obs on log scale
     tiff(file = file.path(paste(my_directory,paste0(model_names[i],"_timeseries_pred_and_obs_log_",forecast_weeks[n],".tif"),sep = "")),
-         width = 8, height = 3, units = "in", res = 300)
+         width = 7, height = 2.5, units = "in", res = 300)
     par(mfrow = c(1,2),mgp = c(2.5,1,0), mar = c(3,4,2,0)+0.1)
 
-    plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_labels[i])
+    plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_labels[i])
     arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2015,obs_log[1,],pch = 17, col = "red")
-    if(model_names[i] == "RW_obs"){
+    if(model_names[i] == "RW_obs" & forecast_weeks[n]==1){
     legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
+    if(model_names[i] == "RW_obs" & forecast_weeks[n]==4){
+      legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n",cex = 0.7)}
     legend("bottomright",legend = "2015",bty = "n")
 
-    plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_labels[i])
+    plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_labels[i])
     arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2016,obs_log[2,],pch = 17, col = "red")
@@ -268,10 +270,10 @@ mean_pred_not_log_2016 <- colMeans(exp(vardat2016) - 0.0035)
 
 #plot timeseries of pred and obs on log scale
 tiff(file = file.path(paste(my_directory,paste0(model_name,"_timeseries_pred_and_obs_log_",forecast_weeks[n],".tif"),sep = "")),
-     width = 8, height = 3, units = "in", res = 300)
+     width = 7, height = 2.5, units = "in", res = 300)
 par(mfrow = c(1,2),mgp = c(2.5,1,0), mar = c(3,4,2,0)+0.1)
 
-plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_label)
+plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_label)
 arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
 arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
 points(dates2015,obs_log[1,],pch = 17, col = "red")
@@ -279,7 +281,7 @@ if(model_name == "RW_obs" & forecast_weeks[n] == 1){
   legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
 legend("bottomright",legend = "2015",bty = "n")
 
-plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("G. echinulata (colonies",~~L^-1, ")")),main = model_label)
+plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_label)
 arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
 arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
 points(dates2016,obs_log[2,],pch = 17, col = "red")
