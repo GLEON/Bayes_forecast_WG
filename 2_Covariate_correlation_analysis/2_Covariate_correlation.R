@@ -46,6 +46,13 @@ covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], sch
 covariates_all_filter <- covariates_all %>%
   filter(year %in% 2009:2014)
 
+#check for normality among variables
+for (i in 6:27){
+  print(hist(as.numeric(unlist(covariates_all_filter[,i])), main = colnames(covariates_all_filter[,i])))
+  print(qqnorm(as.numeric(unlist(covariates_all_filter[,i])), pch = 1, frame = FALSE,main = colnames(covariates_all_filter[,i])))
+  print(qqline(as.numeric(unlist(covariates_all_filter[,i])), col = "steelblue", lwd = 2))
+}
+
 # Set-up for loop to run through covariates ####
 # Outputs - for each year: Pearson's r, Spearman's r, linear r2, quadratic r2
 # Fit all years together?
