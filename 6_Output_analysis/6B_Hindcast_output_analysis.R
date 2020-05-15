@@ -7,15 +7,16 @@
 
 #####################LIST OF METRICS WE ARE CALCULATING###############################
 #1. RMSE of log(totalperL)
-#2. Predictive variance of log(totalperL)
-#3. Coverage (% of values falling within 95% predictive interval)
-#4. Peak timing metric (when did model predict the peak vs. when it occurred)
-#5. Mean quantile of observations in distribution of predictions
-#6. Quantile of 2015 max. density in predictive interval
-#7. Pearson's r btwn predicted and observed in log space
-#8. **Mean diff. in predicted-observed in total per L
-#9. **Bias in predictions during highest density point in 2015
-#10. **Mean range of 95% predictive interval in total per L
+#2. Predictive SD of log(totalperL)
+#3. Predictive loss
+#4. Coverage (% of values falling within 95% predictive interval)
+#5. Peak timing metric (when did model predict the peak vs. when it occurred)
+#6. Mean quantile of observations in distribution of predictions
+#7. Quantile of 2015 max. density in predictive interval
+#8. Pearson's r btwn predicted and observed in log space
+#9. **Mean diff. in predicted-observed in total per L
+#10. **Bias in predictions during highest density point in 2015
+#11. **Mean range of 95% predictive interval in total per L
 
 ##**metrics that are not in log space
 #######################################################################################
@@ -58,7 +59,7 @@ for (n in 1:length(forecast_weeks)){
   }
 
   #set up matrix for model assessment metrics
-  hoa <- matrix(NA,length(model_names),11)
+  hoa <- matrix(NA,length(model_names),12)
 
   for (i in 1:length(model_names)){
 
@@ -86,48 +87,52 @@ for (n in 1:length(forecast_weeks)){
     RMSE <- rmse(mean_pred_log, obs_log)
     hoa[i,2] <- round(RMSE,2)
 
-    #2. predictive variance of log(totalperL)
-    pred_var <- mean(apply(vardat,2,var))
-    hoa[i,3] <- round(pred_var,2)
+    #2. predictive SD of log(totalperL)
+    pred_sd <- mean(apply(vardat,2,sd))
+    hoa[i,3] <- round(pred_sd,2)
+
+    #3. predictive loss
+    pred_loss = sqrt(RMSE + pred_sd)
+    hoa[i,4] = round(pred_loss,2)
 
     #3. coverage (% of values falling within 95% predictive interval)
     cov <- coverage(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[i,4] <- cov
+    hoa[i,5] <- cov
 
     #4. peak timing metric (when did model predict the peak vs. when it occurred)
     #reported as difference in weeks, where -1 means model predicted 1 week early
     #and 1 means model predicted 1 week late
     pt <- peak_timing(pred = mean_pred_log, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[i,5] <- pt
+    hoa[i,6] <- pt
 
     #5. Mean quantile of observations in distribution of predictions
     mean_quant <- mean_quantile(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[i,6] <- round(mean_quant,2)
+    hoa[i,7] <- round(mean_quant,2)
 
     #6. Quantile of 2015 max. density in predictive interval
     max_quant <- max_quantile(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[i,7] <- round(max_quant,2)
+    hoa[i,8] <- round(max_quant,2)
 
     #7. Pearson's r btwn predicted and observed in log space
     corr <- cor(mean_pred_log, c(obs_log[1,],obs_log[2,]), method = "pearson", use = "complete.obs")
-    hoa[i,8] <- round(corr,2)
+    hoa[i,9] <- round(corr,2)
 
     #8. **Mean diff. in predicted-observed in total per L
     bi <- bias(pred_dist = exp(vardat), obs = c(obs_not_log[1,],obs_not_log[2,]))
-    hoa[i,9] <- round(bi,2)
+    hoa[i,10] <- round(bi,2)
 
     #9. **Bias in predictions during highest density point in 2015
     max_bi <- max_bias(pred_dist = exp(vardat), obs = c(obs_not_log[1,],obs_not_log[2,]))
-    hoa[i,10] <- round(max_bi,2)
+    hoa[i,11] <- round(max_bi,2)
 
     #10. **Mean range of 95% predictive interval in total per L
     mr <- mean_range(pred_dist = exp(vardat))
-    hoa[i,11] <- round(mr,2)
+    hoa[i,12] <- round(mr,2)
 
 }
     #set column names for matrix and write to file
     hoa <- data.frame(hoa)
-    colnames(hoa) <- c("model_name","RMSE","pred_var","coverage","peak_timing","mean_quantile",
+    colnames(hoa) <- c("model_name","RMSE","pred_SD","pred_loss","coverage","peak_timing","mean_quantile",
                        "max_quantile","Pearsons_r","mean_bias","max_bias","mean_range")
     write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
 }
