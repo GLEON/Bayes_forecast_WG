@@ -93,7 +93,7 @@ for (n in 1:length(forecast_weeks)){
 
     #3. predictive loss
     pred_var <- mean(apply(vardat,2,var))
-    pred_loss = sqrt(RMSE + pred_var)
+    pred_loss = sqrt(RMSE^2 + pred_var)
     hoa[i,4] = round(pred_loss,2)
 
     #3. coverage (% of values falling within 95% predictive interval)

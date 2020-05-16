@@ -1,2 +1,2 @@
 "model_name","RMSE","pred_SD","pred_loss","coverage","peak_timing","mean_quantile","max_quantile","Pearsons_r","mean_bias","max_bias","mean_range"
-"ensemble","1.52","1.9","2.27","100","14","0.59","0.97","0.62","1.41","-11.55","20.92"
+"ensemble","1.52","1.9","2.44","100","14","0.59","0.97","0.62","1.41","-11.55","20.92"

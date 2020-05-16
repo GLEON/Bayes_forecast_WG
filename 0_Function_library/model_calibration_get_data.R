@@ -218,14 +218,14 @@ if(model_name == "schmidt_and_temp"){
   week_avg1 = colMeans(Schmidt, na.rm = TRUE)
 
   #read in covariate 2 data
-  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
+  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv"))
   #remove 2015-2016 data
   Temp <- Temp[-c(7:8),]
   #center covariate data
   Temp <- (Temp - mean(Temp, na.rm = TRUE))/sd(Temp, na.rm = TRUE)
 
   #read in data from Site 2 for data gap-filling
-  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
+  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv"))
   #remove 2015-2016 data
   Temp_prior <- Temp_prior[-c(7:8),]
   #center water temp data
@@ -273,14 +273,14 @@ if(model_name == "schmidt_and_precip"){
 if(model_name == "temp_and_precip"){
 
   #read in covariate 1 data
-  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
+  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv"))
   #remove 2015-2016 data
   Temp <- Temp[-c(7:8),]
   #center covariate data
   Temp <- (Temp - mean(Temp, na.rm = TRUE))/sd(Temp, na.rm = TRUE)
 
   #read in data from Site 2 for data gap-filling
-  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
+  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv"))
   #remove 2015-2016 data
   Temp_prior <- Temp_prior[-c(7:8),]
   #center water temp data

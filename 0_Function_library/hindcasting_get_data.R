@@ -99,9 +99,9 @@ if (model_name == "schmidt_and_temp"){
   prior1 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
 
   #read in covar2 data
-  covar02 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
+  covar02 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv"))
   #read in prior data
-  prior2 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
+  prior2 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv"))
 
 }
 if (model_name == "schmidt_and_precip"){
@@ -117,9 +117,9 @@ if (model_name == "schmidt_and_precip"){
 }
 if (model_name == "temp_and_precip"){
   #read in covar1 data
-  covar01 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
+  covar01 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv"))
   #read in prior data
-  prior1 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
+  prior1 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv"))
 
   #read in covar2 data
   covar02 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/precip_mm.csv"))
