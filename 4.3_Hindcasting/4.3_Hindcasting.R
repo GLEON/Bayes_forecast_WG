@@ -25,7 +25,7 @@ wks <- c(1:20)
 
 ########################RUN HINDCASTS##############################################
 
-for (i in 1:2){
+for (i in 1:length(my_models)){
 
 #1) Model options => pick model -----------------------------------------------------
 model_name = my_models[i] # options are found in 4.1_JAGS_models
