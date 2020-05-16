@@ -84,7 +84,7 @@ for (n in 1:length(forecast_weeks)){
   #build final data frame and write to file
   means <- round(colMeans(upam, na.rm = TRUE),2)
   upam[16,] <- means
-  upam[,1] <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_wnd","schmidt_max_lag","precip","schmidt_and_precip","wnd_and_precip","wnd_and_GDD","all_models")
+  upam[,1] <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_temp","schmidt_max_lag","precip","schmidt_and_precip","temp_and_precip","precip_and_GDD","all_models")
   upam <- data.frame(upam)
   colnames(upam) <- c("model_name","mean.IC","min.IC","max.IC",
                       "mean.Pa","min.Pa","max.Pa",
