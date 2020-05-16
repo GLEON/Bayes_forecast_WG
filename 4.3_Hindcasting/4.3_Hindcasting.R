@@ -17,7 +17,7 @@
 pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #make vector of model names for model for-loop
-my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_and_wnd","schmidt_max_lag","precip","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
+my_models <- c("schmidt_and_temp","temp_and_precip","precip_and_GDD","RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip","schmidt_and_precip")
 
 #set years and weeks for hindcasting for-loop
 yrs <- c(2015,2016)
@@ -77,7 +77,7 @@ out <- as.matrix(jags.out.mcmc)
 #5) Set up initial conditions and hindcasted drivers for hindcasts
 
 #set up number of draws for initial condition distributions at beginning of season
-Nmc = 10000
+Nmc = 7500
 
 #sample rows from the re-calibrated model output for initial conditions during season
 prow = sample.int(nrow(out),Nmc,replace=TRUE)
@@ -106,7 +106,7 @@ for (m in 1:length(missing)){
   hindcast_data$covar_hindcast[missing[m]] <- mean(covar_ls[,missing[m]],na.rm = TRUE)
   }
 }
-if(model_name %in% c("schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")){
+if(model_name %in% c("schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD")){
   covar_ls1 <- out[,grep("covar1", colnames(out))]
   missing1 <- which(is.na(hindcast_data$covar1_hindcast))
 
