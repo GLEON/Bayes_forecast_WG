@@ -2,7 +2,7 @@
 #History: created by MEL on 25APR20
 
 #load packages
-pacman::p_load(tidyverse, lubridate)
+pacman::p_load(tidyverse, lubridate, lemon)
 
 #set local directory for writing plots
 my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Gloeo_env_covariate_timeseries/"
@@ -44,17 +44,21 @@ mytheme <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_
                  panel.background = element_blank(), axis.line = element_line(colour = "black"),
                  legend.key = element_blank(),legend.background = element_blank(),
                  text = element_text(size=16), axis.text.y = element_text(size = 16),
-                 axis.text.x = element_text(size = 14))
+                 axis.text.x = element_text(size = 12),
+                 panel.border = element_rect(colour = "black", fill = NA),
+                 strip.text.x = element_text(face = "bold"))
 
 #gloeo
+my_y_title <- expression(paste("Log ", italic("G. echinulata"), " total colonies",~~L^-1))
+
 gloeo <- ggplot(data = covariates_all, aes(x = date, y = ln_totalperL))+
-  geom_point(colour = "darkgreen")+
-  geom_line(size = 1, colour = "darkgreen")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
-  ylab(expression(paste("G. echinulata total colonies",~~L^-1)))+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  ylab(my_y_title)+
   theme(strip.background.x = element_blank())+
   xlab("")+
-  mytheme
+  mytheme+
+  geom_point(colour = "darkgreen")+
+  geom_line(size = 1, colour = "darkgreen")
 gloeo
 ggsave(gloeo, filename = file.path(paste(my_directory,"gloeo_timeseries.tif"),sep = ""),
        device = "tiff",height = 4, width = 8, units = "in", scale = 1.1)
@@ -63,7 +67,7 @@ ggsave(gloeo, filename = file.path(paste(my_directory,"gloeo_timeseries.tif"),se
 mintemp <- ggplot(data = covariates_all, aes(x = date, y = HCS.tempC_min))+
   geom_point(colour = "darkblue")+
   geom_line(size = 1, colour = "darkblue")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab(expression("Water temperature " ( degree*C)))+
   theme(strip.background.x = element_blank())+
   xlab("")+
@@ -76,7 +80,7 @@ ggsave(mintemp, filename = file.path(paste(my_directory,"mintemp_timeseries.tif"
 mintemp_lag <- ggplot(data = covariates_all, aes(x = date, y = HCS.tempC_min_lag))+
   geom_point(colour = "darkblue")+
   geom_line(size = 1, colour = "darkblue")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab(expression("Water temperature " ( degree*C)))+
   theme(strip.background.x = element_blank())+
   xlab("")+
@@ -89,7 +93,7 @@ ggsave(mintemp_lag, filename = file.path(paste(my_directory,"mintemp_lag_timeser
 wtrtemp_MA <- ggplot(data = covariates_all, aes(x = date, y = ma_7))+
   geom_point(colour = "darkblue")+
   geom_line(size = 1, colour = "darkblue")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab(expression("Water temperature " ( degree*C)))+
   theme(strip.background.x = element_blank())+
   xlab("")+
@@ -102,7 +106,7 @@ ggsave(wtrtemp_MA, filename = file.path(paste(my_directory,"wtrtemp_MA7_timeseri
 gdd <- ggplot(data = covariates_all, aes(x = date, y = gdd_sum))+
   geom_point(colour = "darkblue")+
   geom_line(size = 1, colour = "darkblue")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab("Growing degree days")+
   theme(strip.background.x = element_blank())+
   xlab("")+
@@ -115,7 +119,7 @@ ggsave(gdd, filename = file.path(paste(my_directory,"GDD_timeseries.tif"),sep = 
 smd <- ggplot(data = covariates_all, aes(x = date, y = schmidt.stability_median_diff))+
   geom_point(colour = "darkorange")+
   geom_line(size = 1, colour = "darkorange")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab(expression(paste("Schmidt stability  ","(",J~m^-2,")")))+
   theme(strip.background.x = element_blank())+
   xlab("")+
@@ -128,7 +132,7 @@ ggsave(smd, filename = file.path(paste(my_directory,"schmidt_med_diff_timeseries
 sml <- ggplot(data = covariates_all, aes(x = date, y = schmidt.stability_max_lag))+
   geom_point(colour = "darkorange")+
   geom_line(size = 1, colour = "darkorange")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab(expression(paste("Schmidt stability  ","(",J~m^-2,")")))+
   theme(strip.background.x = element_blank())+
   xlab("")+
@@ -141,7 +145,7 @@ ggsave(sml, filename = file.path(paste(my_directory,"schmidt_max_lag_timeseries.
 precip <- ggplot(data = covariates_all, aes(x = date, y = precip_mm))+
   geom_point(colour = "darkgray")+
   geom_line(size = 1, colour = "darkgray")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab("millimeters")+
   theme(strip.background.x = element_blank())+
   xlab("")+
@@ -154,7 +158,7 @@ ggsave(precip, filename = file.path(paste(my_directory,"precip_timeseries.tif"),
 winddir <- ggplot(data = covariates_all, aes(x = date, y = AveWindDir_cove_mean_2daylag))+
   geom_point(colour = "darkgray")+
   geom_line(size = 1, colour = "darkgray")+
-  facet_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
+  facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
   ylab("Proportion of wind measurements")+
   theme(strip.background.x = element_blank())+
   xlab("")+
