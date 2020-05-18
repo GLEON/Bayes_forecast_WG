@@ -249,7 +249,7 @@ allvar4 <- ggplot(data = subset(plotdata1, plotdata1$forecast_week == 4), aes(x 
 allvar4
 
 final_plot <- plot_grid(allvar1, allvar4, align = "hv", nrow = 2, ncol = 1,
-                        rel_heights = c(1, 2))
+                        rel_heights = c(1, 1.75))
 
 ggsave(final_plot, filename = file.path(my_directory,paste0("V.pred.rel.all.models.tif")),device = "tiff",
        height = 9, width = 6, units = "in", scale = 1.1, dpi = 600)

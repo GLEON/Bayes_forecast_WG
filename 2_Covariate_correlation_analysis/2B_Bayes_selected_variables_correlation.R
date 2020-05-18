@@ -56,22 +56,22 @@ covariates_all_filter <- covariates_all %>%
 
 #select covariates that make the model selection cut for single covar Bayes models
 bayes_covars <- covariates_all_filter %>%
-  select(date, HCS.tempC_min, schmidt.stability_median_diff, precip_mm, gdd_sum)
+  select(date, ma_7, schmidt.stability_median_diff, precip_mm, gdd_sum)
 
 #plot all covars against each other
-plot(bayes_covars$HCS.tempC_min,bayes_covars$schmidt.stability_median_diff)
-plot(bayes_covars$HCS.tempC_min,bayes_covars$precip_mm)
-plot(bayes_covars$HCS.tempC_min,bayes_covars$gdd_sum)
+plot(bayes_covars$ma_7,bayes_covars$schmidt.stability_median_diff)
+plot(bayes_covars$ma_7,bayes_covars$precip_mm)
+plot(bayes_covars$ma_7,bayes_covars$gdd_sum)
 plot(bayes_covars$precip_mm,bayes_covars$schmidt.stability_median_diff)
 plot(bayes_covars$precip_mm,bayes_covars$gdd_sum)
 plot(bayes_covars$gdd_sum,bayes_covars$schmidt.stability_median_diff)
 
 #check correlation coefficients for non-quadratic relationships
-cor(bayes_covars$HCS.tempC_min,bayes_covars$schmidt.stability_median_diff,method = "spearman", use = "complete.obs")
-cor.test(bayes_covars$HCS.tempC_min,bayes_covars$schmidt.stability_median_diff, method = "spearman", use = "complete.obs", exact = F)
+cor(bayes_covars$ma_7,bayes_covars$schmidt.stability_median_diff,method = "spearman", use = "complete.obs")
+cor.test(bayes_covars$ma_7,bayes_covars$schmidt.stability_median_diff, method = "spearman", use = "complete.obs", exact = F)
 
-cor(bayes_covars$HCS.tempC_min,bayes_covars$precip_mm,method = "spearman", use = "complete.obs")
-cor.test(bayes_covars$HCS.tempC_min,bayes_covars$precip_mm, method = "spearman", use = "complete.obs", exact = F)
+cor(bayes_covars$ma_7,bayes_covars$precip_mm,method = "spearman", use = "complete.obs")
+cor.test(bayes_covars$ma_7,bayes_covars$precip_mm, method = "spearman", use = "complete.obs", exact = F)
 
 cor(bayes_covars$precip_mm,bayes_covars$schmidt.stability_median_diff,method = "spearman", use = "complete.obs")
 cor.test(bayes_covars$precip_mm,bayes_covars$schmidt.stability_median_diff, method = "spearman", use = "complete.obs", exact = F)
@@ -83,7 +83,7 @@ cor(bayes_covars$gdd_sum,bayes_covars$schmidt.stability_median_diff,method = "sp
 cor.test(bayes_covars$gdd_sum,bayes_covars$schmidt.stability_median_diff, method = "spearman", use = "complete.obs", exact = F)
 
 #look at quadratic R2 for mintemp and GDD
-y <- unlist(bayes_covars$HCS.tempC_min)
+y <- unlist(bayes_covars$ma_7)
 x <- unlist(bayes_covars$gdd_sum)
 x2 <- unlist(bayes_covars$gdd_sum^2)
 

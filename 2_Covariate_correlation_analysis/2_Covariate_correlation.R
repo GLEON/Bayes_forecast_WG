@@ -175,6 +175,7 @@ bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output.csv") %>%
 bayes_variables_keep <- bayes_variables %>%
   filter((abs(global_Spearmans_r)>=0.3 & adj_Spearmans_pvalue <=0.05) | abs(global_quad_r2) >= 0.3)
 
+mean(bayes_variables$global_Spearmans_r, na.rm = TRUE)
 
 #this is where judgment comes in - we chose the following summary statistics:
 #1. HCS.tempC_min
