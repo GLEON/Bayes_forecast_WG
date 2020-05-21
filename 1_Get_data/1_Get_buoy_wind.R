@@ -1,31 +1,27 @@
 # Script to download and wrangle Sunapee GLEON buoy wind data from EDI
-# Last updated 2020 April 10 - JB
+# Last updated 2020 May 20 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate, googledrive, openair)
+pacman::p_load(tidyverse, lubridate, openair)
 
-# Download data ####
-#download data file into appropriate local folder
+# Download data from EDI to local folder ####
 
-# Sunapee GLEON buoy wind data
-my_url <- "https://drive.google.com/file/d/1yQHeWihxC1C6wu4VR7boYo1bC9_GA123/view?usp=sharing"
+# High-Frequency Weather Data at Lake Sunapee, New Hampshire, USA, 2007-2019
+# EDI Package ID: edi.234.3
+# Citation: LSPA, K.C. Weathers, and B.G. Steele. 2020. High-Frequency Weather Data at Lake Sunapee, New Hampshire, USA, 2007-2019 ver 3. Environmental Data Initiative. https://doi.org/10.6073/pasta/698e9ffb0cdcda81ecf7188bff54445e. Accessed 2020-05-21.
 
-drive_download(
-  file = drive_get(my_url),
-  path = "./00_Data_files/EDI_data_clones/2007-e2019_wind_L1.csv", overwrite = TRUE)
+data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.234.3&entityid=a14e1f5bbeddc155d3fd8885557466ec"
 
-# Alternative way to get file ID
-as_id(drive_find(pattern = "buoy.met/2007-e2019_wind_L1.csv")$id)
+destination <- "./00_Data_files/EDI_data_clones"
 
-drive_download(file = as_id("1yQHeWihxC1C6wu4VR7boYo1bC9_GA123"),
-               path = "./00_Data_files/EDI_data_clones/2007-e2019_wind_L1.csv", overwrite = TRUE)
+download.file(data, destfile = "./00_Data_files/EDI_data_clones/2007_e2019_wind_L1.csv", method='curl')
 
 # Load buoy wind data into R ####
-buoy_wind <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_wind_L1.csv", col_types = cols(
+buoy_wind <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_wind_L1.csv", col_types = cols(
   datetime = col_datetime(format = ""),
   location = col_character(),
   WindDir_deg = col_double(),
