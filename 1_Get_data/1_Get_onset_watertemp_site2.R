@@ -18,7 +18,7 @@ data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.498.1&en
 
 destination <- "./00_Data_files/EDI_data_clones"
 
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method='curl')
+download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method='libcurl')
 
 # Load onset water temp data into R ####
 dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
@@ -334,4 +334,3 @@ watertemp_all <- bind_cols(watertemp[,c(1,4:8)], watertemp_lag[,-1], watertemp_d
 
 # Write growing degree days data
 write_csv(watertemp_all, "./00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
-
