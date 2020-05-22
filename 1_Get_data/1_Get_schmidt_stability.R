@@ -14,17 +14,17 @@ pacman::p_load(tidyverse, lubridate, rLakeAnalyzer, openair)
 # EDI Package ID: edi.499.1
 # Citation: LSPA, K.C. Weathers, and B.G. Steele. 2020. Lake Sunapee Instrumented Buoy: High Frequency Water Temperature and Dissolved Oxygen Data – 2007-2019 ver 1. Environmental Data Initiative. https://doi.org/10.6073/pasta/70c41711d6199ac2758764ecfcb9815e. Accessed 2020-05-21.
 
-# buoy_data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=06da1cc93c1eaa69f819ce8610f5cd33"
-#
-# hobo_data <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=14340fa6419a6b4bc82cfe4713c25ea6"
-#
-# destination <- "./00_Data_files/EDI_data_clones"
-#
-# # Buoy temp string data
-# download.file(buoy_data,destfile = "./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv ", method='curl')
-#
-# # HOBO data
-# download.file(hobo_data,destfile = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", method='curl')
+buoy_data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=06da1cc93c1eaa69f819ce8610f5cd33"
+
+hobo_data <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=14340fa6419a6b4bc82cfe4713c25ea6"
+
+destination <- "./00_Data_files/EDI_data_clones"
+
+# Buoy temp string data
+download.file(buoy_data,destfile = "./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv", method='libcurl')
+
+# HOBO data
+download.file(hobo_data,destfile = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", method='libcurl')
 
 # Load buoy data into R #### #delim = ",",
 buoy <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv",
