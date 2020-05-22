@@ -17,7 +17,7 @@ pacman::p_load(tidyverse, lubridate, openair, zoo)
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.498.1&entityid=b4f60789ceb87db613924ca43a2f71ed"
 destination <- "./00_Data_files/EDI_data_clones"
 
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method='curl')
+download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method='libcurl')
 
 # Load onset water temp data into R ####
 dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
@@ -29,8 +29,7 @@ dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2
                                  temp_degC = col_double()))
 
 
-
-#limit logger data to sampling years, site, and remove 30 min data in 2009 so consistent with other years
+# limit logger data to sampling years, site, and remove 30 min data in 2009 so consistent with other years
 dat1 <- dat %>%
   mutate(date = date(datetime)) %>%
   filter(year %in% 2009:2016) %>%
@@ -66,7 +65,7 @@ hcs_watertemp_daily_min <- timeAverage(dat3, avg.time = "day", data.thresh = 75,
 hcs_watertemp_daily_max <- timeAverage(dat3, avg.time = "day", data.thresh = 75, statistic = "max", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "hour")
 hcs_watertemp_daily_sd <- timeAverage(dat3, avg.time = "day", data.thresh = 75, statistic = "sd", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "hour")
 
-#Bind summaries together
+# Bind summaries together
 hcs_watertemp_daily_summary <- bind_cols(hcs_watertemp_daily_mean[,-4], hcs_watertemp_daily_median[,5], hcs_watertemp_daily_min[,5], hcs_watertemp_daily_max[,5], hcs_watertemp_daily_sd[,5])
 
 # rename columns
