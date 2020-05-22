@@ -95,7 +95,3 @@ par_daily_summary3 <- par_daily_summary2 %>%
 
 # Write PAR data ####
 write_csv(par_daily_summary3, "./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")
-
-
-
-
