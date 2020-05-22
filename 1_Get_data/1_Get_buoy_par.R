@@ -17,7 +17,7 @@ pacman::p_load(tidyverse, lubridate, openair)
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.234.3&entityid=e7e5f1961a054ef9b4146e82a8f77aa4"
 destination <- "./00_Data_files/EDI_data_clones"
 
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv", method='curl')
+download.file(data,destfile = "./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv", method='libcurl')
 
 # Load buoy PAR data into R ####
 par <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv",
