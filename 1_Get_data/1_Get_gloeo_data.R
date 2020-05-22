@@ -1,5 +1,5 @@
 # Script to download and wrangle Gloeo data from EDI
-# Last updated 2020 April 9 - JB
+# Last updated 2020 May 22 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
@@ -18,7 +18,7 @@ data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.497.2&en
 
 destination <- "./00_Data_files/EDI_data_clones"
 
-download.file(data, destfile = "./00_Data_files/EDI_data_clones/weekly.surface.gloeo_4sites_2005-2016_v10April2020.csv", method='curl')
+download.file(data, destfile = "./00_Data_files/EDI_data_clones/weekly.surface.gloeo_4sites_2005-2016_v10April2020.csv", method='libcurl')
 
 # Load gloeo data into R ####
 dat <- read_csv("./00_Data_files/EDI_data_clones/weekly.surface.gloeo_4sites_2005-2016_v10April2020.csv", col_types = list(date = col_date(format = ""),
@@ -66,5 +66,5 @@ hc_gloeo_data <- dat2 %>%
   mutate(ln_totalperL = log(totalperL + (1/141.4)))# add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
 # convert to natural log using  log + detection limit = 1/141.4
 
+# Write Herrick Cove South gloeo data as a csv ####
 write_csv(hc_gloeo_data, "./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
-
