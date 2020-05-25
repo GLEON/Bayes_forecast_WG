@@ -77,7 +77,7 @@ bias = function(pred_dist, obs){
   obs_diff <- c(NULL)
 
   for (i in 1:length(obs)){
-    obs_diff[i] <- mean(pred_dist[,i], na.rm = TRUE) - obs[i]
+    obs_diff[i] <- median(pred_dist[,i], na.rm = TRUE) - obs[i]
   }
 
   bias <- mean(obs_diff, na.rm = TRUE)

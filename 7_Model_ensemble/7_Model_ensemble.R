@@ -23,20 +23,20 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
+model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD")
 forecast_weeks <- c(1:4)
 hindcast_types <- c("IC","IC.Pa","IC.Pa.D","IC.Pa.D.P")
 
 
 #1. Read in all vardat files for all models EXCEPT RW MODELS for each type of hindcast (IC, IC.P, etc.)
 #2. Append rows of all vardat files and write ensemble vardat to file
-for (n in 4:length(forecast_weeks)){
+for (n in 1:length(forecast_weeks)){
 
   for (j in 1:length(hindcast_types)){
 
     ensemble_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[1],'_vardat.',hindcast_types[j],'_',forecast_weeks[n],'.csv'))))
 
-  for (i in 2:length(model_names)){
+  for (i in 1:length(model_names)){
 
     #read in vardats for various hindcast types for each model
     vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.',hindcast_types[j],'_',forecast_weeks[n],'.csv'))))
@@ -100,7 +100,7 @@ for (n in 1:length(forecast_weeks)){
 
   ensemble_PI <- read_csv(file=file.path(paste("./6_Output_analysis/6.1_Predictive_intervals/",paste0(model_names[1],'_PI_',forecast_weeks[n],'.csv'))))
 
-    for (i in 2:length(model_names)){
+    for (i in 1:length(model_names)){
 
       #read in PIs for each model
       PI <- read_csv(file=file.path(paste("./6_Output_analysis/6.1_Predictive_intervals/",paste0(model_names[i],'_PI_',forecast_weeks[n],'.csv'))))
@@ -146,7 +146,7 @@ for (n in 1:length(forecast_weeks)){
   }
 
   #set up matrix for model assessment metrics
-  hoa <- matrix(NA,1,11)
+  hoa <- matrix(NA,1,12)
 
     hoa[1,1] <- model_name
 
@@ -172,47 +172,52 @@ for (n in 1:length(forecast_weeks)){
     RMSE <- rmse(mean_pred_log, obs_log)
     hoa[1,2] <- round(RMSE,2)
 
-    #2. predictive variance of log(totalperL)
+    #2. predictive SD of log(totalperL)
+    pred_sd <- mean(apply(vardat,2,sd))
+    hoa[1,3] <- round(pred_sd,2)
+
+    #3. predictive loss
     pred_var <- mean(apply(vardat,2,var))
-    hoa[1,3] <- round(pred_var,2)
+    pred_loss = sqrt(RMSE^2 + pred_var)
+    hoa[1,4] = round(pred_loss,2)
 
     #3. coverage (% of values falling within 95% predictive interval)
     cov <- coverage(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[1,4] <- cov
+    hoa[1,5] <- cov
 
     #4. peak timing metric (when did model predict the peak vs. when it occurred)
     #reported as difference in weeks, where -1 means model predicted 1 week early
     #and 1 means model predicted 1 week late
     pt <- peak_timing(pred = mean_pred_log, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[1,5] <- pt
+    hoa[1,6] <- pt
 
     #5. Mean quantile of observations in distribution of predictions
     mean_quant <- mean_quantile(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[1,6] <- round(mean_quant,2)
+    hoa[1,7] <- round(mean_quant,2)
 
     #6. Quantile of 2015 max. density in predictive interval
     max_quant <- max_quantile(pred_dist = vardat, obs = c(obs_log[1,],obs_log[2,]))
-    hoa[1,7] <- round(max_quant,2)
+    hoa[1,8] <- round(max_quant,2)
 
     #7. Pearson's r btwn predicted and observed in log space
     corr <- cor(mean_pred_log, c(obs_log[1,],obs_log[2,]), method = "pearson", use = "complete.obs")
-    hoa[1,8] <- round(corr,2)
+    hoa[1,9] <- round(corr,2)
 
     #8. **Mean diff. in predicted-observed in total per L
     bi <- bias(pred_dist = exp(vardat), obs = c(obs_not_log[1,],obs_not_log[2,]))
-    hoa[1,9] <- round(bi,2)
+    hoa[1,10] <- round(bi,2)
 
     #9. **Bias in predictions during highest density point in 2015
     max_bi <- max_bias(pred_dist = exp(vardat), obs = c(obs_not_log[1,],obs_not_log[2,]))
-    hoa[1,10] <- round(max_bi,2)
+    hoa[1,11] <- round(max_bi,2)
 
     #10. **Mean range of 95% predictive interval in total per L
     mr <- mean_range(pred_dist = exp(vardat))
-    hoa[1,11] <- round(mr,2)
+    hoa[1,12] <- round(mr,2)
 
   #set column names for matrix and write to file
   hoa <- data.frame(hoa)
-  colnames(hoa) <- c("model_name","RMSE","pred_var","coverage","peak_timing","mean_quantile",
+  colnames(hoa) <- c("model_name","RMSE","pred_SD","pred_loss","coverage","peak_timing","mean_quantile",
                      "max_quantile","Pearsons_r","mean_bias","max_bias","mean_range")
   write.csv(hoa,file=file.path(paste("./7_Model_ensemble/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
 }

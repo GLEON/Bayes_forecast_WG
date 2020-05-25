@@ -17,12 +17,12 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output
 write_plots <- TRUE
 
 #make vector of model names for for-loop
-my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_wnd","schmidt_max_lag","precip","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
+my_models <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_precip","precip_and_GDD","schmidt_and_temp","temp_and_precip")
 length(my_models)
 
 ########################CALIBRATE MODELS##############################################
 
-for (i in 15:length(my_models)){
+for (i in 14:length(my_models)){
 
 #1) Source helper functions ---------------------------------------------------------
   source('0_Function_library/model_calibration_plug_n_play.R')

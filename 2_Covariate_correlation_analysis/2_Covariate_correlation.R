@@ -11,8 +11,16 @@ pacman::p_load(tidyverse, lubridate, googledrive)
 # set local directory for plots
 my_directory <- ("C:/Users/Mary Lofton/Dropbox/Ch5/Covariate_analysis_output/")
 
+#define function to extract p-value for linear and quadratic models
+lmp <- function (modelobject) {
+  if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
+  f <- summary(modelobject)$fstatistic
+  p <- pf(f[1],f[2],f[3],lower.tail=F)
+  attributes(p) <- NULL
+  return(p)
+}
 
-# Load all linear covariates ####
+# Load all covariates ####
 
 # gloeo data
 hc_gloeo_data <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
@@ -50,16 +58,16 @@ covariates_all_filter <- covariates_all %>%
 # Outputs - for each year: Pearson's r, Spearman's r, linear r2, quadratic r2
 # Fit all years together?
 
-output <- matrix(nrow = length(covariates_all_filter)-6, ncol = 29) #length of covariates all -6
+output <- matrix(nrow = length(covariates_all_filter)-6, ncol = 9) #length of covariates all -6
 
 # vector of years
 years <- c(2009:2014)
 
-# set up counter to help with year indexing
-col <- c(6,10,14,18,22,26)
-
-# par data columns - special case b/c missing 2014 data
-colnames(covariates_all_filter[52:57])
+# # set up counter to help with year indexing
+# col <- c(6,10,14,18,22,26)
+#
+# # par data columns - special case b/c missing 2014 data
+# colnames(covariates_all_filter[52:57])
 
 # Run for loop ####
 for(i in 7:ncol(covariates_all_filter)) {
@@ -67,13 +75,22 @@ for(i in 7:ncol(covariates_all_filter)) {
   # put variable name in output matrix
   output[i-6,1] <- colnames(covariates_all_filter[,i])
 
-  # #prepare data to do exploratory viz plot
-  # plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
+  #prepare data to do exploratory viz plot
+  plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
 
-  # #write exploratory viz plot to file
-  # png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
-  # plot(plotdata)
-  # dev.off()
+  #write exploratory viz plots to file
+  png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
+  plot(plotdata)
+  dev.off()
+
+  png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_hist.png")))
+  hist(as.numeric(unlist(covariates_all_filter[,i])), main = colnames(covariates_all_filter[,i]))
+  dev.off()
+
+  png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_QQplot.png")))
+  qqnorm(as.numeric(unlist(covariates_all_filter[,i])), pch = 1, frame = FALSE,main = colnames(covariates_all_filter[,i]))
+  qqline(as.numeric(unlist(covariates_all_filter[,i])), col = "steelblue", lwd = 2)
+  dev.off()
 
   #prepare data for regression and correlation
   y <- unlist(covariates_all_filter[,6])
@@ -88,68 +105,77 @@ for(i in 7:ncol(covariates_all_filter)) {
   output[i-6,4] <- round(cor(x,y, method = "spearman", use = "complete.obs"),2)
   quad_mod <- lm(y~x + x2) # x needs to be a matrix for lm to work
   output[i-6,5] <- round(summary(quad_mod)$adj.r.squared,2)
+  output[i-6,6] <- lmp(mod)
+  pearson_p <- cor.test(x,y, method = "pearson", use = "complete.obs")
+  output[i-6,7] <- pearson_p$p.value
+  spearman_p <- cor.test(x,y, method = "spearman", use = "complete.obs", exact = F)
+  output[i-6,8] <- spearman_p$p.value
+  output[i-6,9] <- lmp(quad_mod)
 
-  #no par data for 2014 requires an if else statement to make sure 2014 excluded
-  #from loop with par data columns
-  if(colnames(covariates_all_filter[,i]) %in% colnames(covariates_all_filter)[52:57]){ # check columns match PAR
-  for(j in 1:5) {
-
-   #subset to a single year
-   mod_year <- subset(covariates_all_filter, year==years[j])
-
-   #prepare data for regression and correlation
-   y <- unlist(mod_year[,6])
-   x <- unlist(mod_year[,i])
-   x2 <- unlist(mod_year[,i]^2)
-
-   #run regression and correlations and assign to ouput matrix
-   mod <- lm(y~x)
-   output[i-6,col[j]] <- round(summary(mod)$adj.r.squared,2)
-   output[i-6,col[j]+1] <- round(cor(x,y, method = "pearson", use = "complete.obs"), 2)
-   output[i-6,col[j]+2] <- round(cor(x,y, method = "spearman", use = "complete.obs"),2)
-   quad_mod <- lm(y~x + x2)
-   output[i-6,col[j]+3] <- round(summary(quad_mod)$adj.r.squared,2)
-  }}
-  else{
-    for(j in 1:length(years)) {
-
-      #subset to a single year
-      mod_year <- subset(covariates_all_filter, year==years[j])
-
-      #prepare data for regression and correlation
-      y <- unlist(mod_year[,6])
-      x <- unlist(mod_year[,i])
-      x2 <- unlist(mod_year[,i]^2)
-
-      #run regression and correlations and assign to ouput matrix
-      mod <- lm(y~x)
-      output[i-6,col[j]] <- round(summary(mod)$adj.r.squared,2)
-      output[i-6,col[j]+1] <- round(cor(x,y, method = "pearson", use = "complete.obs"), 2)
-      output[i-6,col[j]+2] <- round(cor(x,y, method = "spearman", use = "complete.obs"),2)
-      quad_mod <- lm(y~x + x2)
-      output[i-6,col[j]+3] <- round(summary(quad_mod)$adj.r.squared,2)
-    }
-
-  }
+  # #no par data for 2014 requires an if else statement to make sure 2014 excluded
+  # #from loop with par data columns
+  # if(colnames(covariates_all_filter[,i]) %in% colnames(covariates_all_filter)[52:57]){ # check columns match PAR
+  # for(j in 1:5) {
+  #
+  #  #subset to a single year
+  #  mod_year <- subset(covariates_all_filter, year==years[j])
+  #
+  #  #prepare data for regression and correlation
+  #  y <- unlist(mod_year[,6])
+  #  x <- unlist(mod_year[,i])
+  #  x2 <- unlist(mod_year[,i]^2)
+  #
+  #  #run regression and correlations and assign to ouput matrix
+  #  mod <- lm(y~x)
+  #  output[i-6,col[j]] <- round(summary(mod)$adj.r.squared,2)
+  #  output[i-6,col[j]+1] <- round(cor(x,y, method = "pearson", use = "complete.obs"), 2)
+  #  output[i-6,col[j]+2] <- round(cor(x,y, method = "spearman", use = "complete.obs"),2)
+  #  quad_mod <- lm(y~x + x2)
+  #  output[i-6,col[j]+3] <- round(summary(quad_mod)$adj.r.squared,2)
+  # }}
+  # else{
+  #   for(j in 1:length(years)) {
+  #
+  #     #subset to a single year
+  #     mod_year <- subset(covariates_all_filter, year==years[j])
+  #
+  #     #prepare data for regression and correlation
+  #     y <- unlist(mod_year[,6])
+  #     x <- unlist(mod_year[,i])
+  #     x2 <- unlist(mod_year[,i]^2)
+  #
+  #     #run regression and correlations and assign to ouput matrix
+  #     mod <- lm(y~x)
+  #     output[i-6,col[j]] <- round(summary(mod)$adj.r.squared,2)
+  #     output[i-6,col[j]+1] <- round(cor(x,y, method = "pearson", use = "complete.obs"), 2)
+  #     output[i-6,col[j]+2] <- round(cor(x,y, method = "spearman", use = "complete.obs"),2)
+  #     quad_mod <- lm(y~x + x2)
+  #     output[i-6,col[j]+3] <- round(summary(quad_mod)$adj.r.squared,2)
+  #   }
+  #
+  # }
 
 }
 
 output <- data.frame(output)
-colnames(output) <- c("covariate_name","global_linear_r2","global_Pearsons_r","global_Spearmans_r","global_quad_r2",
-                      "linear_r2_2009","Pearsons_r_2009","Spearmans_r_2009","quad_r2_2009",
-                      "linear_r2_2010","Pearsons_r_2010","Spearmans_r_2010","quad_r2_2010",
-                      "linear_r2_2011","Pearsons_r_2011","Spearmans_r_2011","quad_r2_2011",
-                      "linear_r2_2012","Pearsons_r_2012","Spearmans_r_2012","quad_r2_2012",
-                      "linear_r2_2013","Pearsons_r_2013","Spearmans_r_2013","quad_r2_2013",
-                      "linear_r2_2014","Pearsons_r_2014","Spearmans_r_2014","quad_r2_2014")
+colnames(output) <- c("covariate_name","global_linear_r2","global_Pearsons_r","global_Spearmans_r","global_quad_r2","linear_pvalue", "Pearsons_pvalue","Spearmans_pvalue","quad_pvalue")
+                      # "linear_r2_2009","Pearsons_r_2009","Spearmans_r_2009","quad_r2_2009",
+                      # "linear_r2_2010","Pearsons_r_2010","Spearmans_r_2010","quad_r2_2010",
+                      # "linear_r2_2011","Pearsons_r_2011","Spearmans_r_2011","quad_r2_2011",
+                      # "linear_r2_2012","Pearsons_r_2012","Spearmans_r_2012","quad_r2_2012",
+                      # "linear_r2_2013","Pearsons_r_2013","Spearmans_r_2013","quad_r2_2013",
+                      # "linear_r2_2014","Pearsons_r_2014","Spearmans_r_2014","quad_r2_2014")
 
 write.csv(output, file = "./2_Covariate_correlation_analysis/output.csv",row.names = FALSE)
 
 #####################FILTERING FOR VARIABLES TO INCLUDE IN BAYES MODELS################
-bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output.csv")
+bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output.csv") %>%
+  mutate(adj_Spearmans_pvalue = p.adjust(Spearmans_pvalue, method = "holm"))
 
 bayes_variables_keep <- bayes_variables %>%
-  filter(abs(global_Spearmans_r)>=0.3 | abs(global_quad_r2) >= 0.3)
+  filter((abs(global_Spearmans_r)>=0.3 & adj_Spearmans_pvalue <=0.05) | abs(global_quad_r2) >= 0.3)
+
+mean(bayes_variables$global_Spearmans_r, na.rm = TRUE)
 
 #this is where judgment comes in - we chose the following summary statistics:
 #1. HCS.tempC_min

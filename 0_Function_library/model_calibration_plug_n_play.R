@@ -25,10 +25,10 @@ jags_plug_ins <- function(model_name){
   if(model_name %in% c("GDD_test")){
     model_type <- "Quad_1var_test"
   }
-  if(model_name %in% c("schmidt_and_precip","wnd_and_precip","schmidt_and_wnd")){
+  if(model_name %in% c("schmidt_and_precip","temp_and_precip","schmidt_and_temp")){
     model_type <- "Linear_2var"
   }
-  if(model_name %in% c("wnd_and_GDD")){
+  if(model_name %in% c("precip_and_GDD")){
     model_type <- "Quad_2var"
   }
 
