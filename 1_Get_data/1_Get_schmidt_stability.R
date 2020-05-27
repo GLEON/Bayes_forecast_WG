@@ -26,7 +26,7 @@ download.file(buoy_data,destfile = "./00_Data_files/EDI_data_clones/2007_e2019_b
 # HOBO data
 download.file(hobo_data,destfile = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", method='libcurl')
 
-# Load buoy data into R #### #delim = ",",
+# Load buoy data into R ####
 buoy <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv",
                  col_types = list(
                    datetime = col_datetime(format = ""),
@@ -70,7 +70,7 @@ buoy <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22Ap
                    temp_flag = col_character()
                  ))
 
-# load HOBO data from 2015 into R ####
+# Load HOBO data from 2015 into R ####
 hobo <- read_csv("./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", col_types = list(
     datetime = col_datetime(format = ""),
     TempC_0p5m = col_double(),
@@ -335,8 +335,7 @@ sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_d
 schmidt_daily_summary4 <- schmidt_daily_summary3 %>%
   filter(date %in% sampling_dates$date)
 
-# Write csv ####
-write_csv(schmidt_daily_summary4, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary.csv")
+# write_csv(schmidt_daily_summary4, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary.csv")
 
 # Add in gap filled data for schmidt values 1-2 days apart from missing data ####
 
@@ -354,8 +353,8 @@ schmidt_daily_summary5 <- schmidt_daily_summary4 %>%
 schmidt_daily_summary6 <- full_join(schmidt_daily_summary5, schmidt_daily_summary3_subset) %>%
   arrange(date)
 
-# Write data for 2nd dataset with water temp holes filled in ####
-write_csv(schmidt_daily_summary6, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled.csv")
+# Write data for 2nd dataset with water temp holes filled in
+# write_csv(schmidt_daily_summary6, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled.csv")
 
 # Create 1 week lag ####
 
@@ -379,7 +378,7 @@ schmidt_weeklag1 <- left_join(sampling_dates_lag[,1:2], schmidt_weeklag, by = "d
 colnames(schmidt_weeklag1)[-c(1:2)] = paste0(colnames(schmidt_weeklag1)[-c(1:2)], '_lag')
 
 # Write schmidt 1 week lag data
-write_csv(schmidt_weeklag1, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weeklag.csv")
+# write_csv(schmidt_weeklag1, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weeklag.csv")
 
 # Calculate 1 week difference ####
 
@@ -408,7 +407,7 @@ for (i in 1:nrow(schmidt_daily_summary3_fill3)) {
 schmidt_diff_output2 <- left_join(sampling_dates, schmidt_diff_output, by = "date")
 
 # Write water temp 1 week difference data
-write_csv(schmidt_diff_output2, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weekdiff.csv")
+# write_csv(schmidt_diff_output2, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weekdiff.csv")
 
 # Combine all schmidt data ####
 schmidt_all <- bind_cols(schmidt_daily_summary6, schmidt_weeklag1[,-c(1:2)], schmidt_diff_output2[,-1])
