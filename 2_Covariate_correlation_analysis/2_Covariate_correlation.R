@@ -6,11 +6,7 @@
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate, googledrive)
-
-# set local directory for plots
-my_directory <- ("C:/Users/Mary Lofton/Dropbox/Ch5/Covariate_analysis_output/")
-
+pacman::p_load(tidyverse, lubridate)
 
 # Load all linear covariates ####
 
@@ -18,7 +14,7 @@ my_directory <- ("C:/Users/Mary Lofton/Dropbox/Ch5/Covariate_analysis_output/")
 hc_gloeo_data <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
 
 # onset water temp data
-water_temp_data <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all.csv")
+water_temp_data <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_HC.csv")
 
 # schmidt stability data
 schmidt_stability_data <- read_csv("./00_Data_files/Covariate_analysis_data/schmidt_stability_all.csv")
@@ -26,21 +22,17 @@ schmidt_stability_data <- read_csv("./00_Data_files/Covariate_analysis_data/schm
 # precip data
 precip_data <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precip_all.csv")
 
-# gdd
-gdd <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
-
 # sw radiation
 swrad <- read_csv("./00_Data_files/Covariate_analysis_data/solar_radiation_daily_summary.csv")
 
 # par
 par <- read_csv("./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")
 
-# wind speed data - a little data wrangling to fill filtered variables with 0 when
-# wind blowing away from cove
-wind_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data.csv")
+# wind data
+wind_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data_all.csv")
 
 # Join all covariate data with gloeo
-covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], gdd[,3], swrad[,-1], par[,-1], wind_data[-1])
+covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], swrad[,-1], par[,-1], wind_data[-1])
 
 # Filter for just 2009-2014
 covariates_all_filter <- covariates_all %>%
@@ -48,7 +40,6 @@ covariates_all_filter <- covariates_all %>%
 
 # Set-up for loop to run through covariates ####
 # Outputs - for each year: Pearson's r, Spearman's r, linear r2, quadratic r2
-# Fit all years together?
 
 output <- matrix(nrow = length(covariates_all_filter)-6, ncol = 29) #length of covariates all -6
 
@@ -86,7 +77,7 @@ for(i in 7:ncol(covariates_all_filter)) {
   output[i-6,2] <- round(summary(mod)$adj.r.squared,2)
   output[i-6,3] <- round(cor(x,y, method = "pearson", use = "complete.obs"), 2)
   output[i-6,4] <- round(cor(x,y, method = "spearman", use = "complete.obs"),2)
-  quad_mod <- lm(y~x + x2) # x needs to be a matrix for lm to work
+  quad_mod <- lm(y~x + x2)
   output[i-6,5] <- round(summary(quad_mod)$adj.r.squared,2)
 
   #no par data for 2014 requires an if else statement to make sure 2014 excluded
@@ -154,11 +145,10 @@ bayes_variables_keep <- bayes_variables %>%
 #this is where judgment comes in - we chose the following summary statistics:
 #1. HCS.tempC_min
 #2. HCS_tempC_min_lag
-#3. ma_7 (7-day moving average of water temp.)/ JB - ma 14 is close but ok with 7!
+#3. ma_7 (7-day moving average of water temp.)
 #4. schmidt.stability_median_diff
 #5. schmidt.stability_max_lag
 #6. gdd_sum
 #7. precip_sum
 #8. AveWindDir_cove_mean_2daylag - positive relationship with wind direction indicator variable
 
-sum(is.na(wind_speed_data0$AveWindSp_ms_mean))
