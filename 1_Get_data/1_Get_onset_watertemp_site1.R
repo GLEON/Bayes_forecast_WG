@@ -312,7 +312,7 @@ gdd_all7 <- gdd_all6 %>%
 
 
 # Combine all water temp files ####
-watertemp_all <- bind_cols(dat7[,c(1,4:8)], dat4_lag1[,-1], wtr_diff_output2[,-1], dat3_ma7[,-1], gdd_all7[,-1])
+watertemp_all <- bind_cols(dat7[,c(1,4:8)], dat4_lag1[,-1], wtr_diff_output2[,-1], dat3_ma7[,-1], gdd_all7[,3])
 
 # Write all water temp data
 write_csv(watertemp_all, "./00_Data_files/Covariate_analysis_data/onset_watertemp_all_HC.csv")
