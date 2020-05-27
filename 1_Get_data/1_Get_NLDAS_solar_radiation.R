@@ -71,5 +71,5 @@ solar_rad3 <- solar_rad2 %>%
   filter(date %in% sampling_dates$date)
 
 # Write NLDAS solar radiation data ####
-write_csv(solar_rad3, "./00_Data_files/Covariate_analysis_data/solar_radiation_daily_summary.csv")
+write_csv(solar_rad3, "./00_Data_files/Covariate_analysis_data/NLDAS_solar_radiation_2009-2016.csv")
 
