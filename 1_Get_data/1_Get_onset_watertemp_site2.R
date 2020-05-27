@@ -90,8 +90,8 @@ dat5 <- dat4 %>%
   mutate(date = date(date)) %>%
   filter(date %in% sampling_dates$date)
 
-# Write water temp daily summary data ####
-write_csv(dat5, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_SOTF.csv")
+# Write water temp daily summary data
+# write_csv(dat5, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_SOTF.csv")
 
 # Gap fill with water temp for gloeo sample days within 1 or 2 days ####
 
@@ -127,7 +127,7 @@ dat6 <- dat5 %>%
 dat7 <- full_join(dat6, dat4_subset4) %>%
   arrange(date)
 
-# Write data for 2nd dataset with water temp holes filled in ####
+# Write data for 2nd dataset with water temp holes filled in
 write_csv(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_SOTF.csv")
 
 saveRDS(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_SOTF.rds")
@@ -156,11 +156,11 @@ dat4_lag <- dat4_fill2 %>%
   select(-c(date,year,dayofyr))
 
 
-dat4_lag1 <- left_join(sampling_dates_lag, dat4_lag, by = "date_1weeklag") %>%
+dat4_lag1 <- left_join(sampling_dates_lag[,2], dat4_lag, by = "date_1weeklag") %>%
   rename(SOTF.tempC_mean_lag = SOTF.tempC_mean, SOTF.tempC_median_lag = SOTF.tempC_median, SOTF.tempC_min_lag = SOTF.tempC_min, SOTF.tempC_max_lag = SOTF.tempC_max,SOTF.tempC_sd_lag = SOTF.tempC_sd)
 
 # Write water temp lag data
-write_csv(dat4_lag1, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weeklag_SOTF.csv")
+# write_csv(dat4_lag1, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weeklag_SOTF.csv")
 
 # Calculate 1 week difference in water temp ####
 
@@ -190,7 +190,7 @@ wtr_diff_output2 <- wtr_diff_output %>%
   filter(date %in% sampling_dates$date)
 
 # Write water temp 1 week difference data
-write_csv(wtr_diff_output2, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weekdiff_SOTF.csv")
+# write_csv(wtr_diff_output2, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weekdiff_SOTF.csv")
 
 # Water Temp Moving Avg ####
 # Use hourly water temp full time dataset
@@ -235,7 +235,7 @@ dat3_ma7 <- left_join(sampling_dates, dat3_ma6) %>%
   select(date, ma_3:ma_14)
 
 # Write water temp moving average data
-write_csv(dat3_ma7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg_SOTF.csv")
+# write_csv(dat3_ma7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg_SOTF.csv")
 
 
 # Growing Degree Days ####
@@ -321,16 +321,13 @@ gdd_all7 <- gdd_all6 %>%
   filter(date %in% sampling_dates$date)
 
 # Write growing degree days data
-write_csv(gdd_all7, "./00_Data_files/Covariate_analysis_data/growing_degree_days_SOTF.csv")
+# write_csv(gdd_all7, "./00_Data_files/Covariate_analysis_data/growing_degree_days_SOTF.csv")
 
 
-# Combine all water temp files (except growing degree days) ####
-watertemp <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_SOTF.csv")
-watertemp_lag <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weeklag_SOTF.csv")
-watertemp_diff <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_1weekdiff_SOTF.csv")
-movingavg <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_movingavg_SOTF.csv")
+# Combine all water temp files ####
 
-watertemp_all <- bind_cols(watertemp[,c(1,4:8)], watertemp_lag[,-1], watertemp_diff[,-1], movingavg[,-1])
+watertemp_all <- bind_cols(dat7[,c(1,4:8)], dat4_lag1[,-1], wtr_diff_output2[,-1], dat3_ma7[,-1], gdd_all7[,-1])
 
-# Write growing degree days data
+# Write all water temp data
 write_csv(watertemp_all, "./00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
+
