@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","precip","GDD","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
+model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","precip","GDD","schmidt_and_precip","precip_and_GDD","schmidt_and_temp","temp_and_precip")
 yrs <- c(2015:2016)
 wks <- c(1:20)
 forecast_weeks <- c(1:4)
@@ -23,38 +23,38 @@ N_weeks[2,] <- c(21:40)
 
 ###########################UNCERTAINTY PARTITIONING###################################
 
-for (i in 14:length(model_names)){
+for (i in 1:length(model_names)){
 
   for (n in 1:length(forecast_weeks)){
 
     #create empty matrices to populate with hindcast variance for each week
 
     #deterministic hindcasts (no uncertainty)
-    vardat.det <- matrix(NA, 10000, 40)
+    vardat.det <- matrix(NA, 7500, 40)
     vardat.det <- data.frame(vardat.det)
 
     #initial conditions uncertainty only
-    vardat.IC <- matrix(NA, 10000, 40)
+    vardat.IC <- matrix(NA, 7500, 40)
     vardat.IC <- data.frame(vardat.IC)
 
     #initial conditions and parameter uncertainty
-    vardat.IC.Pa <- matrix(NA, 10000, 40)
+    vardat.IC.Pa <- matrix(NA, 7500, 40)
     vardat.IC.Pa <- data.frame(vardat.IC.Pa)
 
     #initial conditions, parameter, driver
-    vardat.IC.Pa.D <- matrix(NA, 10000, 40)
+    vardat.IC.Pa.D <- matrix(NA, 7500, 40)
     vardat.IC.Pa.D <- data.frame(vardat.IC.Pa.D)
 
     #initial conditions, parameter, driver, process
-    vardat.IC.Pa.D.P <- matrix(NA, 10000, 40)
+    vardat.IC.Pa.D.P <- matrix(NA, 7500, 40)
     vardat.IC.Pa.D.P <- data.frame(vardat.IC.Pa.D.P)
 
     #initial conditions and process (for models with no parameters/drivers)
-    vardat.IC.P <- matrix(NA, 10000, 40)
+    vardat.IC.P <- matrix(NA, 7500, 40)
     vardat.IC.P <- data.frame(vardat.IC.P)
 
     #initial conditions, parameter, process (for AR model with no drivers)
-    vardat.IC.Pa.P <- matrix(NA, 10000, 40)
+    vardat.IC.Pa.P <- matrix(NA, 7500, 40)
     vardat.IC.Pa.P <- data.frame(vardat.IC.Pa.P)
 
     for (j in 1:length(yrs)){

@@ -15,8 +15,8 @@ pacman::p_load(tidyverse, lubridate)
 my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
-model_labels <- c("RW","AR","MinWaterTemp","MinWaterTempLag","WaterTempMA","SchmidtMedDiff","SchmidtMaxLag","WindDir","Precip","GDD","SchmidtAndWind","SchmidtAndPrecip","WindAndPrecip","WindAndGDD")
+model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD")
+model_labels <- c("a. RW","b. AR","MinWaterTemp","c. MinWaterTempLag","d. WaterTempMA","DeltaSchmidt","SchmidtLag","WindDir","f. Precip","GDD","g. Schmidt+Temp","Schmidt+Precip","Temp+Precip","Precip+GDD")
 
 forecast_weeks <- c(1,4)
 
@@ -122,21 +122,33 @@ for (n in 1:length(forecast_weeks)){
          width = 7, height = 2.5, units = "in", res = 300)
     par(mfrow = c(1,2),mgp = c(2.5,1,0), mar = c(3,4,2,0)+0.1)
 
-    plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_labels[i])
+    if(forecast_weeks[n]==1){
+    plot(dates2015,ci2015_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-8,5))}
+    else{plot(dates2015,ci2015_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-12,8))}
+    if(model_names[i]=="schmidt_med_diff"){
+      title(expression(paste("e. ",Delta,"Schmidt", sep = "")),adj=0)
+    } else {
+    title(model_labels[i], adj = 0, font.main = 1)}
     arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2015,obs_log[1,],pch = 17, col = "red")
-    if(model_names[i] == "RW_obs" & forecast_weeks[n]==1){
-    legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
-    if(model_names[i] == "RW_obs" & forecast_weeks[n]==4){
-      legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n",cex = 0.7)}
-    legend("bottomright",legend = "2015",bty = "n")
+    # if(model_names[i] == "RW_obs" & forecast_weeks[n]==1){
+    # legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
+    # if(model_names[i] == "RW_obs" & forecast_weeks[n]==4){
+    #   legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n",cex = 0.7)}
+    #legend("bottomright",legend = as.expression(bquote(bold("2015"))),bty = "n")
 
-    plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_labels[i])
+    if(forecast_weeks[n]==1){
+      plot(dates2016,ci2016_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-8,5))}
+    else{plot(dates2016,ci2016_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-12,8))}
+    if(model_names[i]=="schmidt_med_diff"){
+      title(expression(paste("e. ",Delta,"Schmidt", sep = "")),adj=0, font = 2)
+    } else {
+      title(model_labels[i], adj = 0, font.main = 1)}
     arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2016,obs_log[2,],pch = 17, col = "red")
-    legend("bottomright",legend = "2016",bty = "n")
+    #legend("bottomright",legend = as.expression(bquote(bold("2016"))),bty = "n")
 
     dev.off()
 
@@ -273,21 +285,43 @@ tiff(file = file.path(paste(my_directory,paste0(model_name,"_timeseries_pred_and
      width = 7, height = 2.5, units = "in", res = 300)
 par(mfrow = c(1,2),mgp = c(2.5,1,0), mar = c(3,4,2,0)+0.1)
 
-plot(dates2015,ci2015_log[2,],pch = 16,ylim = c(min(pi2015_log[1,])-0.1,max(pi2015_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_label)
+if(forecast_weeks[n]==1){
+  plot(dates2015,ci2015_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-8,5))}
+else{plot(dates2015,ci2015_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-12,8))}
+title(model_label, adj = 0, font.main = 1)
 arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
 arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
 points(dates2015,obs_log[1,],pch = 17, col = "red")
-if(model_name == "RW_obs" & forecast_weeks[n] == 1){
-  legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
-legend("bottomright",legend = "2015",bty = "n")
+# if(model_name == "RW_obs" & forecast_weeks[n] == 1){
+#   legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
+# legend("bottomright",legend = "2015",bty = "n")
 
-plot(dates2016,ci2016_log[2,],pch = 16,ylim = c(min(pi2016_log[1,])-0.1,max(pi2016_log[3,])+0.1),xlab = "", las = 1,ylab = expression(paste("total colonies",~~L^-1)),main = model_label)
+if(forecast_weeks[n]==1){
+  plot(dates2016,ci2016_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-8,5))}
+else{plot(dates2016,ci2016_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-12,8))}
+title(model_label, adj = 0, font.main = 1)
 arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
 arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
 points(dates2016,obs_log[2,],pch = 17, col = "red")
-legend("bottomright",legend = "2016",bty = "n")
+#legend("bottomright",legend = "2016",bty = "n")
 
 dev.off()
+
+
+############plot that just has legend to include in final figures
+tiff(file = file.path(paste(my_directory,paste0("Fig5_Fig6_FigSX_legend.tif"),sep = "")),
+     width = 4, height = 5, units = "in", res = 300)
+plot.new()
+legend("topleft",legend = c("median predicted","observed","95% credible interval","95% predictive interval"),pch = c(16,17,NA,NA),
+       col = c("black","red", "black","gray"),bty = "n",lty = c(NA,NA,1,1),
+       lwd = c(NA,NA,2,2), cex = 1.2)
+
+dev.off()
+
+
+
+
+
 
 # #plot timeseries of pred and obs on not log scale
 # tiff(file = file.path(paste(my_directory,paste0(model_name,"_timeseries_pred_and_obs_not_log_",forecast_weeks[n],".tif"),sep = "")),
@@ -311,4 +345,5 @@ dev.off()
 # dev.off()
 
 }
+
 
