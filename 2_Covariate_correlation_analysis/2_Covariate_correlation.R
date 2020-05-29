@@ -1,5 +1,5 @@
-# Script to run linear correlations on covarites and gloeo data
-# Last updated 2020 April 14 - JB
+# Script to run Spearman's correlations and quadratic regressions on environmental covariates and gloeo data
+# Last updated 2020 May 29 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
@@ -7,10 +7,10 @@
 
 #load other packages
 
-pacman::p_load(tidyverse, lubridate, googledrive)
+pacman::p_load(tidyverse)
 
 # set local directory for plots
-my_directory <- ("C:/Users/Mary Lofton/Dropbox/Ch5/Covariate_analysis_output/")
+# my_directory <- ("C:/Users/Mary Lofton/Dropbox/Ch5/Covariate_analysis_output/")
 
 #define function to extract p-value for linear and quadratic models
 lmp <- function (modelobject) {
@@ -58,7 +58,7 @@ covariates_all_filter <- covariates_all %>%
 output <- matrix(nrow = length(covariates_all_filter)-6, ncol = 9) #length of covariates all -6
 
 # vector of years
-years <- c(2009:2014)
+# years <- c(2009:2014)
 
 # # set up counter to help with year indexing
 # col <- c(6,10,14,18,22,26)
@@ -73,21 +73,21 @@ for(i in 7:ncol(covariates_all_filter)) {
   output[i-6,1] <- colnames(covariates_all_filter[,i])
 
   #prepare data to do exploratory viz plot
-  plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
-
-  #write exploratory viz plots to file
-  png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
-  plot(plotdata)
-  dev.off()
-
-  png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_hist.png")))
-  hist(as.numeric(unlist(covariates_all_filter[,i])), main = colnames(covariates_all_filter[,i]))
-  dev.off()
-
-  png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_QQplot.png")))
-  qqnorm(as.numeric(unlist(covariates_all_filter[,i])), pch = 1, frame = FALSE,main = colnames(covariates_all_filter[,i]))
-  qqline(as.numeric(unlist(covariates_all_filter[,i])), col = "steelblue", lwd = 2)
-  dev.off()
+  # plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
+  #
+  # #write exploratory viz plots to file
+  # png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
+  # plot(plotdata)
+  # dev.off()
+  #
+  # png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_hist.png")))
+  # hist(as.numeric(unlist(covariates_all_filter[,i])), main = colnames(covariates_all_filter[,i]))
+  # dev.off()
+  #
+  # png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_QQplot.png")))
+  # qqnorm(as.numeric(unlist(covariates_all_filter[,i])), pch = 1, frame = FALSE,main = colnames(covariates_all_filter[,i]))
+  # qqline(as.numeric(unlist(covariates_all_filter[,i])), col = "steelblue", lwd = 2)
+  # dev.off()
 
   #prepare data for regression and correlation
   y <- unlist(covariates_all_filter[,6])
@@ -156,12 +156,12 @@ for(i in 7:ncol(covariates_all_filter)) {
 
 output <- data.frame(output)
 colnames(output) <- c("covariate_name","global_linear_r2","global_Pearsons_r","global_Spearmans_r","global_quad_r2","linear_pvalue", "Pearsons_pvalue","Spearmans_pvalue","quad_pvalue")
-                      # "linear_r2_2009","Pearsons_r_2009","Spearmans_r_2009","quad_r2_2009",
-                      # "linear_r2_2010","Pearsons_r_2010","Spearmans_r_2010","quad_r2_2010",
-                      # "linear_r2_2011","Pearsons_r_2011","Spearmans_r_2011","quad_r2_2011",
-                      # "linear_r2_2012","Pearsons_r_2012","Spearmans_r_2012","quad_r2_2012",
-                      # "linear_r2_2013","Pearsons_r_2013","Spearmans_r_2013","quad_r2_2013",
-                      # "linear_r2_2014","Pearsons_r_2014","Spearmans_r_2014","quad_r2_2014")
+# "linear_r2_2009","Pearsons_r_2009","Spearmans_r_2009","quad_r2_2009",
+# "linear_r2_2010","Pearsons_r_2010","Spearmans_r_2010","quad_r2_2010",
+# "linear_r2_2011","Pearsons_r_2011","Spearmans_r_2011","quad_r2_2011",
+# "linear_r2_2012","Pearsons_r_2012","Spearmans_r_2012","quad_r2_2012",
+# "linear_r2_2013","Pearsons_r_2013","Spearmans_r_2013","quad_r2_2013",
+# "linear_r2_2014","Pearsons_r_2014","Spearmans_r_2014","quad_r2_2014")
 
 write.csv(output, file = "./2_Covariate_correlation_analysis/output.csv",row.names = FALSE)
 
@@ -174,13 +174,12 @@ bayes_variables_keep <- bayes_variables %>%
 
 mean(bayes_variables$global_Spearmans_r, na.rm = TRUE)
 
-#this is where judgment comes in - we chose the following summary statistics:
+#this is where judgment comes in - we chose the following summary statistics based on the highest global Spearman's rho for each covariate group:
 #1. HCS.tempC_min
 #2. HCS_tempC_min_lag
 #3. ma_7 (7-day moving average of water temp.)
-#4. schmidt.stability_median_diff
+#4. gdd_sum (growing degree days)
 #5. schmidt.stability_max_lag
-#6. gdd_sum
+#6. schmidt.stability_median_diff
 #7. precip_sum
-#8. AveWindDir_cove_mean_2daylag - positive relationship with wind direction indicator variable
-
+#8. AveWindDir_cove_mean_2daylag
