@@ -6,7 +6,7 @@
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate, openair)
+pacman::p_load(tidyverse, lubridate, openair, zoo)
 
 # Download data from EDI to local folder ####
 
@@ -181,7 +181,7 @@ wind.speed_diff_output3 <- left_join(wind.speed_diff_output2, windsp_daily_summa
 
 # Filter for wind direction coming towards Herrick Cove and calculates cumulative sum just for wind speed blowing in
 windsp_cum_sum_filter_in <- windsp_hourly_mean_filter[-c(1:1656),] %>%
-  mutate(AveWindSp_ms_filter = ifelse(AveWindDir_cove==0, NA, AveWindSp_ms))
+  mutate(AveWindSp_ms_filter = ifelse(AveWindDir_cove==0, 0, AveWindSp_ms))
 
 # Filter missing hours
 # 2009-08-08 09:00:00
@@ -196,7 +196,6 @@ windsp_cum_sum_filter_in <- windsp_hourly_mean_filter[-c(1:1656),] %>%
 windsp_cum_sum_filter_in1 <- windsp_cum_sum_filter_in[-c(250,326,35770,36083,36471,51441,59290,59291),c(1,5)] %>%
   mutate(sum_1 = rollsum(AveWindSp_ms_filter, k = 24, fill = NA, align = "right")) %>%
   mutate(sum_2 = rollsum(AveWindSp_ms_filter, k = 48, fill = NA, align = "right"))
-
 
 windsp_cum_sum_max_day_in <- windsp_cum_sum_filter_in1 %>%
   rename(datetime = date) %>%
