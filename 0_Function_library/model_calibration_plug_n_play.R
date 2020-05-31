@@ -15,6 +15,7 @@ jags_plug_ins <- function(model_name){
 #assign same model name for models with the same structure
   if(model_name == "RW"){model_type = "RW"}
   if(model_name == "RW_obs"){model_type = "RW_obs"}
+  if(model_name == "RY"){model_type = "RY"}
   if(model_name == "AR"){model_type = "AR"}
   if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","precip")){
     model_type <- "Linear_1var"
@@ -45,6 +46,13 @@ jags_plug_ins <- function(model_name){
   variable.namesout.RW_obs <- c("tau_proc","tau_obs","mu")
   init.RW_obs <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
   params.RW_obs <- c("tau_proc","tau_obs")
+
+#RY
+  data.RY <- list(y=cal_data$y, year_no = cal_data$year_no,season_weeks=cal_data$season_weeks,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.RY <- c("tau_proc", "tau_obs","tau_yr")
+  variable.namesout.RY <- c("tau_proc","tau_obs","mu","tau_yr","yr")
+  init.RY <- list(list(tau_proc=0.001, tau_obs = 0.1,tau_yr = 0.001), list(tau_proc=0.1, tau_obs = 1, tau_yr = 0.1), list(tau_proc=1, tau_obs = 5, tau_yr = 1))
+  params.RY <- c("tau_proc","tau_obs","tau_yr")
 
 #AR
   data.AR <- list(y=cal_data$y, year_no = cal_data$year_no, season_weeks=cal_data$season_weeks, beta.m1=0,  beta.m2=0,beta.v1=0.001, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)

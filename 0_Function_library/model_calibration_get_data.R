@@ -22,7 +22,7 @@ y <- y[-c(7:8),]
 
 ###############################GLOEO-ONLY MODELS#####################################
 #for RW, RW_obs, and AR models
-if(model_name %in% c("RW","RW_obs","AR")){
+if(model_name %in% c("RW","RW_obs","AR","RY")){
   return(list(year_no = year_no, season_weeks = season_weeks, y = y))
 }
 
