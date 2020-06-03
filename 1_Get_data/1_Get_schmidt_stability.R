@@ -1,42 +1,33 @@
-# Script to download and wrangle Sunapee GLEON buoy water temp string thermistor data from EDI to get schmidt stability
-# Last updated 2020 April 10 - JB
+# Script to download and wrangle Sunapee GLEON buoy water temp string thermistor data from EDI and calculate schmidt stability
+# Last updated 2020 May 21 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate, googledrive, rLakeAnalyzer, openair)
+pacman::p_load(tidyverse, lubridate, rLakeAnalyzer, openair)
 
-# Download data ####
-#download data file into appropriate local folder
+# Download data from EDI to local folder ####
 
-# Sunapee GLEON buoy water temp thermistor data
-my_url <- "https://drive.google.com/file/d/1mN_GNVdiiAHLzoQCRS7Vh9amjSrgJKD9/view?usp=sharing"
+# Lake Sunapee Instrumented Buoy: High Frequency Water Temperature and Dissolved Oxygen Data – 2007-2019
+# EDI Package ID: edi.499.1
+# Citation: LSPA, K.C. Weathers, and B.G. Steele. 2020. Lake Sunapee Instrumented Buoy: High Frequency Water Temperature and Dissolved Oxygen Data – 2007-2019 ver 1. Environmental Data Initiative. https://doi.org/10.6073/pasta/70c41711d6199ac2758764ecfcb9815e. Accessed 2020-05-21.
 
-drive_download(
-  file = drive_get(my_url),
-  path = "./00_Data_files/EDI_data_clones/2007-e2019_buoy_tempstring_v07April2020.csv", overwrite = TRUE)
+buoy_data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=06da1cc93c1eaa69f819ce8610f5cd33"
 
-# Alternative way to get file ID
-as_id(drive_find(pattern = "buoy.tempstring/2007-e2019_buoy_tempstring_v07April2020.csv")$id)
+hobo_data <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=14340fa6419a6b4bc82cfe4713c25ea6"
 
-drive_download(file = as_id("1mN_GNVdiiAHLzoQCRS7Vh9amjSrgJKD9"),
-               path = "./00_Data_files/EDI_data_clones/2007-e2019_buoy_tempstring_v07April2020.csv", overwrite = TRUE)
+destination <- "./00_Data_files/EDI_data_clones"
 
-# 2015 HOBO temp string data
-drive_download(
-  file = as_id(drive_find(pattern = "buoy.tempstring/2015_hobotempstring_L1.csv")$id),
-  path = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", overwrite = TRUE)
+# Buoy temp string data
+download.file(buoy_data,destfile = "./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv", method='libcurl')
 
-# Alternative way to get file ID
-as_id(drive_find(pattern = "buoy.tempstring/2015_hobotempstring_L1.csv")$id)
-
-drive_download(file = as_id("1OqPKgnx5Hk8TwnuM9r64g414ENj6YQsP"),
-               path = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv.csv", overwrite = TRUE)
+# HOBO data
+download.file(hobo_data,destfile = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", method='libcurl')
 
 # Load buoy data into R ####
-buoy <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_buoy_tempstring_v07April2020.csv",
+buoy <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv",
                  col_types = list(
                    datetime = col_datetime(format = ""),
                    location = col_character(),
@@ -79,7 +70,7 @@ buoy <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_buoy_tempstring_v07
                    temp_flag = col_character()
                  ))
 
-# load HOBO data from 2015 into R ####
+# Load HOBO data from 2015 into R ####
 hobo <- read_csv("./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", col_types = list(
     datetime = col_datetime(format = ""),
     TempC_0p5m = col_double(),
@@ -142,7 +133,7 @@ bathy <- load.bathy("./00_Data_files/Sunapee.bth")
 
 schmidt_buoy <- ts.schmidt.stability(buoy2, bathy, na.rm = TRUE)
 
-schmidt_hobo <- ts.schmidt.stability(hobo, bathy, na.rm = TRUE)
+schmidt_hobo <- ts.schmidt.stability(hobo[,-11], bathy, na.rm = TRUE)
 
 # Schmidt Data cleaning  ####
 
@@ -344,8 +335,7 @@ sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_d
 schmidt_daily_summary4 <- schmidt_daily_summary3 %>%
   filter(date %in% sampling_dates$date)
 
-# Write csv ####
-write_csv(schmidt_daily_summary4, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary.csv")
+# write_csv(schmidt_daily_summary4, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary.csv")
 
 # Add in gap filled data for schmidt values 1-2 days apart from missing data ####
 
@@ -363,8 +353,8 @@ schmidt_daily_summary5 <- schmidt_daily_summary4 %>%
 schmidt_daily_summary6 <- full_join(schmidt_daily_summary5, schmidt_daily_summary3_subset) %>%
   arrange(date)
 
-# Write data for 2nd dataset with water temp holes filled in ####
-write_csv(schmidt_daily_summary6, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled.csv")
+# Write data for 2nd dataset with water temp holes filled in
+# write_csv(schmidt_daily_summary6, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled.csv")
 
 # Create 1 week lag ####
 
@@ -388,7 +378,7 @@ schmidt_weeklag1 <- left_join(sampling_dates_lag[,1:2], schmidt_weeklag, by = "d
 colnames(schmidt_weeklag1)[-c(1:2)] = paste0(colnames(schmidt_weeklag1)[-c(1:2)], '_lag')
 
 # Write schmidt 1 week lag data
-write_csv(schmidt_weeklag1, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weeklag.csv")
+# write_csv(schmidt_weeklag1, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weeklag.csv")
 
 # Calculate 1 week difference ####
 
@@ -417,7 +407,7 @@ for (i in 1:nrow(schmidt_daily_summary3_fill3)) {
 schmidt_diff_output2 <- left_join(sampling_dates, schmidt_diff_output, by = "date")
 
 # Write water temp 1 week difference data
-write_csv(schmidt_diff_output2, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weekdiff.csv")
+# write_csv(schmidt_diff_output2, "./00_Data_files/Covariate_analysis_data/schmidt_stability_daily_summary_gap_filled_1weekdiff.csv")
 
 # Combine all schmidt data ####
 schmidt_all <- bind_cols(schmidt_daily_summary6, schmidt_weeklag1[,-c(1:2)], schmidt_diff_output2[,-1])

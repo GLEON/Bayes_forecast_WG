@@ -1,33 +1,17 @@
-# Script to download and wrangle Sunapee NLDAS data from EDI
-# Last updated 2020 April 11 - JB
+# Script to download and wrangle Sunapee NLDAS data
+# *Will need to update once NLDAS data are published on EDI - stored on GitHub for now
+# Last updated 2020 May 22 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
 #install.packages('pacman')
 
-#load other packages
-pacman::p_load(tidyverse, lubridate, googledrive)
-
-# Download data ####
-#download data file into appropriate local folder
-
-# NLDAS data
-my_url <- "https://drive.google.com/file/d/1iQa4jDrUq_p1kEk1zUhePzPdBK8fySYi/view?usp=sharing"
-
-drive_download(
-  file = drive_get(my_url),
-  path = "./00_Data_files/EDI_data_clones/NLDAS_SunapeeMet_1979_2016.csv", overwrite = TRUE)
-
-# Alternative way to get file ID
-as_id(drive_find(pattern = "EDI.data.clones/NLDAS_SunapeeMet_1979_2016.csv")$id)
-
-drive_download(file = as_id("1iQa4jDrUq_p1kEk1zUhePzPdBK8fySYi"),
-               path = "./00_Data_files/EDI_data_clones/NLDAS_SunapeeMet_1979_2016.csv", overwrite = TRUE)
-
+# load other packages
+pacman::p_load(tidyverse, lubridate)
 
 # Load NLDAS data into R ####
 
-nldas <- read_csv("./00_Data_files/EDI_data_clones/NLDAS_SunapeeMet_1979_2016.csv")
+nldas <- read_csv("./00_Data_files/NLDAS_SunapeeMet_1979_2016.csv")
 
 # Filter for just short wave radiation and time period
 
@@ -48,7 +32,7 @@ sum(is.na(solar_rad$ShortWaveRad_Wperm2)) #no missing data
 solar_rad1 <- solar_rad %>%
   group_by(date) %>%
   select(-c(datetime, month)) %>%
-  summarize_all(funs(mean, median, max, sd, sum)) %>%
+  summarize_all(lst(mean, median, max, sd, sum)) %>%
   select(date, starts_with("ShortWaveRad"))
 
 # Daily summary for min excluding 0 values
@@ -72,4 +56,5 @@ solar_rad3 <- solar_rad2 %>%
 
 # Write NLDAS solar radiation data ####
 write_csv(solar_rad3, "./00_Data_files/Covariate_analysis_data/NLDAS_solar_radiation_2009-2016.csv")
+
 
