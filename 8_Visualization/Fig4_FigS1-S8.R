@@ -79,7 +79,7 @@ gloeo2 <- ggplot(data = first4, aes(x = date, y = totalperL))+
   facet_rep_wrap(vars(year), nrow = 1, ncol = 4, scales = "free_x")+
   #ylab(my_y_title)+
   xlab("")+
-  ylim(0,5)+
+  coord_cartesian(ylim = c(0,5))+
   ylab("")+
   mytheme2+
   geom_point(colour = "darkgreen")+
@@ -103,7 +103,7 @@ gloeo4 <- ggplot(data = second4, aes(x = date, y = totalperL))+
   facet_rep_wrap(vars(year), nrow = 1, ncol = 4, scales = "free_x")+
   #ylab(my_y_title)+
   xlab("")+
-  ylim(0,5)+
+  coord_cartesian(ylim = c(0,5))+
   ylab("")+
   mytheme2+
   geom_point(colour = "darkgreen")+
@@ -126,6 +126,17 @@ final_plot <- grid.arrange(arrangeGrob(plot, left = y.grob))
 
 ggsave(final_plot, filename = file.path(paste(my_directory,"gloeo_timeseries.tif"),sep = ""),
        device = "tiff",height = 4, width = 8, units = "in", scale = 1.5)
+
+#theme for rest of plots
+mytheme <- theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                 panel.background = element_blank(), axis.line = element_line(colour = "black"),
+                legend.key = element_blank(),legend.background = element_blank(),
+                text = element_text(size=16), axis.text.y = element_text(size = 16),
+                axis.text.x = element_text(size = 12),
+                panel.border = element_rect(colour = "black", fill = NA),
+                strip.text.x = element_text(face = "bold"))
+
+
 
 #mintemp
 mintemp <- ggplot(data = covariates_all, aes(x = date, y = HCS.tempC_min))+
@@ -210,7 +221,7 @@ precip <- ggplot(data = covariates_all, aes(x = date, y = precip_mm))+
   geom_point(colour = "darkgray")+
   geom_line(size = 1, colour = "darkgray")+
   facet_rep_wrap(vars(year), nrow = 2, ncol = 4, scales = "free_x")+
-  ylab("millimeters")+
+  ylab("Precipitation (mm per day)")+
   theme(strip.background.x = element_blank())+
   xlab("")+
   mytheme
