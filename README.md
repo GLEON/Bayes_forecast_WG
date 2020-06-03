@@ -1,8 +1,8 @@
 # Bayes_forecast_WG
 A working group using Bayesian techniques to develop ecological forecasts
 
-This branch has been tagged as a code publication for Lofton et al. 2020,
-"Process error dominates near-term forecast uncertainty of oligotrophic lake cyanobacterial density"
+This branch has been tagged as a code publication for Lofton et al. 20XX,
+"Using near-term forecasts and uncertainty partitioning to improve predictions of low-frequency cyanobacterial events"
 
 Guide to file structure:
 (see readmes within each folder for further details)
