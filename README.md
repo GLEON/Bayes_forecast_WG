@@ -7,7 +7,7 @@ This branch has been tagged as a code publication for Lofton et al. 2020,
 Guide to file structure:
 (see readmes within each folder for further details)
 
-00_Data_files: contains analysis-ready formatted data files derived from data publications housed at the Environmental Data Initiative (EDI)
+00_Data_files: folder that will be populated with analysis-ready formatted data files derived from data publications housed at the Environmental Data Initiative (EDI) when the user runs scripts in 1_Get_data
 
 0_Function_library: contains Rscripts of functions that will be sourced during subsequent modeling and analysis Rscripts
 
@@ -23,11 +23,11 @@ Guide to file structure:
 
 4.3_Hindcasting: contains Rscript to run G. echinulata hindcasts for all Bayesian state-space models from 2015-2016 using hindcasted driver data
 
-5_Model_output: contains model output from both the calibration and hindcasting phases of analysis
+5_Model_output: folder will be populated with model output from both the calibration and hindcasting phases of analysis as user runs scripts in 4.2_Calibrate_Bayesian_models and 4.3_Hindcasting
 
 6_Output_analysis: contains Rscripts to analyze model output from both the calibration and hindcasting phases of analysis
 
-7_Model ensemble: contains Rscript and output files for an unweighted model ensemble hindcasting exercise based on hindcast output from individual Bayesian state-space models
+7_Model ensemble: contains Rscript for an unweighted model ensemble hindcasting exercise based on hindcast output from individual Bayesian state-space models
 
 8_Visualization: contains Rscripts to generate output visualization and manuscript figures from both the calibration and hindcasting phases of analysis
 
