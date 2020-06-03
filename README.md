@@ -23,9 +23,11 @@ Guide to file structure:
 
 4.3_Hindcasting: contains Rscript to run G. echinulata hindcasts for all Bayesian state-space models from 2015-2016 using hindcasted driver data
 
-5_Model_output: folder will be populated with model output from both the calibration and hindcasting phases of analysis as user runs scripts in 4.2_Calibrate_Bayesian_models and 4.3_Hindcasting
+4.4_Uncertainty_partitioning: contains Rscript to run uncertainty partitioning for all G. echinulata hindcasts from all models
 
-6_Output_analysis: contains Rscripts to analyze model output from both the calibration and hindcasting phases of analysis
+5_Model_output: folder will be populated with model output from both the calibration and hindcasting phases of analysis as user runs scripts in 4.2_Calibrate_Bayesian_models, 4.3_Hindcasting, and 4.4_Uncertainty_partitioning
+
+6_Output_analysis: contains Rscripts to analyze model output (in 5_Model_output) from both the calibration and hindcasting phases of analysis
 
 7_Model ensemble: contains Rscript for an unweighted model ensemble hindcasting exercise based on hindcast output from individual Bayesian state-space models
 
