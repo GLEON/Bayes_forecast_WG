@@ -1,29 +1,23 @@
 # Script to download and wrangle Sunapee GLEON buoy PAR data from EDI
-# Last updated 2020 April 11 - JB
+# Last updated 2020 May 20 - JB
 
 # Load packages ####
 # run this line if you do not have pacman installed
 #install.packages('pacman')
 
 #load other packages
-pacman::p_load(tidyverse, lubridate, googledrive, openair)
+pacman::p_load(tidyverse, lubridate, openair)
 
-# Download data ####
-#download data file into appropriate local folder
+# Download data from EDI to local folder ####
 
-# Sunapee GLEON buoy PAR data
-my_url <- "https://drive.google.com/file/d/1_Og4EBRCskBIkirpaCf8nKAiZUGeBZa6/view?usp=sharing"
+# High-Frequency Weather Data at Lake Sunapee, New Hampshire, USA, 2007-2019
+# EDI Package ID: edi.234.3
+# Citation: LSPA, K.C. Weathers, and B.G. Steele. 2020. High-Frequency Weather Data at Lake Sunapee, New Hampshire, USA, 2007-2019 ver 3. Environmental Data Initiative. https://doi.org/10.6073/pasta/698e9ffb0cdcda81ecf7188bff54445e. Accessed 2020-05-21.
 
-drive_download(
-  file = drive_get(my_url),
-  path = "./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv", overwrite = TRUE)
+data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.234.3&entityid=e7e5f1961a054ef9b4146e82a8f77aa4"
+destination <- "./00_Data_files/EDI_data_clones"
 
-# Alternative way to get file ID
-as_id(drive_find(pattern = "buoy.met/2007-e2019_PAR_L1.csv")$id)
-
-drive_download(file = as_id("1_Og4EBRCskBIkirpaCf8nKAiZUGeBZa6"),
-               path = "./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv", overwrite = TRUE)
-
+download.file(data,destfile = "./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv", method='libcurl')
 
 # Load buoy PAR data into R ####
 par <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv",
@@ -47,17 +41,16 @@ print(unique(par1$PAR_flag)) #  z
 
 min(par1$PAR_umolm2s, na.rm = T) # no negative values
 
-# Combine par data with full time series ####
+# Combine PAR data with full time series ####
 
 full_datetime <- seq(from = ymd_hms("2009-05-21 00:00:00"), to = ymd_hms("2016-10-05 23:00:00"), by = dminutes(10))
-full_datetime.df <- as_tibble(full_datetime)
-colnames(full_datetime.df) <- "datetime"
+full_datetime.df <- as_tibble_col(full_datetime, column_name = "datetime")
 
 par2 <- left_join(full_datetime.df, par1, by = "datetime") %>%
   rename(date = datetime) %>%  # open air function needs date column so renamed datetime
   select(-c(year,month))
 
-# filter for > 0 for daily min value
+# filter for > 0 for daily min value not 0
 par2_min <- par1 %>%
   filter(PAR_umolm2s > 0)
 
@@ -102,7 +95,3 @@ par_daily_summary3 <- par_daily_summary2 %>%
 
 # Write PAR data ####
 write_csv(par_daily_summary3, "./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")
-
-
-
-
