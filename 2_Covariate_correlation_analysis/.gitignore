@@ -3,5 +3,5 @@
 # Except this file
 !.gitignore
 !readme.txt
-!2A_Covariate_correlation
-!2B_Bayes_selected_variables_correlation
+!2A_Covariate_correlation.R
+!2B_Bayes_selected_variables_correlation.R
