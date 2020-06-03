@@ -20,6 +20,3 @@ Questions_Outline.docx
 GLEON Gloeo Modeling Progress 20190104.pptx
 .httr-oauth
 
-#ignoring folders that contain hindcast output files, etc.
-00_Data_files/
-5_Model_output/
