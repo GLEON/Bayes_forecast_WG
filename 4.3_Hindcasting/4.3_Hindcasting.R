@@ -14,7 +14,10 @@
 #install.packages('pacman')
 
 #load packages
-pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
+pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda, uuid, ncdf4, EML, emld)
+
+# devtools::install_github('eco4cast/EFIstandards') # need to install from github if you don't have it; check for updates on this package of if there is a stable version on CRAN
+library(EFIstandards)
 
 #make vector of model names for model for-loop
 my_models <- c("schmidt_and_temp","temp_and_precip","precip_and_GDD","RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip","schmidt_and_precip")
@@ -22,6 +25,9 @@ my_models <- c("schmidt_and_temp","temp_and_precip","precip_and_GDD","RW","RW_ob
 #set years and weeks for hindcasting for-loop
 yrs <- c(2015,2016)
 wks <- c(1:20)
+
+# metadata details
+forecast_project_id <- 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200909' #An ID that applies to a bunch of forecasts
 
 ########################RUN HINDCASTS##############################################
 
@@ -163,6 +169,13 @@ for (i in 1:length(my_models)){
                                      IC = mean(IC),
                                      wk = wks[k],
                                      covar_hindcast = covar.hindcast.det)
+      # JAZ; 2020-09-11; working on forecast metadata
+      # need to get the output, which is Nmc rows x 4 columns matrix, into a netcdf. Each model/uncert/year/week is a new forecast and should get a new forecast ID
+      # do we want new netcdfs for each file or each model type or maybe just one model for the whole suite ? the last option is probably bad cuz it would be a huge file
+
+      cur_forecast_id <- uuid::UUIDgenerate() #The ID that applies to the specific forecast
+
+
 
       write.csv(det.prediction,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)
 

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.2" packageId="GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200909" system="uuid" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0 https://eml.ecoinformatics.org/eml-2.2.0/eml.xsd">
+  <dataset>
+    <title>Lake Sunapee G. echinulata forecasts</title>
+    <creator id="https://orcid.org/0000-0003-3270-1330">
+      <individualName>
+        <givenName>Mary</givenName>
+        <surName>Lofton</surName>
+      </individualName>
+      <electronicMailAddress>melofton@vt.edu</electronicMailAddress>
+    </creator>
+    <pubDate>2015-05-07</pubDate>
+    <abstract>EML metadata for G. echinulata forecasts</abstract>
+    <keywordSet>
+      <keyword>forecast</keyword>
+      <keyword>ecosystem</keyword>
+      <keyword>timeseries</keyword>
+      <keyword>water</keyword>
+      <keyword>HABs</keyword>
+      <keyword>algae</keyword>
+      <keywordThesaurus>EFI controlled vocabulary</keywordThesaurus>
+    </keywordSet>
+    <intellectualRights>?</intellectualRights>
+    <coverage>
+      <geographicCoverage>
+        <geographicDescription>Lake Sunapee</geographicDescription>
+        <boundingCoordinates>
+          <westBoundingCoordinate>-72.0836</westBoundingCoordinate>
+          <eastBoundingCoordinate>-72.0314</eastBoundingCoordinate>
+          <northBoundingCoordinate>43.4323</northBoundingCoordinate>
+          <southBoundingCoordinate>43.3238</southBoundingCoordinate>
+          <boundingAltitudes>
+            <altitudeMinimum>333</altitudeMinimum>
+            <altitudeMaximum>333</altitudeMaximum>
+            <altitudeUnits>meter</altitudeUnits>
+          </boundingAltitudes>
+        </boundingCoordinates>
+      </geographicCoverage>
+      <temporalCoverage>
+        <rangeOfDates>
+          <beginDate>
+            <calendarDate>2015-05-14</calendarDate>
+          </beginDate>
+          <endDate>
+            <calendarDate>2015-05-14</calendarDate>
+          </endDate>
+        </rangeOfDates>
+      </temporalCoverage>
+    </coverage>
+    <contact>
+      <references>https://orcid.org/0000-0003-3270-1330</references>
+    </contact>
+    <methods>methods go here</methods>
+    <dataTable>
+      <entityName>AR_IC.Pa.P.O_2015-05-14.nc</entityName>
+      <entityDescription>Lake Sunapee G. echinulata forecasts</entityDescription>
+      <physical>
+        <objectName>AR_IC.Pa.P.O_2015-05-14.nc</objectName>
+        <size unit="bytes">280938</size>
+        <authentication method="MD5">f82722c76c2b9e65a3245a5dddfdcb7f</authentication>
+        <dataFormat>
+          <textFormat>
+            <recordDelimiter>&#13;
+</recordDelimiter>
+            <attributeOrientation>column</attributeOrientation>
+            <simpleDelimited>
+              <fieldDelimiter>,</fieldDelimiter>
+            </simpleDelimited>
+          </textFormat>
+        </dataFormat>
+      </physical>
+      <attributeList>
+        <attribute>
+          <attributeName>valid_date</attributeName>
+          <attributeDefinition>forecast valid date</attributeDefinition>
+          <storageType>date</storageType>
+          <measurementScale>
+            <dateTime>
+              <formatString>YYYY-MM-DD</formatString>
+              <dateTimeDomain/>
+            </dateTime>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>ensemble</attributeName>
+          <attributeDefinition>index of ensemble member</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <standardUnit>dimensionless</standardUnit>
+              </unit>
+              <numericDomain>
+                <numberType>integer</numberType>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>Gloeo abundance</attributeName>
+          <attributeDefinition>G. echinulata abundance</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <customUnit>colonies L-1</customUnit>
+              </unit>
+              <numericDomain>
+                <numberType>real</numberType>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>forecast_issue_time</attributeName>
+          <attributeDefinition>time that forecast was created</attributeDefinition>
+          <storageType>date</storageType>
+          <measurementScale>
+            <dateTime>
+              <formatString>YYYY-MM-DD</formatString>
+              <dateTimeDomain/>
+            </dateTime>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>data_assimilation</attributeName>
+          <attributeDefinition>flag whether time step included data assimilation</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <standardUnit>dimensionless</standardUnit>
+              </unit>
+              <numericDomain>
+                <numberType>integer</numberType>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>forecast_id</attributeName>
+          <attributeDefinition>ID for specific forecast iteration</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <textDomain>
+                  <definition>forecast id</definition>
+                </textDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>forecast_project_id</attributeName>
+          <attributeDefinition>ID for forecasting project</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <textDomain>
+                  <definition>project id</definition>
+                </textDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+        </attribute>
+      </attributeList>
+    </dataTable>
+  </dataset>
+</eml:eml>
