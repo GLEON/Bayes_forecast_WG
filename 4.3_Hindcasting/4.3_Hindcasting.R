@@ -178,7 +178,7 @@ for (i in 1:length(my_models)){
       matrix_to_ncdf(hindcast_matrix = det.prediction,
                      Nmc = Nmc,
                      forecast_issue_time = as.Date(cur_date),
-                     forecast_iteration_id = uuid::UUIDgenerate(),
+                     forecast_iteration_id = create_forecast_iteration_id(forecast_project_id),
                      forecast_project_id = forecast_project_id,
                      model_name = paste(model_name, 'det', sep = '_'),
                      nc_name_out = nc_name_out)
@@ -244,7 +244,7 @@ for (i in 1:length(my_models)){
       matrix_to_ncdf(hindcast_matrix = hindcast.IC,
                      Nmc = Nmc,
                      forecast_issue_time = as.Date(cur_date),
-                     forecast_iteration_id = uuid::UUIDgenerate(),
+                     forecast_iteration_id = create_forecast_iteration_id(forecast_project_id),
                      forecast_project_id = forecast_project_id,
                      model_name = paste(model_name, 'IC', sep = '_'),
                      nc_name_out = nc_name_out)
