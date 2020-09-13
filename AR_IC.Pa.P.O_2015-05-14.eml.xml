@@ -57,7 +57,7 @@
       <physical>
         <objectName>AR_IC.Pa.P.O_2015-05-14.nc</objectName>
         <size unit="bytes">280938</size>
-        <authentication method="MD5">f82722c76c2b9e65a3245a5dddfdcb7f</authentication>
+        <authentication method="MD5">b12b3af85128f4156326418b1277cf8d</authentication>
         <dataFormat>
           <textFormat>
             <recordDelimiter>&#13;
@@ -168,4 +168,49 @@
       </attributeList>
     </dataTable>
   </dataset>
+  <additionalMetadata>
+    <metadata>
+      <forecast>
+        <drivers>
+          <uncertainty>no</uncertainty>
+        </drivers>
+        <forecast_horizon>28 days</forecast_horizon>
+        <forecast_issue_time>2015-05-07</forecast_issue_time>
+        <forecast_iteration_id>1415fb92-77fc-4bfc-b2ac-f4cf043ed118</forecast_iteration_id>
+        <forecast_project_id>GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200909</forecast_project_id>
+        <initial_conditions>
+          <complexity>1</complexity>
+          <propagation>
+            <size>7500</size>
+            <type>ensemble</type>
+          </propagation>
+          <uncertainty>propagates</uncertainty>
+        </initial_conditions>
+        <metadata_standard_version>0.2</metadata_standard_version>
+        <model_description>
+          <name>AR_IC</name>
+          <repository>https://github.com/GLEON/Bayes_forecast_WG/tree/eco_apps_release/4.1_JAGS_models</repository>
+          <type>process-based</type>
+        </model_description>
+        <parameters>
+          <complexity>1</complexity>
+          <uncertainty>contains</uncertainty>
+        </parameters>
+        <process_error>
+          <complexity>1</complexity>
+          <covariance>TRUE</covariance>
+          <localization>FALSE</localization>
+          <propagation>
+            <size>7500</size>
+            <type>ensemble</type>
+          </propagation>
+          <uncertainty>propagates</uncertainty>
+        </process_error>
+        <random_effects>
+          <uncertainty>no</uncertainty>
+        </random_effects>
+        <timestep>1 week</timestep>
+      </forecast>
+    </metadata>
+  </additionalMetadata>
 </eml:eml>
