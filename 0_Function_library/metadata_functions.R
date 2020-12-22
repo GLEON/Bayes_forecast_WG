@@ -234,12 +234,12 @@ create_forecast_eml = function(model_out_nc_file,
   coverage <- EML::set_coverage(begin = lubridate::as_datetime(dates[1]),
                                 end = lubridate::as_datetime(tail((dates)[1])),
                                 geographicDescription = "Lake Sunapee",
-                                west = -72.0836,
-                                east = -72.0314,  # need to check if this is correct boundaries and altitude
-                                north = 43.4323,
-                                south = 43.3238,
-                                altitudeMaximum = 333,
-                                altitudeMinimum = 333,
+                                west = -72.0831,
+                                east = -72.0304,  # need to check if this is correct boundaries and altitude
+                                north = 43.4307,
+                                south = 43.3217,
+                                altitudeMaximum = 333.3,
+                                altitudeMinimum = 333.3,
                                 altitudeUnits = 'meter')
 
   keywordSet <- list(
@@ -255,7 +255,7 @@ create_forecast_eml = function(model_out_nc_file,
 
 
   ### methods details here ###
-  methods = list(methods = 'methods go here') ## need to add in methods details; could point to paper?
+  methods = list(methods = 'See Lofton et al. XXXX url:') ## need to add in methods details; could point to paper?
   ###########
 
   dataset = eml$dataset(title = 'Lake Sunapee G. echinulata forecasts',
