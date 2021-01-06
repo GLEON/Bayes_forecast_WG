@@ -1,26 +1,24 @@
 
 # notes on EFI forecast standards
 
-# see document here: https://docs.google.com/document/d/1rEV2qI1u4l3gjzy8-x3gjFChsd5SIWTUL6aWhPWYdr8/edit
+# see document here: https://docs.google.com/document/d/1Xxyt-1LFHCE-CBwF_qad2sWHMHJoZVJdrOyK4ydjeR0/edit
 # Following the Climate and Forecast (CF) convention, the order of dimensions for all three formats is T, Z, Y, X, E where T is time, Z, Y, and X are spatial dimensions, and E is ensemble member. In general forecasts issued at different dates or times should be stored in separate files, and thus the time dimension is the time being predicted. If multiple forecasts are placed within a single file then the issue time is the first time dimension and then the time being predicted is second.
 
-
-
 # practice data #############
-# hindcast_matrix = read.csv('edi.18.3/Gechinulata_hindcasts/Gechinulata_hindcasts/AR_IC.Pa.P.O_2015-05-14.csv', stringsAsFactor = F)
-# Nmc = 7500
-# forecast_issue_time = as.Date('2015-05-07')
-# forecast_iteration_id = uuid::UUIDgenerate()
-# forecast_project_id = 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200909'
-# model_name = 'AR_IC'
-# nc_name_out = 'AR_IC.Pa.P.O_2015-05-14.nc'
-#
-# library(ncdf4)
-# library(tidyverse)
-# library(EML)
-# library(emld)
-# library(uuid)
-# library(EFIstandards)
+hindcast_matrix = read.csv('edi.18.3/Gechinulata_hindcasts/Gechinulata_hindcasts/AR_IC.Pa.P.O_2015-05-14.csv', stringsAsFactor = F)
+Nmc = 7500
+forecast_issue_time = as.Date('2015-05-07')
+forecast_iteration_id = uuid::UUIDgenerate()
+forecast_project_id = 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200909'
+model_name = 'AR_IC'
+nc_name_out = 'AR_IC.Pa.P.O_2015-05-14.nc'
+
+library(ncdf4)
+library(tidyverse)
+library(EML)
+library(emld)
+library(uuid)
+library(EFIstandards)
 ######
 
 #' Function to organize model output arrays into netcdf
@@ -32,24 +30,23 @@
 #' @param model_name model name used to forecast Gloeo abundance
 #' @param nc_name_out name of the ncdf file
 #'
-matrix_to_ncdf = function(hindcast_matrix,
-                          Nmc,
-                          forecast_issue_time,
-                          forecast_iteration_id,
-                          forecast_project_id,
-                          model_name,
-                          nc_name_out){
+nc_create_hindcast_out = function(Nmc,
+                                  forecast_issue_times,
+                                  forecast_iteration_ids,
+                                  forecast_project_id,
+                                  model_name,
+                                  nc_name_out){
 
   hindcast_df <- select_if(hindcast_matrix, ~sum(!is.na(.)) > 0)  %>% # getting rid of NA columns
     as_tibble()
 
   n_valid_times <- ncol(hindcast_df) # number of forecast weeks
-  # need to check if forecast issue times and week_1 are the same or week_1 7 days in the future ###
+  # forecast issue times are at week_0 and week_1-4 are x weeks in the future
   valid_times <- seq.Date(forecast_issue_time + 7,
                           forecast_issue_time + (n_valid_times * 7),
                           by = 'week')
 
-  # flag for if any observations were assimilated for each date, 0 for no data assimilated, 1 for data assimilated; not sure if there were data assimilated in hindcasts at first time point or not; I'm thinking no, but need to confirm with Mary
+  # flag for if any observations were assimilated for each date, 0 for no data assimilated, 1 for data assimilated; data were assimilated at week 0 and hindcasts were made at weeks 1-4
   data_assimilation <- hindcast_df %>% mutate_all(~ifelse(!is.na(.), 0, NA))
 
   #Set dimensions
@@ -93,11 +90,18 @@ matrix_to_ncdf = function(hindcast_matrix,
                              longname = 'G. echinulata total colonies L-1',
                              prec = 'float')
 
-  def_list[[3]] <- ncvar_def(name =  'data_assimilation',
-                             units = 'logical',
-                             dim = list(time_dim, ens_dim),
+  def_list[[3]] <- ncvar_def(name =  "forecast",
+                             units = "integer",
+                             dim = list(time_dim),
                              missval = fillvalue,
-                             longname = '1 = data assimilation used in timestep',
+                             longname = 'EFI standard forecast code. 0 = hindcast, 1 = forecast',
+                             prec="single")
+
+  def_list[[4]] <- ncvar_def(name =  'data_assimilation',
+                             units = 'integer',
+                             dim = list(time_dim),
+                             missval = fillvalue,
+                             longname = 'EFI standard data assimilation code. 0 = no DA, 1 = DA at timestep',
                              prec = 'single')
 
   ncout <- nc_create(nc_name_out, def_list, force_v4 = T)
@@ -110,6 +114,9 @@ matrix_to_ncdf = function(hindcast_matrix,
             vals = as.matrix(hindcast_df))
   ncvar_put(nc = ncout,
             varid = def_list[[3]],
+            vals = as.matrix(forecast))
+  ncvar_put(nc = ncout,
+            varid = def_list[[4]],
             vals = as.matrix(data_assimilation))
 
   #Global file metadata
