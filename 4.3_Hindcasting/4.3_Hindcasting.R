@@ -93,7 +93,6 @@ for (i in 1:length(my_models)){
         IC = rnorm(Nmc,-5,sqrt(1/100))
 
       } else if(wks[k] %in% c(2:20) & yrs[j] == 2015) { #other weeks use last observed time point + observation error OR draws from imputed value distribution + observation error
-
         mycol <- paste0("mu","[7,",wks[k-1],"]")
         IC = out[prow,mycol]
 
