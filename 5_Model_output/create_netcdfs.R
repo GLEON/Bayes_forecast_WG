@@ -26,7 +26,8 @@ forecast_project_id = 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200
 
 for(m in models){
   # need to get the different types of uncertainty for given model
-  uncertainty_types = sub('.*?_', '', files[grep(forecast_issue_times[1], files[grep(m, files)])]) %>% sub('\\_.*', '', .)
+  model_files = files[grep(m, files)]
+  uncertainty_types = sub('.*?_', '', model_files[grep(forecast_issue_times[1], model_files)]) %>% sub('\\_.*', '', .)
   for(u in uncertainty_types){
     # create a NetCDF for model + uncertainty type for hindcast output
     forecast_iteration_id = uuid::UUIDgenerate()
@@ -40,7 +41,7 @@ for(m in models){
                            n_mc = n_mc,
                            forecast_issue_times = forecast_issue_times,
                            n_valid_times = n_valid_times,
-                           forecast_iteration_id,
+                           forecast_iteration_id = forecast_iteration_id,
                            forecast_project_id = forecast_project_id,
                            model_name = model_name,
                            nc_name_out = nc_name_out)
