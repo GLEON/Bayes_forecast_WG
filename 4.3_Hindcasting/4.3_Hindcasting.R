@@ -172,32 +172,32 @@ for (i in 1:length(my_models)){
       # JAZ; 2020-09-11; working on forecast metadata
       # need to get the output, which is Nmc rows x 4 columns matrix, into a netcdf. Each model/uncert/year/week is a new forecast and should get a new forecast_iteration_ID
       # We probably should have a new netcdfs for each file (i.e. forecast_iteration_ID) since there is a lot of metadata that will be unique to each forecast for the partitioning uncertainty forecasts
-      nc_name_out = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_',yrs[j],'_',wks[k],'.nc')))
-      eml_file_name = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_',yrs[j],'_',wks[k],'.eml.xml')))
-
-      matrix_to_ncdf(hindcast_matrix = det.prediction,
-                     Nmc = Nmc,
-                     forecast_issue_time = as.Date(cur_date),
-                     forecast_iteration_id = create_forecast_iteration_id(forecast_project_id),
-                     forecast_project_id = forecast_project_id,
-                     model_name = paste(model_name, 'det', sep = '_'),
-                     nc_name_out = nc_name_out)
-
-      # example eml out - should make another function for detailing all ic, param, driver details and complexity for the different model names
-      create_forecast_eml(model_out_nc_file = nc_name_out,
-                          eml_file_name = eml_file_name,
-                          initial_conditions = 'no',
-                          ic_complexity = NA,
-                          parameters = 'contains',
-                          param_complexity = 1,
-                          random_effects = 'no',
-                          random_complexity = NA,
-                          drivers = 'no',
-                          driver_complexity = NA,
-                          process_error = 'propagates',
-                          process_complexity = 1,
-                          covariance = TRUE,
-                          localization = FALSE)
+      # nc_name_out = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_',yrs[j],'_',wks[k],'.nc')))
+      # eml_file_name = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_',yrs[j],'_',wks[k],'.eml.xml')))
+      #
+      # matrix_to_ncdf(hindcast_matrix = det.prediction,
+      #                Nmc = Nmc,
+      #                forecast_issue_time = as.Date(cur_date),
+      #                forecast_iteration_id = create_forecast_iteration_id(forecast_project_id),
+      #                forecast_project_id = forecast_project_id,
+      #                model_name = paste(model_name, 'det', sep = '_'),
+      #                nc_name_out = nc_name_out)
+      #
+      # # example eml out - should make another function for detailing all ic, param, driver details and complexity for the different model names
+      # create_forecast_eml(model_out_nc_file = nc_name_out,
+      #                     eml_file_name = eml_file_name,
+      #                     initial_conditions = 'no',
+      #                     ic_complexity = NA,
+      #                     parameters = 'contains',
+      #                     param_complexity = 1,
+      #                     random_effects = 'no',
+      #                     random_complexity = NA,
+      #                     drivers = 'no',
+      #                     driver_complexity = NA,
+      #                     process_error = 'propagates',
+      #                     process_complexity = 1,
+      #                     covariance = TRUE,
+      #                     localization = FALSE)
 
       write.csv(det.prediction,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)
 
@@ -238,32 +238,32 @@ for (i in 1:length(my_models)){
                                   wk = wks[k],
                                   covar_hindcast = covar.hindcast.IC)
 
-      nc_name_out = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_',yrs[j],'_',wks[k],'.nc')))
-      eml_file_name = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_',yrs[j],'_',wks[k],'.eml.xml')))
-
-      matrix_to_ncdf(hindcast_matrix = hindcast.IC,
-                     Nmc = Nmc,
-                     forecast_issue_time = as.Date(cur_date),
-                     forecast_iteration_id = create_forecast_iteration_id(forecast_project_id),
-                     forecast_project_id = forecast_project_id,
-                     model_name = paste(model_name, 'IC', sep = '_'),
-                     nc_name_out = nc_name_out)
-
-      # example eml out - should make another function for detailing all ic, param, driver details and complexity for the different model names
-      create_forecast_eml(model_out_nc_file = nc_name_out,
-                          eml_file_name = eml_file_name,
-                          initial_conditions = 'propagates',
-                          ic_complexity = 1,
-                          parameters = 'contains',
-                          param_complexity = 1,
-                          random_effects = 'no',
-                          random_complexity = NA,
-                          drivers = 'no',
-                          driver_complexity = NA,
-                          process_error = 'propagates',
-                          process_complexity = 1,
-                          covariance = TRUE,
-                          localization = FALSE)
+      # nc_name_out = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_',yrs[j],'_',wks[k],'.nc')))
+      # eml_file_name = file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_',yrs[j],'_',wks[k],'.eml.xml')))
+      #
+      # matrix_to_ncdf(hindcast_matrix = hindcast.IC,
+      #                Nmc = Nmc,
+      #                forecast_issue_time = as.Date(cur_date),
+      #                forecast_iteration_id = create_forecast_iteration_id(forecast_project_id),
+      #                forecast_project_id = forecast_project_id,
+      #                model_name = paste(model_name, 'IC', sep = '_'),
+      #                nc_name_out = nc_name_out)
+      #
+      # # example eml out - should make another function for detailing all ic, param, driver details and complexity for the different model names
+      # create_forecast_eml(model_out_nc_file = nc_name_out,
+      #                     eml_file_name = eml_file_name,
+      #                     initial_conditions = 'propagates',
+      #                     ic_complexity = 1,
+      #                     parameters = 'contains',
+      #                     param_complexity = 1,
+      #                     random_effects = 'no',
+      #                     random_complexity = NA,
+      #                     drivers = 'no',
+      #                     driver_complexity = NA,
+      #                     process_error = 'propagates',
+      #                     process_complexity = 1,
+      #                     covariance = TRUE,
+      #                     localization = FALSE)
 
       #write hindcast to file
       write.csv(hindcast.IC,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)
