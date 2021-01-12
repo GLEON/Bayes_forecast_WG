@@ -1,7 +1,13 @@
-2007-e2019_PAR_L1.csv
-PRISM_met_1981_2017_midge.csv
-2007-e2019_buoy_tempstring_v07April2020.csv
-2015_hobotempstring_L1.csv.csv
-2007-e2019_wind_L1.csv
-NLDAS_SunapeeMet_1979_2016.csv
-weekly.surface.gloeo_4sites_2005-2016_v10April2020.csv
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+
+# Files previously needed in this directory:
+# 2007-e2019_PAR_L1.csv
+# PRISM_met_1981_2017_midge.csv
+# 2007-e2019_buoy_tempstring_v07April2020.csv
+# 2015_hobotempstring_L1.csv.csv
+# 2007-e2019_wind_L1.csv
+# NLDAS_SunapeeMet_1979_2016.csv
+# weekly.surface.gloeo_4sites_2005-2016_v10April2020.csv

@@ -298,20 +298,20 @@ schmidt_daily_sd_2015 <- timeAverage(schmidt_buoy2015_fulltime, avg.time = "day"
 
 #Bind summaries together
 schmidt_daily_summary1 <- bind_cols(schmidt_daily_mean, schmidt_daily_median[,2], schmidt_daily_min[,2], schmidt_daily_max[,2], schmidt_daily_sd[,2])
+colnames(schmidt_daily_summary1)[2:6] <- c("schmidt.stability_mean","schmidt.stability_median","schmidt.stability_min","schmidt.stability_max","schmidt.stability_sd")
 
 # rename columns
 schmidt_daily_summary2 <- schmidt_daily_summary1 %>%
-  rename(schmidt.stability_mean = schmidt.stability, schmidt.stability_median = schmidt.stability1, schmidt.stability_min = schmidt.stability2, schmidt.stability_max = schmidt.stability3,schmidt.stability_sd = schmidt.stability4) %>%
   mutate(date = date(date)) %>%
   mutate(year = year(date)) %>%
   filter(year !=2015) # remove 2015 to be able to bind separate data
 
 #Bind 2015 summaries together
 schmidt_daily_summary2015 <- bind_cols(schmidt_daily_mean_2015, schmidt_daily_median_2015[,2], schmidt_daily_min_2015[,2], schmidt_daily_max_2015[,2], schmidt_daily_sd_2015[,2])
+colnames(schmidt_daily_summary2015)[2:6] <- c("schmidt.stability_mean","schmidt.stability_median","schmidt.stability_min","schmidt.stability_max","schmidt.stability_sd")
 
 # rename columns
 schmidt_daily_summary2015_2 <- schmidt_daily_summary2015 %>%
-  rename(schmidt.stability_mean = schmidt.stability, schmidt.stability_median = schmidt.stability1, schmidt.stability_min = schmidt.stability2, schmidt.stability_max = schmidt.stability3,schmidt.stability_sd = schmidt.stability4) %>%
   mutate(date = date(date)) %>%
   mutate(year = year(date))
 
@@ -330,7 +330,7 @@ lines(schmidt.stability_max ~ date, data = schmidt_daily_summary3, col = "red")
 # Limit schmidt data to sampling dates ####
 
 #read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
 
 schmidt_daily_summary4 <- schmidt_daily_summary3 %>%
   filter(date %in% sampling_dates$date)
@@ -367,7 +367,7 @@ schmidt_daily_summary3_fill2 <- full_join(schmidt_daily_summary3_fill, schmidt_d
   arrange(date)
 
 # Read in sampling dates lag
-sampling_dates_lag <- read_csv("./00_Data_files/Covariate_analysis_data/sampling_dates_lag.csv")
+sampling_dates_lag <- read_csv("./00_Data_files/sampling_dates_lag.csv")
 
 #Join schmidt with 1 week lag date
 schmidt_weeklag <- schmidt_daily_summary3_fill2 %>%

@@ -91,15 +91,15 @@ windsp_daily_sd <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data
 
 #Bind summaries together
 windsp_daily_summary <- bind_cols(windsp_daily_mean, windsp_daily_median[,3], windsp_daily_min[,3], windsp_daily_max[,3], windsp_daily_sd[,3])
+colnames(windsp_daily_summary)[3:8] <- c("AveWindSp_ms_mean","AveWindDir_cove_mean","AveWindSp_ms_median","AveWindSp_ms_min","AveWindSp_ms_max","AveWindSp_ms_sd")
 
 # rename columns
-windsp_daily_summary2 <- windsp_daily_summary %>%
-  rename(AveWindSp_ms_mean = AveWindSp_ms, AveWindDir_cove_mean = AveWindDir_cove, AveWindSp_ms_median = AveWindSp_ms1, AveWindSp_ms_min = AveWindSp_ms2, AveWindSp_ms_max = AveWindSp_ms3, AveWindSp_ms_sd = AveWindSp_ms4)
+windsp_daily_summary2 <- windsp_daily_summary
 
 # Limit wind speed data to sampling dates ####
 
 # Read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
 
 windsp_daily_summary3 <- windsp_daily_summary2 %>%
   mutate(date = date(date)) %>%
@@ -108,7 +108,7 @@ windsp_daily_summary3 <- windsp_daily_summary2 %>%
 # Create 1-3 day & 1 week lag ####
 
 # Read in sampling dates lag
-sampling_dates_lag <- read_csv("./00_Data_files/Covariate_analysis_data/sampling_dates_lag.csv")
+sampling_dates_lag <- read_csv("./00_Data_files/sampling_dates_lag.csv")
 
 # Join wind speed data with 1 DAY lag date
 windsp_daily_summary2_lag_1day <- windsp_daily_summary2 %>%

@@ -67,14 +67,15 @@ hcs_watertemp_daily_sd <- timeAverage(dat3, avg.time = "day", data.thresh = 75, 
 
 # Bind summaries together
 hcs_watertemp_daily_summary <- bind_cols(hcs_watertemp_daily_mean[,-4], hcs_watertemp_daily_median[,5], hcs_watertemp_daily_min[,5], hcs_watertemp_daily_max[,5], hcs_watertemp_daily_sd[,5])
+colnames(hcs_watertemp_daily_summary)[4:8] <- c("HCS.tempC_mean","HCS.tempC_median","HCS.tempC_min","HCS.tempC_max","HCS.tempC_sd")
+
 
 # rename columns
-dat4 <- hcs_watertemp_daily_summary %>%
-  rename(HCS.tempC_mean = temp_degC, HCS.tempC_median = temp_degC1, HCS.tempC_min = temp_degC2, HCS.tempC_max = temp_degC3,HCS.tempC_sd = temp_degC4)
+dat4 <- hcs_watertemp_daily_summary
 
 # Join with sampling dates ####
 # read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
 
 # Filter water temp data for sampling dates
 dat5 <- dat4 %>%
@@ -129,7 +130,8 @@ sampling_dates_lag <- sampling_dates %>%
   mutate(date_2daylag = date - ddays(2)) %>%
   mutate(date_3daylag = date - ddays(3))
 
-write_csv(sampling_dates_lag, "./00_Data_files/Covariate_analysis_data/sampling_dates_lag.csv")
+# Write file of lagged sampling dates to file - will stay in repo so only needs done once
+#write_csv(sampling_dates_lag,"./00_Data_files/sampling_dates_lag.csv")
 
 # Fill full time series data for water temp holes @ start & end gloeo data
 dat4_fill <- dat4 %>%
