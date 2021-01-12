@@ -139,7 +139,7 @@ if(model_name == "schmidt_max_lag"){
 if(model_name == "wnd_dir_2day_lag"){
 
   #read in covariate data
-  Wnd <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+  Wnd <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv"))
   #remove 2015-2016 data
   Wnd <- Wnd[-c(7:8),]
   #center covariate data
