@@ -76,9 +76,9 @@ if (model_name == "schmidt_max_lag"){
 }
 if (model_name == "wnd_dir_2day_lag"){
   #read in covar data
-  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+  covar0 <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv"))
   #read in prior data
-  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_2day_lag.csv"))
+  prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv"))
 }
 if (model_name == "precip"){
   #read in covar data

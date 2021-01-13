@@ -27,7 +27,7 @@ yrs <- c(2015,2016)
 wks <- c(1:20)
 
 # metadata details
-forecast_project_id <- 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200909' #An ID that applies to a bunch of forecasts
+forecast_project_id <- 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20210112' #An ID that applies to a bunch of forecasts
 
 ########################RUN HINDCASTS##############################################
 
