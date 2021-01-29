@@ -4,7 +4,15 @@ A working group using Bayesian techniques to develop ecological forecasts
 This branch has been tagged as a code publication for Lofton et al. 20XX,
 "Using near-term forecasts and uncertainty partitioning to improve predictions of low-frequency cyanobacterial events"
 
-Guide to file structure:
+# Instructions to run analysis
+1. Download or clone the Github repository to your local machine.
+2. Run all Rscripts in the 1_Get_data folder to access all data associated with the analysis, published at the Environmental Data Initiative.
+3. Sequentially run all Rscripts in the following folders (2,3,4,etc.). A guide to folders is provided below.
+
+Note that for some scripts, particularly those for data visualization, the user will have to set a local working directory for plot output.
+This is generally indicated at the top of the relevant scripts.
+
+# Guide to file structure:
 (see readmes within each folder for further details)
 
 00_Data_files: folder that will be populated with analysis-ready formatted data files derived from data publications housed at the Environmental Data Initiative (EDI) when the user runs scripts in 1_Get_data
