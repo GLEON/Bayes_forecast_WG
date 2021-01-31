@@ -74,15 +74,14 @@ sotf_watertemp_daily_sd <- timeAverage(dat3, avg.time = "day", data.thresh = 75,
 
 #Bind summaries together
 sotf_watertemp_daily_summary <- bind_cols(sotf_watertemp_daily_mean[,-4], sotf_watertemp_daily_median[,5], sotf_watertemp_daily_min[,5], sotf_watertemp_daily_max[,5], sotf_watertemp_daily_sd[,5])
+colnames(sotf_watertemp_daily_summary)[4:8] <- c("SOTF.tempC_mean","SOTF.tempC_median","SOTF.tempC_min","SOTF.tempC_max","SOTF.tempC_sd")
 
 # rename columns
-dat4 <- sotf_watertemp_daily_summary %>%
-  rename(SOTF.tempC_mean = temp_degC, SOTF.tempC_median = temp_degC1, SOTF.tempC_min = temp_degC2, SOTF.tempC_max = temp_degC3,SOTF.tempC_sd = temp_degC4)
-
+dat4 <- sotf_watertemp_daily_summary
 
 # Join with sampling dates ####
 #read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
 str(sampling_dates)
 
 # Filter water temp data for sampling dates
@@ -140,6 +139,9 @@ sampling_dates_lag <- sampling_dates %>%
   mutate(date_1daylag = date - ddays(1)) %>%
   mutate(date_2daylag = date - ddays(2)) %>%
   mutate(date_3daylag = date - ddays(3))
+
+# Write file of lagged sampling dates to file - will stay in repo so only needs done once
+#write_csv(sampling_dates_lag,"./00_Data_files/sampling_dates_lag.csv")
 
 # Fill full time series data for water temp holes @ start & end gloeo data
 dat4_fill <- dat4 %>%

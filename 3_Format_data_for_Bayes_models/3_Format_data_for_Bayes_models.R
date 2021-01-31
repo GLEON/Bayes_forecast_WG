@@ -21,7 +21,7 @@ colnames(gloeo) <- paste("wk", colnames(gloeo), sep = "_")
 write.csv(gloeo, "./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv", row.names = FALSE)
 
 ############format water temp data
-wtr <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all.csv")
+wtr <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_HC.csv")
 wtr2 <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
 
 #min water temp for Site 1
@@ -133,11 +133,9 @@ colnames(max_lag) <- paste("wk", colnames(max_lag), sep = "_")
 write.csv(max_lag, "./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv", row.names = FALSE)
 
 ############format GDD data
-gdd <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
-gdd2 <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days_SOTF.csv")
 
 #GDD for Site 1
-gdd1 <- gdd %>%
+gdd1 <- wtr %>%
   select(date, gdd_sum) %>%
   mutate(season_week = rep(c(1:20),times = 8),
          year = year(date)) %>%
@@ -150,7 +148,7 @@ colnames(gdd1) <- paste("wk", colnames(gdd1), sep = "_")
 write.csv(gdd1, "./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv", row.names = FALSE)
 
 #GDD for Site 2
-gdd3 <- gdd2 %>%
+gdd2 <- wtr2 %>%
   select(date, gdd_sum) %>%
   mutate(season_week = rep(c(1:20),times = 8),
          year = year(date)) %>%
@@ -158,12 +156,12 @@ gdd3 <- gdd2 %>%
   spread(key = season_week, value = gdd_sum) %>%
   select(-year)
 
-colnames(gdd3) <- paste("wk", colnames(gdd3), sep = "_")
+colnames(gdd2) <- paste("wk", colnames(gdd2), sep = "_")
 
-write.csv(gdd3, "./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv", row.names = FALSE)
+write.csv(gdd2, "./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv", row.names = FALSE)
 
 ############format wind data
-wnd <- read_csv("./00_Data_files/Covariate_analysis_data/wind_speed_data_all_combined.csv")
+wnd <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data_all.csv")
 
 #avg. wind direction with a 2 day lag
 wnd1 <- wnd %>%
@@ -179,7 +177,7 @@ colnames(wnd1) <- paste("wk", colnames(wnd1), sep = "_")
 write.csv(wnd1, "./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv", row.names = FALSE)
 
 ##############format precip data
-ppt <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precip_all.csv")
+ppt <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precipitation_2009-2016.csv")
 
 #avg. wind direction with a 2 day lag
 ppt1 <- ppt %>%

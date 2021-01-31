@@ -81,13 +81,13 @@ par_daily_sum <- par2 %>%
 par_daily_summary <- bind_cols(par_daily_mean, par_daily_median[,2], par_daily_min[,2], par_daily_max[,2], par_daily_sd[,2], par_daily_sum[,4])
 
 # rename columns
-par_daily_summary2 <- par_daily_summary %>%
-  rename(par_mean = PAR_umolm2s, par_median = PAR_umolm2s1, par_min = PAR_umolm2s2, par_max = PAR_umolm2s3, par_sd = PAR_umolm2s4, par_sum = daily_sum2)
+colnames(par_daily_summary)[2:7] <- c("par_mean","par_median","par_min","par_max","par_sd","par_sum")
+par_daily_summary2 <- par_daily_summary
 
 # Limit PAR data to sampling dates ####
 
 #read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
 
 par_daily_summary3 <- par_daily_summary2 %>%
   mutate(date = date(date)) %>%

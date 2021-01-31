@@ -34,10 +34,10 @@ water_temp_data <- read_csv("./00_Data_files/Covariate_analysis_data/onset_water
 schmidt_stability_data <- read_csv("./00_Data_files/Covariate_analysis_data/schmidt_stability_all.csv")
 
 # precip data
-precip_data <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precip_all.csv")
+precip_data <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precipitation_2009-2016.csv")
 
 # sw radiation
-swrad <- read_csv("./00_Data_files/Covariate_analysis_data/solar_radiation_daily_summary.csv")
+swrad <- read_csv("./00_Data_files/Covariate_analysis_data/NLDAS_solar_radiation_2009-2016.csv")
 
 # par
 par <- read_csv("./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")

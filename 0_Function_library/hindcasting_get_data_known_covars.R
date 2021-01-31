@@ -149,9 +149,11 @@ if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7")){
     covar[7,] <- NA
 
     #create covar hindcast
-    covar_hindcast <- covar0[c(1:6),]
+    covar_hindcast <- covar0[c(1:7),]
     #standardize covar hindcast
     covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar_hindcast <- covar_hindcast[7,]
 
     #standardize gap-filling dataset
     prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
@@ -170,9 +172,11 @@ if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7")){
     covar[8,] <- NA
 
     #create covar hindcast
-    covar_hindcast <- covar0[c(1:7),]
+    covar_hindcast <- covar0[c(1:8),]
     #standardize covar_hindcast
     covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar_hindcast <- covar_hindcast[8,]
 
     #standardize gap-filling dataset
     prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
@@ -202,9 +206,11 @@ if(model_name %in% c("schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","pr
     covar[7,] <- NA
 
     #create covar hindcast
-    covar_hindcast <- covar0[c(1:6),]
+    covar_hindcast <- covar0[c(1:7),]
     #standardize covar hindcast
     covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar_hindcast <- covar_hindcast[7,]
 
     #standardize gap-filling dataset
     prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
@@ -222,9 +228,11 @@ if(model_name %in% c("schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","pr
     covar[8,] <- NA
 
     #create covar hindcast
-    covar_hindcast <- covar0[c(1:7),]
+    covar_hindcast <- covar0[c(1:8),]
     #standardize covar_hindcast
     covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar_hindcast <- covar_hindcast[8,]
 
     #standardize gap-filling dataset
     prior <- (prior - mean(prior, na.rm = TRUE))/sd(prior, na.rm = TRUE)
@@ -253,13 +261,15 @@ if(model_name %in% c("GDD")){
     covar[7,] <- NA
 
     #create covar hindcast
-    covar_hindcast <- covar0[c(1:6),]
+    covar_hindcast <- covar0[c(1:7),]
     #standardize within year to account for different start dates in different years
     covar_hindcast <- apply(covar_hindcast,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
     #transpose
     covar_hindcast <- t(covar_hindcast)
     #standardize covar hindcast
     covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar_hindcast <- covar_hindcast[7,]
 
     #standardize within year to account for different start dates in different years
     prior <- apply(prior,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
@@ -282,13 +292,15 @@ if(model_name %in% c("GDD")){
     covar[8,] <- NA
 
     #create covar hindcast
-    covar_hindcast <- covar0[c(1:7),]
+    covar_hindcast <- covar0[c(1:8),]
     #standardize within year to account for different start dates in different years
     covar_hindcast <- apply(covar_hindcast,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
     #transpose
     covar_hindcast <- t(covar_hindcast)
     #standardize covar_hindcast
     covar_hindcast <- (covar_hindcast - mean(covar_hindcast, na.rm = TRUE))/sd(covar_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar_hindcast <- covar_hindcast[8,]
 
     #standardize within year to account for different start dates in different years
     prior <- apply(prior,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
@@ -326,9 +338,11 @@ if(model_name == "schmidt_and_precip"){
     covar1[7,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:6),]
+    covar1_hindcast <- covar01[c(1:7),]
     #standardize covar hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[7,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -344,9 +358,11 @@ if(model_name == "schmidt_and_precip"){
     covar2[7,] <- NA
 
     #create covar1 hindcast
-    covar2_hindcast <- covar02[c(1:6),]
+    covar2_hindcast <- covar02[c(1:7),]
     #standardize covar hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[7,]
 
     #standardize covar1 gap-filling dataset
     prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
@@ -364,9 +380,11 @@ if(model_name == "schmidt_and_precip"){
     covar1[8,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:7),]
+    covar1_hindcast <- covar01[c(1:8),]
     #standardize covar_hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[8,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -382,9 +400,11 @@ if(model_name == "schmidt_and_precip"){
     covar2[8,] <- NA
 
     #create covar2 hindcast
-    covar2_hindcast <- covar02[c(1:7),]
+    covar2_hindcast <- covar02[c(1:8),]
     #standardize covar2_hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[8,]
 
     #standardize covar2 gap-filling dataset
     prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
@@ -414,9 +434,11 @@ if(model_name == "temp_and_precip"){
     covar1[7,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:6),]
+    covar1_hindcast <- covar01[c(1:7),]
     #standardize covar hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[7,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -433,9 +455,11 @@ if(model_name == "temp_and_precip"){
     covar2[7,] <- NA
 
     #create covar1 hindcast
-    covar2_hindcast <- covar02[c(1:6),]
+    covar2_hindcast <- covar02[c(1:7),]
     #standardize covar hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[7,]
 
     #standardize covar1 gap-filling dataset
     prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
@@ -453,9 +477,11 @@ if(model_name == "temp_and_precip"){
     covar1[8,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:7),]
+    covar1_hindcast <- covar01[c(1:8),]
     #standardize covar_hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[8,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -472,9 +498,11 @@ if(model_name == "temp_and_precip"){
     covar2[8,] <- NA
 
     #create covar2 hindcast
-    covar2_hindcast <- covar02[c(1:7),]
+    covar2_hindcast <- covar02[c(1:8),]
     #standardize covar2_hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[8,]
 
     #standardize covar2 gap-filling dataset
     prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
@@ -504,9 +532,11 @@ if(model_name == "schmidt_and_temp"){
     covar1[7,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:6),]
+    covar1_hindcast <- covar01[c(1:7),]
     #standardize covar hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[7,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -522,9 +552,11 @@ if(model_name == "schmidt_and_temp"){
     covar2[7,] <- NA
 
     #create covar1 hindcast
-    covar2_hindcast <- covar02[c(1:6),]
+    covar2_hindcast <- covar02[c(1:7),]
     #standardize covar hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[7,]
 
     #standardize covar1 gap-filling dataset
     prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
@@ -543,9 +575,11 @@ if(model_name == "schmidt_and_temp"){
     covar1[8,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:7),]
+    covar1_hindcast <- covar01[c(1:8),]
     #standardize covar_hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[8,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -561,9 +595,11 @@ if(model_name == "schmidt_and_temp"){
     covar2[8,] <- NA
 
     #create covar2 hindcast
-    covar2_hindcast <- covar02[c(1:7),]
+    covar2_hindcast <- covar02[c(1:8),]
     #standardize covar2_hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[8,]
 
     #standardize covar2 gap-filling dataset
     prior2 <- (prior2 - mean(prior2, na.rm = TRUE))/sd(prior2, na.rm = TRUE)
@@ -594,9 +630,11 @@ if(model_name %in% c("precip_and_GDD")){
     covar1[7,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:6),]
+    covar1_hindcast <- covar01[c(1:7),]
     #standardize covar hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[7,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -612,13 +650,15 @@ if(model_name %in% c("precip_and_GDD")){
     covar2[7,] <- NA
 
     #create covar 2 hindcast
-    covar2_hindcast <- covar02[c(1:6),]
+    covar2_hindcast <- covar02[c(1:7),]
     #standardize within year to account for different start dates in different years
     covar2_hindcast <- apply(covar2_hindcast,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
     #transpose
     covar2_hindcast <- t(covar2_hindcast)
     #standardize covar 2 hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[7,]
 
     #standardize within year to account for different start dates in different years
     prior2 <- apply(prior2,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
@@ -641,9 +681,11 @@ if(model_name %in% c("precip_and_GDD")){
     covar1[8,] <- NA
 
     #create covar1 hindcast
-    covar1_hindcast <- covar01[c(1:7),]
+    covar1_hindcast <- covar01[c(1:8),]
     #standardize covar_hindcast
     covar1_hindcast <- (covar1_hindcast - mean(covar1_hindcast, na.rm = TRUE))/sd(covar1_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar1_hindcast <- covar1_hindcast[8,]
 
     #standardize covar1 gap-filling dataset
     prior1 <- (prior1 - mean(prior1, na.rm = TRUE))/sd(prior1, na.rm = TRUE)
@@ -659,13 +701,15 @@ if(model_name %in% c("precip_and_GDD")){
     covar2[8,] <- NA
 
     #create covar2 hindcast
-    covar2_hindcast <- covar02[c(1:7),]
+    covar2_hindcast <- covar02[c(1:8),]
     #standardize within year to account for different start dates in different years
     covar2_hindcast <- apply(covar2_hindcast,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
     #transpose
     covar2_hindcast <- t(covar2_hindcast)
     #standardize covar2_hindcast
     covar2_hindcast <- (covar2_hindcast - mean(covar2_hindcast, na.rm = TRUE))/sd(covar2_hindcast, na.rm = TRUE)
+    #select row for hindcast year
+    covar2_hindcast <- covar2_hindcast[8,]
 
     #standardize within year to account for different start dates in different years
     prior2 <- apply(prior2,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})

@@ -68,3 +68,8 @@ hc_gloeo_data <- dat2 %>%
 
 # Write Herrick Cove South gloeo data as a csv ####
 write_csv(hc_gloeo_data, "./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
+
+# # Write sampling dates as a csv - only needs done once, as this file will stay in repo
+# sampling_dates <- tibble(hc_gloeo_data$date)
+# colnames(sampling_dates) <- "date"
+# write_csv(sampling_dates, "./00_Data_files/sampling_dates.csv")
