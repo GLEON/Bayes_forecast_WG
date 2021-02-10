@@ -7,17 +7,19 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
   #assign same model name for models with the same structure
   if(model_name == "RW"){model_type = "RW"}
   if(model_name == "RW_obs"){model_type = "RW_obs"}
-  if(model_name == "AR"){model_type = "AR"}
-  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","precip")){
+  if(model_name == "RW_bias"){model_type = "RW_bias"}
+  if(model_name == "AC"){model_type = "AC"}
+  if(model_name == "base_DLM"){model_type = "base_DLM"}
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","schmidt_max_lag")){
     model_type <- "Linear_1var"
   }
   if(model_name %in% c("GDD")){
     model_type <- "Quad_1var"
   }
-  if(model_name %in% c("schmidt_and_precip","temp_and_precip","schmidt_and_temp")){
+  if(model_name %in% c("schmidt_and_wind","temp_and_wind")){
     model_type <- "Linear_2var"
   }
-  if(model_name %in% c("precip_and_GDD")){
+  if(model_name %in% c("wind_and_GDD")){
     model_type <- "Quad_2var"
   }
 
@@ -28,8 +30,17 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
       params <- list(sd_obs = 0, sd_proc = 0)
     }
 
-    if(model_type == "AR"){
+    if(model_type == "base_DLM"){
       params <- list(sd_obs = 0, sd_proc = 0, beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
+                     beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE))
+    }
+
+    if(model_type == "RW_bias"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE))
+    }
+
+    if(model_type == "AC"){
+      params <- list(sd_obs = 0, sd_proc = 0,
                      beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE))
     }
 
@@ -67,8 +78,17 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
       print("This type of uncertainty is invalid for model_type.")
     }
 
-    if(model_type == "AR"){
+    if(model_type == "base_DLM"){
       params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"])
+    }
+
+    if(model_type == "RW_bias"){
+      params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"])
+    }
+
+    if(model_type == "AC"){
+      params <- list(sd_obs = 0, sd_proc = 0,
                      beta2 = posteriors[num_draws,"beta2"])
     }
 
@@ -141,8 +161,17 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
       }
     }
 
-    if(model_type == "AR"){
+    if(model_type == "base_DLM"){
       params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"])
+    }
+
+    if(model_type == "RW_bias"){
+      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"])
+    }
+
+    if(model_type == "AC"){
+      params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]),
                      beta2 = posteriors[num_draws,"beta2"])
     }
 
@@ -179,8 +208,17 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
       params <- list(sd_obs = 1/sqrt(posteriors[num_draws,"tau_obs"]), sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]))
     }
 
-    if(model_type == "AR"){
+    if(model_type == "base_DLM"){
       params <- list(sd_obs = 1/sqrt(posteriors[num_draws,"tau_obs"]), sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
+                     beta2 = posteriors[num_draws,"beta2"])
+    }
+
+    if(model_type == "RW_bias"){
+      params <- list(sd_obs = 1/sqrt(posteriors[num_draws,"tau_obs"]), sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"])
+    }
+
+    if(model_type == "AC"){
+      params <- list(sd_obs = 1/sqrt(posteriors[num_draws,"tau_obs"]), sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]),
                      beta2 = posteriors[num_draws,"beta2"])
     }
 

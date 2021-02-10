@@ -5,24 +5,26 @@
 run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
 
   #check that model is set up for hindcasting
-  if(!model_name %in% c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_temp","schmidt_max_lag","precip","schmidt_and_precip","temp_and_precip","precip_and_GDD")){
+  if(!model_name %in% c("RW","RW_obs","base_DLM","AC","RW_bias","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")){
     print("This model is not included in the hindcasting functions.")
   }
 
   #assign same model name for models with the same structure
   if(model_name == "RW"){model_type = "RW"}
   if(model_name == "RW_obs"){model_type = "RW_obs"}
-  if(model_name == "AR"){model_type = "AR"}
-  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","precip")){
+  if(model_name == "RW_bias"){model_type = "RW_bias"}
+  if(model_name == "AC"){model_type = "AC"}
+  if(model_name == "base_DLM"){model_type = "base_DLM"}
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","schmidt_max_lag")){
     model_type <- "Linear_1var"
   }
   if(model_name %in% c("GDD")){
     model_type <- "Quad_1var"
   }
-  if(model_name %in% c("schmidt_and_precip","temp_and_precip","schmidt_and_temp")){
+  if(model_name %in% c("schmidt_and_wind","temp_and_wind")){
     model_type <- "Linear_2var"
   }
-  if(model_name %in% c("precip_and_GDD")){
+  if(model_name %in% c("wind_and_GDD")){
     model_type <- "Quad_2var"
   }
 
@@ -132,7 +134,109 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
     }
   }
 
-  if(model_type == "AR"){
+  if(model_type == "RW_bias"){
+    if(wk %in% c(1:17)){
+      for(j in 1:4){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #process model
+        gloeo_temp = params$beta1 + gloeo_prev
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk == 18){
+      for(j in 1:3){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #process model
+        gloeo_temp = params$beta1 + gloeo_prev
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk == 19){
+      for(j in 1:2){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #process model
+        gloeo_temp = params$beta1 + gloeo_prev
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk == 20){
+      #set initial conditions
+      gloeo_prev <- IC
+      #process model
+      gloeo_temp = params$beta1 + gloeo_prev
+      proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+      #data model
+      out[,1] = rnorm(Nmc,proc.model[,1],params$sd_obs)
+    }
+  }
+
+  if(model_type == "AC"){
+    if(wk %in% c(1:17)){
+      for(j in 1:4){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #process model
+        gloeo_temp = params$beta2*gloeo_prev
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk == 18){
+      for(j in 1:3){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #process model
+        gloeo_temp = params$beta2*gloeo_prev
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk == 19){
+      for(j in 1:2){
+        #set initial conditions
+        if(j == 1){gloeo_prev <- IC}
+        #process model
+        gloeo_temp = params$beta2*gloeo_prev
+        proc.model[,j] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+        #data model
+        out[,j] = rnorm(Nmc,proc.model[,j],params$sd_obs)
+        #update IC
+        gloeo_prev <- out[,j]
+      }}
+
+    if(wk == 20){
+      #set initial conditions
+      gloeo_prev <- IC
+      #process model
+      gloeo_temp = params$beta2*gloeo_prev
+      proc.model[,1] = rnorm(Nmc,gloeo_temp,params$sd_proc)
+      #data model
+      out[,1] = rnorm(Nmc,proc.model[,1],params$sd_obs)
+    }
+  }
+
+  if(model_type == "base_DLM"){
     if(wk %in% c(1:17)){
       for(j in 1:4){
         #set initial conditions
@@ -182,6 +286,8 @@ run_hindcast <- function(model_name, params, Nmc, IC, wk, covar_hindcast){
       out[,1] = rnorm(Nmc,proc.model[,1],params$sd_obs)
     }
   }
+
+
 
   if(model_type == "Linear_1var"){
 

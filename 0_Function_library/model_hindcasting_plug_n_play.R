@@ -15,17 +15,19 @@ jags_plug_ins <- function(model_name){
 #assign same model name for models with the same structure
   if(model_name == "RW"){model_type = "RW"}
   if(model_name == "RW_obs"){model_type = "RW_obs"}
-  if(model_name == "AR"){model_type = "AR"}
-  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","precip")){
+  if(model_name == "RW_bias"){model_type = "RW_bias"}
+  if(model_name == "AC"){model_type = "AC"}
+  if(model_name == "base_DLM"){model_type = "base_DLM"}
+  if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","schmidt_max_lag")){
     model_type <- "Linear_1var"
   }
   if(model_name %in% c("GDD")){
     model_type <- "Quad_1var"
   }
-  if(model_name %in% c("schmidt_and_precip","temp_and_precip","schmidt_and_temp")){
+  if(model_name %in% c("schmidt_and_wind","temp_and_wind")){
     model_type <- "Linear_2var"
   }
-  if(model_name %in% c("precip_and_GDD")){
+  if(model_name %in% c("wind_and_GDD")){
     model_type <- "Quad_2var"
   }
 
@@ -43,12 +45,26 @@ jags_plug_ins <- function(model_name){
   init.RW_obs <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
   params.RW_obs <- c("tau_proc","tau_obs")
 
-#AR
-  data.AR <- list(y=hindcast_data$y, year_no = hindcast_data$year_no, season_weeks=hindcast_data$season_weeks, beta.m1=0,  beta.m2=0,beta.v1=0.001, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
-  variable.names.AR <- c("tau_proc", "beta1","beta2", "tau_obs")
-  variable.namesout.AR <- c("tau_proc", "beta1", "beta2",  "mu", "tau_obs")
-  init.AR <- list(list(tau_proc=0.001, tau_obs = 0.1,  beta1=-0.5, beta2=-0.5), list(tau_proc=0.1,  tau_obs = 1, beta1=0, beta2=0), list(tau_proc=1, tau_obs = 5, beta1=0.5,beta2=0.5))
-  params.AR <- c("tau_proc","beta1", "beta2",  "tau_obs")
+#RW_bias
+  data.RW_bias <- list(y=hindcast_data$y, year_no = hindcast_data$year_no, season_weeks=hindcast_data$season_weeks, beta.m1=0,  beta.v1=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.RW_bias <- c("tau_proc", "beta1", "tau_obs")
+  variable.namesout.RW_bias <- c("tau_proc", "beta1",   "mu", "tau_obs")
+  init.RW_bias <- list(list(tau_proc=0.001, tau_obs = 0.1,  beta1=-0.5), list(tau_proc=0.1,  tau_obs = 1, beta1=0), list(tau_proc=1, tau_obs = 5, beta1=0.5))
+  params.RW_bias <- c("tau_proc","beta1", "tau_obs")
+
+#AC
+  data.AC <- list(y=hindcast_data$y, year_no = hindcast_data$year_no, season_weeks=hindcast_data$season_weeks,   beta.m2=0, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.AC <- c("tau_proc", "beta2", "tau_obs")
+  variable.namesout.AC <- c("tau_proc",  "beta2",  "mu", "tau_obs")
+  init.AC <- list(list(tau_proc=0.001, tau_obs = 0.1,   beta2=-0.5), list(tau_proc=0.1,  tau_obs = 1,  beta2=0), list(tau_proc=1, tau_obs = 5, beta2=0.5))
+  params.AC <- c("tau_proc", "beta2",  "tau_obs")
+
+#base_DLM
+  data.base_DLM <- list(y=hindcast_data$y, year_no = hindcast_data$year_no, season_weeks=hindcast_data$season_weeks, beta.m1=0,  beta.m2=0,beta.v1=0.001, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.base_DLM <- c("tau_proc", "beta1","beta2", "tau_obs")
+  variable.namesout.base_DLM <- c("tau_proc", "beta1", "beta2",  "mu", "tau_obs")
+  init.base_DLM <- list(list(tau_proc=0.001, tau_obs = 0.1,  beta1=-0.5, beta2=-0.5), list(tau_proc=0.1,  tau_obs = 1, beta1=0, beta2=0), list(tau_proc=1, tau_obs = 5, beta1=0.5,beta2=0.5))
+  params.base_DLM <- c("tau_proc","beta1", "beta2",  "tau_obs")
 
 #Linear_1var
   data.Linear_1var <- list(y=hindcast_data$y, year_no = hindcast_data$year_no, season_weeks=hindcast_data$season_weeks,covar=hindcast_data$covar, week_avg=hindcast_data$week_avg, beta.m1=0,  beta.m2=0,beta.m3=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
