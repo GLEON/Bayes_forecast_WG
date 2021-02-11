@@ -11,7 +11,7 @@ make_varMat <- function(model_name){
     vm <- rbind(var.IC,var.IC.P)
   }
 
-  else if(model_name == "AR"){
+  else if(model_name %in% c("RW_bias","AC","base_DLM")){
     var.IC     <- apply(vardat.IC,2,var)
     var.IC.Pa    <- apply(vardat.IC.Pa,2,var)
     var.IC.Pa.P   <- apply(vardat.IC.Pa.P,2,var)

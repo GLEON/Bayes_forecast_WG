@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","schmidt_max_lag","precip","GDD","schmidt_and_precip","precip_and_GDD","schmidt_and_temp","temp_and_precip")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","schmidt_max_lag","GDD","schmidt_and_wind","wind_and_GDD","temp_and_wind")
 yrs <- c(2015:2016)
 wks <- c(1:20)
 forecast_weeks <- c(1:4)
@@ -76,11 +76,11 @@ for (i in 1:length(model_names)){
         dat <- read_csv(file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_names[i],'_hindcast.IC.Pa_',yrs[j],'_',wks[k],'.csv'))))
         vardat.IC.Pa[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]}
 
-      if(model_names[i] == "AR"){
+      if(model_names[i] %in% c("RW_bias","AC","base_DLM")){
         dat <- read_csv(file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_names[i],'_hindcast.IC.Pa.P_',yrs[j],'_',wks[k],'.csv'))))
         vardat.IC.Pa.P[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]}
 
-      if(!model_names[i] %in% c("RW","RW_obs","AR")){
+      if(!model_names[i] %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         dat <- read_csv(file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_names[i],'_hindcast.IC.Pa.D_',yrs[j],'_',wks[k],'.csv'))))
         vardat.IC.Pa.D[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]
 
@@ -96,9 +96,9 @@ for (i in 1:length(model_names)){
       write.csv(vardat.IC.P,file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P_',forecast_weeks[n],'.csv'))),row.names = FALSE)}
     if(!model_names[i] %in% c("RW","RW_obs")){
       write.csv(vardat.IC.Pa,file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa_',forecast_weeks[n],'.csv'))),row.names = FALSE)}
-    if(model_names[i] == "AR"){
+    if(model_names[i] %in% c("RW_bias","AC","base_DLM")){
       write.csv(vardat.IC.Pa.P,file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.P_',forecast_weeks[n],'.csv'))),row.names = FALSE)}
-    if(!model_names[i] %in% c("RW","RW_obs","AR")){
+    if(!model_names[i] %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
       write.csv(vardat.IC.Pa.D,file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.D_',forecast_weeks[n],'.csv'))),row.names = FALSE)
       write.csv(vardat.IC.Pa.D.P,file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.D.P_',forecast_weeks[n],'.csv'))),row.names = FALSE)}
 
