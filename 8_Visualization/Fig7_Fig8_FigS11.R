@@ -16,8 +16,8 @@ pacman::p_load(tidyverse, lubridate,cowplot)
 my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Uncertainty_partitioning_analysis_output/"
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD","ensemble")
-model_labels <- c("a. RW","b. AR","a. MinWaterTemp","c. MinWaterTempLag","d. WaterTempMA","SchmidtMedDiff","b. SchmidtMaxLag","c. WindDir","f. Precip","d. GDD","g. Schmidt+Temp","e. Schmidt+Precip","f. Temp+Precip","g. Precip+GDD","h. Ensemble")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
+model_labels <- c("a. RW","b. BiasRW","c. AC","d. BaseDLM","a. MinWaterTemp","b. MinWaterTempLag","c. WaterTempMA","d. WindDir","e. GDD","f. SchmidtLag","g. Schmidt+Wind","e. Temp+Wind","f. Wind+GDD","h. Ensemble")
 schmidt_title <- expression(paste("e. ",Delta,"Schmidt", sep = ""))
 forecast_weeks <- c(1:4)
 

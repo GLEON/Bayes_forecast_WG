@@ -23,7 +23,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD")
+model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 forecast_weeks <- c(1:4)
 hindcast_types <- c("IC","IC.Pa","IC.Pa.D","IC.Pa.D.P")
 
@@ -45,15 +45,15 @@ for (n in 1:length(forecast_weeks)){
 
     #manually add in AR since has different vardat file names
     if(hindcast_types[j] == "IC"){
-      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('AR_vardat.IC_',forecast_weeks[n],'.csv'))))
+      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('base_DLM_vardat.IC_',forecast_weeks[n],'.csv'))))
       ensemble_vardat <- rbind(ensemble_vardat, AR_vardat)
     }
     if(hindcast_types[j] == "IC.Pa"){
-      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('AR_vardat.IC.Pa_',forecast_weeks[n],'.csv'))))
+      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('base_DLM_vardat.IC.Pa_',forecast_weeks[n],'.csv'))))
       ensemble_vardat <- rbind(ensemble_vardat, AR_vardat)
     }
     if(hindcast_types[j] == "IC.Pa.D.P"){
-      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('AR_vardat.IC.Pa.P_',forecast_weeks[n],'.csv'))))
+      AR_vardat <- read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0('base_DLM_vardat.IC.Pa.P_',forecast_weeks[n],'.csv'))))
       ensemble_vardat <- rbind(ensemble_vardat, AR_vardat)
     }
 
@@ -93,7 +93,7 @@ rm(list = ls())
 #5. Calculate ensemble PI
 
 #setting up counters and vectors for for-loop
-model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wnd","schmidt_and_precip","wnd_and_precip","wnd_and_GDD")
+model_names <- c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 forecast_weeks <- c(1:4)
 
 for (n in 1:length(forecast_weeks)){

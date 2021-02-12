@@ -15,8 +15,8 @@ pacman::p_load(tidyverse, lubridate)
 my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD")
-model_labels <- c("a. RW","b. AR","MinWaterTemp","c. MinWaterTempLag","d. WaterTempMA","DeltaSchmidt","SchmidtLag","WindDir","f. Precip","GDD","g. Schmidt+Temp","Schmidt+Precip","Temp+Precip","Precip+GDD")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
+model_labels <- c("a. RW","b. BiasRW","c. AC","d. BaseDLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","WindDir","GDD","SchmidtLag","Schmidt+Wind","e. Temp+Wind","f. Wind+GDD")
 
 forecast_weeks <- c(1,4)
 
@@ -65,7 +65,7 @@ for (n in 1:length(forecast_weeks)){
     #confidence intervals
     if(model_names[i] %in% c("RW","RW_obs")){
       vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P_',forecast_weeks[n],'.csv')))))}
-    else if(model_names[i] == "AR"){
+    else if(model_names[i] %in% c("BiasRW","AC","BaseDLM")){
       vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.P_',forecast_weeks[n],'.csv')))))}
     else{vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.D.P_',forecast_weeks[n],'.csv')))))}
 
@@ -131,7 +131,7 @@ for (n in 1:length(forecast_weeks)){
     title(model_labels[i], adj = 0, font.main = 1)}
     arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
-    points(dates2015,obs_log[1,],pch = 17, col = "red")
+    points(dates2015,obs_log[1,],pch = 17, col = "chartreuse3")
     # if(model_names[i] == "RW_obs" & forecast_weeks[n]==1){
     # legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
     # if(model_names[i] == "RW_obs" & forecast_weeks[n]==4){
@@ -147,7 +147,7 @@ for (n in 1:length(forecast_weeks)){
       title(model_labels[i], adj = 0, font.main = 1)}
     arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
-    points(dates2016,obs_log[2,],pch = 17, col = "red")
+    points(dates2016,obs_log[2,],pch = 17, col = "chartreuse3")
     #legend("bottomright",legend = as.expression(bquote(bold("2016"))),bty = "n")
 
     dev.off()
@@ -291,7 +291,7 @@ else{plot(dates2015,ci2015_log[2,],pch = 16,xlab = "", las = 1,ylab = expression
 title(model_label, adj = 0, font.main = 1)
 arrows(dates2015, (pi2015_log[2,]-(pi2015_log[2,]-pi2015_log[1,])), dates2015, (pi2015_log[2,]+(pi2015_log[3,]-pi2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
 arrows(dates2015, (ci2015_log[2,]-(ci2015_log[2,]-ci2015_log[1,])), dates2015, (ci2015_log[2,]+(ci2015_log[3,]-ci2015_log[2,])), length=0.05, angle=90, code=3, lwd = 1.3)
-points(dates2015,obs_log[1,],pch = 17, col = "red")
+points(dates2015,obs_log[1,],pch = 17, col = "chartreuse3")
 # if(model_name == "RW_obs" & forecast_weeks[n] == 1){
 #   legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
 # legend("bottomright",legend = "2015",bty = "n")
@@ -302,7 +302,7 @@ else{plot(dates2016,ci2016_log[2,],pch = 16,xlab = "", las = 1,ylab = expression
 title(model_label, adj = 0, font.main = 1)
 arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
 arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
-points(dates2016,obs_log[2,],pch = 17, col = "red")
+points(dates2016,obs_log[2,],pch = 17, col = "chartreuse3")
 #legend("bottomright",legend = "2016",bty = "n")
 
 dev.off()
@@ -313,7 +313,7 @@ tiff(file = file.path(paste(my_directory,paste0("Fig5_Fig6_FigSX_legend.tif"),se
      width = 4, height = 5, units = "in", res = 300)
 plot.new()
 legend("topleft",legend = c("median predicted","observed","95% credible interval","95% predictive interval"),pch = c(16,17,NA,NA),
-       col = c("black","red", "black","gray"),bty = "n",lty = c(NA,NA,1,1),
+       col = c("black","chartreuse3", "black","gray"),bty = "n",lty = c(NA,NA,1,1),
        lwd = c(NA,NA,2,2), cex = 1.2)
 
 dev.off()
