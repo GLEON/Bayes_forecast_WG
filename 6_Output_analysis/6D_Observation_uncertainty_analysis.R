@@ -12,7 +12,7 @@ pacman::p_load(tidyverse, lubridate)
 my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","schmidt_max_lag","wnd_dir_2day_lag","precip","GDD","schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_max_lag","wnd_dir_2day_lag","GDD","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 forecast_weeks <- c(1,4)
 
 final <- matrix(NA,length(forecast_weeks),4)
@@ -26,7 +26,7 @@ for (i in 1:length(model_names)){
 #confidence intervals
 if(model_names[i] %in% c("RW","RW_obs")){
   vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P_',forecast_weeks[n],'.csv')))))}
-else if(model_names[i] == "AR"){
+else if(model_names[i] %in% c("RW_bias","AC","base_DLM")){
   vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.P_',forecast_weeks[n],'.csv')))))}
 else{vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.D.P_',forecast_weeks[n],'.csv')))))}
 

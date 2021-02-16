@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","precip_and_GDD","schmidt_and_precip","temp_and_precip","schmidt_and_temp")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 yrs <- c(2015:2016)
 wks <- c(1:20)
 forecast_weeks <- c(1:4)
@@ -40,11 +40,11 @@ for (i in 1:length(model_names)){
         dat <- read_csv(file=file.path(paste("./5_Model_output/5.4_Hindcasting_known_covars/",paste0(model_names[i],'_hindcast.IC.P.O_',yrs[j],'_',wks[k],'.csv'))))
         vardat.w_obs[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]}
 
-      if(model_names[i] == "AR"){
+      if(model_names[i] %in% c("RW_bias","AC","base_DLM")){
         dat <- read_csv(file=file.path(paste("./5_Model_output/5.4_Hindcasting_known_covars/",paste0(model_names[i],'_hindcast.IC.Pa.P.O_',yrs[j],'_',wks[k],'.csv'))))
         vardat.w_obs[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]}
 
-      if(!model_names[i] %in% c("RW","RW_obs","AR")){
+      if(!model_names[i] %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         dat <- read_csv(file=file.path(paste("./5_Model_output/5.4_Hindcasting_known_covars/",paste0(model_names[i],'_hindcast.IC.Pa.D.P.O_',yrs[j],'_',wks[k],'.csv'))))
         vardat.w_obs[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]
       }

@@ -6,7 +6,7 @@ This branch has been tagged as a code publication for Lofton et al. 20XX,
 
 # Instructions to run analysis:
 1. Download or clone the Github repository to your local machine.
-2. Run all Rscripts in the 1_Get_data folder to access all data associated with the analysis, published at the Environmental Data Initiative.
+2. Run all Rscripts in the 1_Get_data folder to access all data associated with the analysis, published in the Environmental Data Initiative repository.
 3. Sequentially run all Rscripts in the following folders (2,3,4,etc.). A guide to folders is provided below.
 
 Note that for some scripts, particularly those for data visualization, the user will have to set a local working directory for plot output.

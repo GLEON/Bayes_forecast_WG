@@ -16,7 +16,7 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
 
 #setting up counters and vectors for for-loop
 model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
-model_labels <- c("a. RW","b. BiasRW","c. AC","d. BaseDLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","WindDir","GDD","SchmidtLag","Schmidt+Wind","e. Temp+Wind","f. Wind+GDD")
+model_labels <- c("a. RW","b. BiasRW","c. AC","d. BaseDLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","WindDir","GDD","SchmidtLag","Schmidt+Wind","e. Temp+Wind","Wind+GDD")
 
 forecast_weeks <- c(1,4)
 
@@ -31,7 +31,7 @@ for (n in 1:length(forecast_weeks)){
   obs_not_log <- obs_not_log[7:8,]
 
   #read in sampling dates
-  dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+  dates <- read_csv("./00_Data_files/sampling_dates.csv")
   dates <- dates$date[121:160]
 
   #subset observed data according to forecast week
@@ -65,7 +65,7 @@ for (n in 1:length(forecast_weeks)){
     #confidence intervals
     if(model_names[i] %in% c("RW","RW_obs")){
       vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.P_',forecast_weeks[n],'.csv')))))}
-    else if(model_names[i] %in% c("BiasRW","AC","BaseDLM")){
+    else if(model_names[i] %in% c("RW_bias","AC","base_DLM")){
       vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.P_',forecast_weeks[n],'.csv')))))}
     else{vardat <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_vardat.IC.Pa.D.P_',forecast_weeks[n],'.csv')))))}
 
@@ -204,7 +204,7 @@ for (n in 1:length(forecast_weeks)){
   obs_not_log <- obs_not_log[7:8,]
 
   #read in sampling dates
-  dates <- read_csv("./00_Data_files/Bayesian_model_input_data/sampling_dates.csv")
+  dates <- read_csv("./00_Data_files/sampling_dates.csv")
   dates <- dates$date[121:160]
 
   #subset observed data according to forecast week
