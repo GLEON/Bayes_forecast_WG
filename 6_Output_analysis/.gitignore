@@ -8,4 +8,7 @@
 !6C_Uncertainty_partitioning_output_analysis.R
 !6D_Observation_uncertainty_analysis.R
 !6E_Check_uncertainty_partitioning_modality.R
+!6F_Predictive_intervals_known_covars.R
+!6G_Hindcast_output_analysis_known_covars.R
 !6.1_Predictive_intervals/
+!6.2_Predictive_intervals_known_covars/

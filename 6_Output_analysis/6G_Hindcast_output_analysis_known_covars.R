@@ -31,7 +31,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_and_wind","temp_and_wind","wind_and_GDD","schmidt_max_lag")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 forecast_weeks <- c(1:4)
 
 ########################CALCULATE ASSESSMENT METRICS#####################################
@@ -69,7 +69,7 @@ for (n in 1:length(forecast_weeks)){
     source('0_Function_library/output_analysis_assessment_metrics.R')
 
     #read in appropriate hindcast summary files
-    vardat <- as.matrix(read_csv(file=file.path(paste("./6_Output_analysis/6.1_Predictive_intervals/",paste0(model_names[i],'_PI_',forecast_weeks[n],'.csv')))))
+    vardat <- as.matrix(read_csv(file=file.path(paste("./6_Output_analysis/6.2_Predictive_intervals_known_covars/",paste0(model_names[i],'_PI_',forecast_weeks[n],'.csv')))))
 
     #subset vardat and varMat according to forecast week
     if(forecast_weeks[n] == 4){
@@ -135,13 +135,35 @@ for (n in 1:length(forecast_weeks)){
     hoa <- data.frame(hoa)
     colnames(hoa) <- c("model_name","RMSE","pred_SD","pred_loss","coverage","peak_timing","mean_quantile",
                        "max_quantile","Pearsons_r","mean_bias","max_bias","mean_range")
-    write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
+    write.csv(hoa,file=file.path(paste("./6_Output_analysis/",paste0('hindcast_output_analysis_known_covars_wk_',forecast_weeks[n],'.csv'),sep = "")),row.names = FALSE)
 }
 
 
 ###############LOOK AT OUTPUT ANALYSIS#######################################
-wk1 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_1.csv")
-wk2 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_2.csv")
-wk3 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_3.csv")
-wk4 <- read_csv("./6_Output_analysis/hindcast_output_analysis_wk_4.csv")
+wk1_known <- read_csv("./6_Output_analysis/hindcast_output_analysis_known_covars_wk_1.csv")
+wk2_known <- read_csv("./6_Output_analysis/hindcast_output_analysis_known_covars_wk_2.csv")
+wk3_known <- read_csv("./6_Output_analysis/hindcast_output_analysis_known_covars_wk_3.csv")
+wk4_known <- read_csv("./6_Output_analysis/hindcast_output_analysis_known_covars_wk_4.csv")
 
+compare <- data.frame(wk1$model_name, wk1$pred_loss, wk4$pred_loss, wk1_known$pred_loss,
+                      wk4_known$pred_loss)
+colnames(compare) <- c("model_name","hindcast_pred_loss_wk1","hindcast_pred_loss_wk4",
+                       "known_pred_loss_wk1","known_pred_loss_wk4")
+compare$hindcast_delPL_wk1 <- compare$hindcast_pred_loss_wk1 - min(compare$hindcast_pred_loss_wk1)
+compare$hindcast_delPL_wk4 <- compare$hindcast_pred_loss_wk4 - min(compare$hindcast_pred_loss_wk4)
+compare$known_delPL_wk1 <- compare$known_pred_loss_wk1 - min(compare$known_pred_loss_wk1)
+compare$known_delPL_wk4 <- compare$known_pred_loss_wk4 - min(compare$known_pred_loss_wk4)
+
+write.csv(compare,"./6_Output_analysis/hindcasted_vs_known_drivers_compare.csv",row.names = FALSE)
+
+###########EXPONENTIATE delPL################################
+delPL <- data.frame(wk1$model_name,
+                        exp(compare$hindcast_pred_loss_wk1),
+                        exp(compare$hindcast_pred_loss_wk4))
+delPL$delPL_wk1 <- delPL$exp.compare.hindcast_pred_loss_wk1. - min(delPL$exp.compare.hindcast_pred_loss_wk1.)
+delPL$delPL_wk4 <- delPL$exp.compare.hindcast_pred_loss_wk4. - min(delPL$exp.compare.hindcast_pred_loss_wk4.)
+
+compare2 <- data.frame(wk1$model_name,compare$hindcast_delPL_wk1,compare$hindcast_delPL_wk4,
+                       delPL$delPL_wk1, delPL$delPL_wk4)
+colnames(compare2) <- c("model_name","ln_delPL_wk1","ln_delPL_wk4",
+                        "exp_delPL_wk1","exp_delPL_wk4")

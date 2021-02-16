@@ -19,7 +19,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_temp","schmidt_max_lag","precip","schmidt_and_precip","temp_and_precip","precip_and_GDD")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 forecast_weeks <- c(1:4)
 
 ########################CALCULATE ASSESSMENT METRICS#####################################
@@ -54,7 +54,7 @@ for (n in 1:length(forecast_weeks)){
     }
 
     #Driver
-    if(model_names[i] %in% c("RW","RW_obs","AR")){
+    if(model_names[i] %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
       upam[i,8] <- NA
       upam[i,9] <- NA
       upam[i,10] <- NA
@@ -69,7 +69,7 @@ for (n in 1:length(forecast_weeks)){
       upam[i,11] <- round(mean((varRel[2,] - varRel[1,]), na.rm = TRUE),2)
       upam[i,12] <- round(min((varRel[2,] - varRel[1,]), na.rm = TRUE),2)
       upam[i,13] <- round(max((varRel[2,] - varRel[1,]), na.rm = TRUE),2)
-    } else if (model_names[i] == "AR") {
+    } else if (model_names[i] %in% c("RW_bias","AC","base_DLM")) {
       upam[i,11] <- round(mean((varRel[3,] - varRel[2,]), na.rm = TRUE),2)
       upam[i,12] <- round(min((varRel[3,] - varRel[2,]), na.rm = TRUE),2)
       upam[i,13] <- round(max((varRel[3,] - varRel[2,]), na.rm = TRUE),2)
@@ -83,8 +83,8 @@ for (n in 1:length(forecast_weeks)){
 
   #build final data frame and write to file
   means <- round(colMeans(upam, na.rm = TRUE),2)
-  upam[16,] <- means
-  upam[,1] <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_temp","schmidt_max_lag","precip","schmidt_and_precip","temp_and_precip","precip_and_GDD","all_models")
+  upam[length(model_names)+1,] <- means
+  upam[,1] <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD","all_models")
   upam <- data.frame(upam)
   colnames(upam) <- c("model_name","mean.IC","min.IC","max.IC",
                       "mean.Pa","min.Pa","max.Pa",

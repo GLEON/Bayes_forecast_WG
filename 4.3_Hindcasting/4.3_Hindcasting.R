@@ -20,14 +20,14 @@ pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda, uuid, ncdf4, EM
 library(EFIstandards)
 
 #make vector of model names for model for-loop
-my_models <- c("schmidt_and_temp","temp_and_precip","precip_and_GDD","RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip","schmidt_and_precip")
+my_models <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 
 #set years and weeks for hindcasting for-loop
 yrs <- c(2015,2016)
 wks <- c(1:20)
 
 # metadata details
-forecast_project_id <- 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20210112' #An ID that applies to a bunch of forecasts
+forecast_project_id <- 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20210210' #An ID that applies to a bunch of forecasts
 
 ########################RUN HINDCASTS##############################################
 
@@ -42,11 +42,11 @@ for (i in 1:length(my_models)){
     for (k in 1:length(wks)){
 
       #2) Source helper functions ---------------------------------------------------------
-      source('0_Function_library/model_hindcasting_plug_n_play.R')
-      source('0_Function_library/hindcasting_get_data.R')
-      source('0_Function_library/hindcasting_get_params.R')
-      source('0_Function_library/hindcasting_run_hindcast.R')
-      source('0_Function_library/hindcasting_get_covar_hindcasts.R')
+      source('0_Function_library/model_hindcasting_plug_n_play.R') #check
+      source('0_Function_library/hindcasting_get_data.R') #check
+      source('0_Function_library/hindcasting_get_params.R') #check
+      source('0_Function_library/hindcasting_run_hindcast.R') #check
+      source('0_Function_library/hindcasting_get_covar_hindcasts.R') #check
 
 
       #2) Read in data for model ----------------------------------------------------------
@@ -103,7 +103,7 @@ for (i in 1:length(my_models)){
       }
 
       ###gap-fill missing covariate values using latent states from calibrated model
-      if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip")){
+      if(model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag")){
         covar_ls <- out[,grep("covar", colnames(out))]
         missing <- which(is.na(hindcast_data$covar_hindcast))
 
@@ -111,7 +111,7 @@ for (i in 1:length(my_models)){
           hindcast_data$covar_hindcast[missing[m]] <- mean(covar_ls[,missing[m]],na.rm = TRUE)
         }
       }
-      if(model_name %in% c("schmidt_and_temp","schmidt_and_precip","temp_and_precip","precip_and_GDD")){
+      if(model_name %in% c("schmidt_and_wind","temp_and_wind","wind_and_GDD")){
         covar_ls1 <- out[,grep("covar1", colnames(out))]
         missing1 <- which(is.na(hindcast_data$covar1_hindcast))
 
@@ -128,7 +128,7 @@ for (i in 1:length(my_models)){
 
 
       #set up sampling of covariate hindcasting ensemble for models with covariates
-      if(!model_name %in% c("RW","RW_obs","AR")){
+      if(!model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         #set up sampling for hindcasted covariates
         if(yrs[j] == 2015){year_no <- c(1:6)}else{year_no <- c(1:7)}
         #set up draws from covariate matrix to account for intraanual correlation
@@ -143,9 +143,9 @@ for (i in 1:length(my_models)){
                                num_draws = prow)
 
       #get hindcasted covariates
-      if(model_name %in% c("RW","RW_obs","AR")){
+      if(model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         covar.hindcast.det <- NA
-      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip")) {
+      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag")) {
         covar.hindcast.det <- get_covar_hindcasts(model_name = model_name,
                                                   forecast_type = "det",
                                                   wk = wks[k],
@@ -211,9 +211,9 @@ for (i in 1:length(my_models)){
                               num_draws = prow)
 
       #get hindcasted covariates
-      if(model_name %in% c("RW","RW_obs","AR")){
+      if(model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         covar.hindcast.IC <- NA
-      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip")) {
+      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag")) {
         covar.hindcast.IC <- get_covar_hindcasts(model_name = model_name,
                                                  forecast_type = "IC",
                                                  wk = wks[k],
@@ -278,9 +278,9 @@ for (i in 1:length(my_models)){
                                    num_draws = prow)
 
         #get hindcasted covariates
-        if(model_name %in% c("RW","RW_obs","AR")){
+        if(model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
           covar.hindcast.IC.Pa <- NA
-        } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip")) {
+        } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag")) {
           covar.hindcast.IC.Pa <- get_covar_hindcasts(model_name = model_name,
                                                       forecast_type = "IC.Pa",
                                                       wk = wks[k],
@@ -309,7 +309,7 @@ for (i in 1:length(my_models)){
 
       ###### driver uncertainty ##########
 
-      if(!model_name %in% c("RW","RW_obs","AR")){
+      if(!model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
 
         #retrieve parameters for hindcast
         params.IC.Pa.D <- get_params(model_name = model_name,
@@ -318,7 +318,7 @@ for (i in 1:length(my_models)){
                                      num_draws = prow)
 
         #get hindcasted covariates
-        if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip")) {
+        if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag")) {
           covar.hindcast.IC.Pa.D <- get_covar_hindcasts(model_name = model_name,
                                                         forecast_type = "IC.Pa.D",
                                                         wk = wks[k],
@@ -355,9 +355,9 @@ for (i in 1:length(my_models)){
                                   num_draws = prow)
 
       #get hindcasted covariates
-      if(model_name %in% c("RW","RW_obs","AR")){
+      if(model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         covar.hindcast.w_proc <- NA
-      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip")) {
+      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag")) {
         covar.hindcast.w_proc <- get_covar_hindcasts(model_name = model_name,
                                                      forecast_type = "IC.P",
                                                      wk = wks[k],
@@ -384,9 +384,9 @@ for (i in 1:length(my_models)){
       #write hindcast to file
       if(model_name %in% c("RW","RW_obs")){
         write.csv(hindcast.w_proc,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.P_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)}
-      if(model_name == "AR"){
+      if(model_name %in% c("RW_bias","AC","base_DLM")){
         write.csv(hindcast.w_proc,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.P_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)}
-      if(!model_name %in% c("RW","RW_obs","AR")){
+      if(!model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         write.csv(hindcast.w_proc,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)}
 
 
@@ -399,9 +399,9 @@ for (i in 1:length(my_models)){
                                  num_draws = prow)
 
       #get hindcasted covariates
-      if(model_name %in% c("RW","RW_obs","AR")){
+      if(model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         covar.hindcast.w_obs <- NA
-      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","GDD","wnd_dir_2day_lag","schmidt_max_lag","precip")) {
+      } else if (model_name %in% c("wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag")) {
         covar.hindcast.w_obs <- get_covar_hindcasts(model_name = model_name,
                                                     forecast_type = "IC.P.O",
                                                     wk = wks[k],
@@ -428,9 +428,9 @@ for (i in 1:length(my_models)){
       #write hindcast to file
       if(model_name %in% c("RW","RW_obs")){
         write.csv(hindcast.w_obs,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.P.O_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)}
-      if(model_name == "AR"){
+      if(model_name %in% c("RW_bias","AC","base_DLM")){
         write.csv(hindcast.w_obs,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.P.O_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)}
-      if(!model_name %in% c("RW","RW_obs","AR")){
+      if(!model_name %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
         write.csv(hindcast.w_obs,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P.O_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)}
 
     }}}

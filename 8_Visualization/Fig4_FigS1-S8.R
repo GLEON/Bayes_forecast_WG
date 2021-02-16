@@ -241,3 +241,7 @@ winddir <- ggplot(data = covariates_all, aes(x = date, y = AveWindDir_cove_mean_
 winddir
 ggsave(winddir, filename = file.path(paste(my_directory,"winddir_timeseries.tif"),sep = ""),
        device = "tiff",height = 4, width = 8, units = "in", scale = 1.1)
+
+#Figure S2
+g <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))
+hist(g, main = "", xlab = expression(paste(italic("G. echinulata"), " total colonies",~~L^-1)))

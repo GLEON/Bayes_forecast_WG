@@ -22,7 +22,7 @@ y <- y[-c(7:8),]
 
 ###############################GLOEO-ONLY MODELS#####################################
 #for RW, RW_obs, and AR models
-if(model_name %in% c("RW","RW_obs","AR","RY")){
+if(model_name %in% c("RW","RW_obs","AC","RY","RW_bias","base_DLM")){
   return(list(year_no = year_no, season_weeks = season_weeks, y = y))
 }
 
@@ -208,7 +208,7 @@ if(model_name == "GDD"){
 if(model_name == "schmidt_and_temp"){
 
   #read in covariate 1 data
-  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv"))
   #remove 2015-2016 data
   Schmidt <- Schmidt[-c(7:8),]
   #center covariate data
@@ -218,14 +218,14 @@ if(model_name == "schmidt_and_temp"){
   week_avg1 = colMeans(Schmidt, na.rm = TRUE)
 
   #read in covariate 2 data
-  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv"))
+  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
   #remove 2015-2016 data
   Temp <- Temp[-c(7:8),]
   #center covariate data
   Temp <- (Temp - mean(Temp, na.rm = TRUE))/sd(Temp, na.rm = TRUE)
 
   #read in data from Site 2 for data gap-filling
-  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv"))
+  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
   #remove 2015-2016 data
   Temp_prior <- Temp_prior[-c(7:8),]
   #center water temp data
@@ -241,11 +241,11 @@ if(model_name == "schmidt_and_temp"){
 
 }
 
-#for schmidt_and_precip
-if(model_name == "schmidt_and_precip"){
+#for schmidt_and_wind
+if(model_name == "schmidt_and_wind"){
 
   #read in covariate 1 data
-  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_med_diff.csv"))
+  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv"))
   #remove 2015-2016 data
   Schmidt <- Schmidt[-c(7:8),]
   #center covariate data
@@ -255,32 +255,32 @@ if(model_name == "schmidt_and_precip"){
   week_avg1 = colMeans(Schmidt, na.rm = TRUE)
 
   #read in covariate 2 data
-  Precip <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/precip_mm.csv"))
+  Wind <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv"))
   #remove 2015-2016 data
-  Precip <- Precip[-c(7:8),]
+  Wind <- Wind[-c(7:8),]
   #center covariate data
-  Precip <- (Precip - mean(Precip, na.rm = TRUE))/sd(Precip, na.rm = TRUE)
+  Wind <- (Wind - mean(Wind, na.rm = TRUE))/sd(Wind, na.rm = TRUE)
 
   #calculate weekly average of covariate from past years for gap filling
-  week_avg2 = colMeans(Precip, na.rm = TRUE)
+  week_avg2 = colMeans(Wind, na.rm = TRUE)
 
-  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Schmidt, covar2 = Precip, week_avg1 = week_avg1, week_avg2 = week_avg2))
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Schmidt, covar2 = Wind, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
 }
 
 
-#for temp_and_precip
-if(model_name == "temp_and_precip"){
+#for temp_and_wind
+if(model_name == "temp_and_wind"){
 
   #read in covariate 1 data
-  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site1.csv"))
+  Temp <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site1.csv"))
   #remove 2015-2016 data
   Temp <- Temp[-c(7:8),]
   #center covariate data
   Temp <- (Temp - mean(Temp, na.rm = TRUE))/sd(Temp, na.rm = TRUE)
 
   #read in data from Site 2 for data gap-filling
-  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_MA7_Site2.csv"))
+  Temp_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_Site2.csv"))
   #remove 2015-2016 data
   Temp_prior <- Temp_prior[-c(7:8),]
   #center water temp data
@@ -292,33 +292,33 @@ if(model_name == "temp_and_precip"){
   week_avg1[is.na(week_avg1)] <- week_avg1[19]
 
   #read in covariate 2 data
-  Precip <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/precip_mm.csv"))
+  Wind <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv"))
   #remove 2015-2016 data
-  Precip <- Precip[-c(7:8),]
+  Wind <- Wind[-c(7:8),]
   #center covariate data
-  Precip <- (Precip - mean(Precip, na.rm = TRUE))/sd(Precip, na.rm = TRUE)
+  Wind <- (Wind - mean(Wind, na.rm = TRUE))/sd(Wind, na.rm = TRUE)
 
   #calculate weekly average of covariate from past years for gap filling
-  week_avg2 = colMeans(Precip, na.rm = TRUE)
+  week_avg2 = colMeans(Wind, na.rm = TRUE)
 
-  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Temp, covar2 = Precip, week_avg1 = week_avg1, week_avg2 = week_avg2))
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Temp, covar2 = Wind, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
 }
 
 ###############################TWO COVARIATE QUADRATIC MODELS#####################################
 
-#for precip_and_GDD
-if(model_name == "precip_and_GDD"){
+#for schmidt_and_GDD
+if(model_name == "schmidt_and_GDD"){
 
   #read in covariate 1 data
-  Precip <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/precip_mm.csv"))
+  Schmidt <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/schmidt_max_lag.csv"))
   #remove 2015-2016 data
-  Precip <- Precip[-c(7:8),]
+  Schmidt <- Schmidt[-c(7:8),]
   #center covariate data
-  Precip <- (Precip - mean(Precip, na.rm = TRUE))/sd(Precip, na.rm = TRUE)
+  Schmidt <- (Schmidt - mean(Schmidt, na.rm = TRUE))/sd(Schmidt, na.rm = TRUE)
 
   #calculate weekly average of covariate from past years for gap filling
-  week_avg1 = colMeans(Precip, na.rm = TRUE)
+  week_avg1 = colMeans(Schmidt, na.rm = TRUE)
 
   #read in covariate 2 data
   GDD <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv"))
@@ -347,7 +347,51 @@ if(model_name == "precip_and_GDD"){
   #use weekly average from last sampled week (18) to serve as prior for weeks 19 & 20
   week_avg2[is.na(week_avg2)] <- week_avg2[19]
 
-  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Precip, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2))
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Schmidt, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2))
+
+}
+
+#for wind_and_GDD
+if(model_name == "wind_and_GDD"){
+
+  #read in covariate 1 data
+  Wind <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv"))
+  #remove 2015-2016 data
+  Wind <- Wind[-c(7:8),]
+  #center covariate data
+  Wind <- (Wind - mean(Wind, na.rm = TRUE))/sd(Wind, na.rm = TRUE)
+
+  #calculate weekly average of covariate from past years for gap filling
+  week_avg1 = colMeans(Wind, na.rm = TRUE)
+
+  #read in covariate 2 data
+  GDD <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv"))
+  #remove 2015-2016 data
+  GDD <- GDD[-c(7:8),]
+  #standardize within year to account for different start dates in different years
+  GDD <- apply(GDD,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+  #transpose
+  GDD <- t(GDD)
+  #standardize across years
+  GDD <- (GDD - mean(GDD, na.rm = TRUE))/sd(GDD, na.rm = TRUE)
+
+  #read in data from Site 2 for data gap-filling
+  GDD_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv"))
+  #remove 2015-2016 data
+  GDD_prior <- GDD_prior[-c(7:8),]
+  #standardize within year to account for different start dates in different years
+  GDD_prior <- apply(GDD_prior,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+  #transpose
+  GDD_prior <- t(GDD_prior)
+  #standardize across years
+  GDD_prior <- (GDD_prior - mean(GDD_prior, na.rm = TRUE))/sd(GDD_prior, na.rm = TRUE)
+
+  #calculate weekly average of covariate 2 from past years for gap filling
+  week_avg2 = colMeans(GDD_prior, na.rm = TRUE)
+  #use weekly average from last sampled week (18) to serve as prior for weeks 19 & 20
+  week_avg2[is.na(week_avg2)] <- week_avg2[19]
+
+  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Wind, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
 }
 

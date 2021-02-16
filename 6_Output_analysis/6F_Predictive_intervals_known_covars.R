@@ -13,7 +13,7 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","wind_and_GDD","schmidt_and_wind","temp_and_wind")
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
 yrs <- c(2015:2016)
 wks <- c(1:20)
 forecast_weeks <- c(1:4)
@@ -37,15 +37,15 @@ for (i in 1:length(model_names)){
 
       #read in hindcast files from each week and append to matrix
       if(model_names[i] %in% c("RW","RW_obs")){
-        dat <- read_csv(file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_names[i],'_hindcast.IC.P.O_',yrs[j],'_',wks[k],'.csv'))))
+        dat <- read_csv(file=file.path(paste("./5_Model_output/5.4_Hindcasting_known_covars/",paste0(model_names[i],'_hindcast.IC.P.O_',yrs[j],'_',wks[k],'.csv'))))
         vardat.w_obs[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]}
 
       if(model_names[i] %in% c("RW_bias","AC","base_DLM")){
-        dat <- read_csv(file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_names[i],'_hindcast.IC.Pa.P.O_',yrs[j],'_',wks[k],'.csv'))))
+        dat <- read_csv(file=file.path(paste("./5_Model_output/5.4_Hindcasting_known_covars/",paste0(model_names[i],'_hindcast.IC.Pa.P.O_',yrs[j],'_',wks[k],'.csv'))))
         vardat.w_obs[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]}
 
       if(!model_names[i] %in% c("RW","RW_obs","RW_bias","AC","base_DLM")){
-        dat <- read_csv(file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_names[i],'_hindcast.IC.Pa.D.P.O_',yrs[j],'_',wks[k],'.csv'))))
+        dat <- read_csv(file=file.path(paste("./5_Model_output/5.4_Hindcasting_known_covars/",paste0(model_names[i],'_hindcast.IC.Pa.D.P.O_',yrs[j],'_',wks[k],'.csv'))))
         vardat.w_obs[,N_weeks[j,k]] <- dat[,forecast_weeks[n]]
       }
 
@@ -53,7 +53,7 @@ for (i in 1:length(model_names)){
     }
 
     #write variance matrices to .csv
-    write.csv(vardat.w_obs,file=file.path(paste("./6_Output_analysis/6.1_Predictive_intervals/",paste0(model_names[i],'_PI_',forecast_weeks[n],'.csv'))),row.names = FALSE)
+    write.csv(vardat.w_obs,file=file.path(paste("./6_Output_analysis/6.2_Predictive_intervals_known_covars/",paste0(model_names[i],'_PI_',forecast_weeks[n],'.csv'))),row.names = FALSE)
 
   }
 }
