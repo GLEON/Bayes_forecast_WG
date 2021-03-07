@@ -293,7 +293,7 @@ create_hindcast_eml = function(model_out_nc_file,
                                       uncertainty = uncertainty,
                                       n_mc = n_mc)
 
-  pubDate <- Sys.time() # change this to the revisions of the model
+  pubDate <- "2021-02-10 16:30:00 EST" # change this to the revisions of the model
 
   forecast_project_id <- ncatt_get(nc = model_out, varid = 0, attname = 'forecast_project_id')$value
 
@@ -370,7 +370,7 @@ create_hindcast_eml = function(model_out_nc_file,
                         creator = author,
                         contact = list(references = 'orcid.org/0000-0003-3270-1330'), # check if Mary's ORCID
                         pubDate = pubDate,
-                        intellectualRights = '?',
+                        intellectualRights = 'https://spdx.org/licenses/CC-BY-4.0.html',
                         #Usage and licensing information. <intellectualRights> can be text, but we recommend providing the URL of a standard license, e.g. https://opensource.org/licenses/MIT
                         # <licensed> is more detailed and consists of the following subtags
                         # <licenseName>  e.g. Creative Commons Attribution 4.0 International
@@ -500,12 +500,17 @@ get_model_metadata = function(model,
     param_status = 'absent'
     driver_complexity = 0
     driver_status = 'absent'
-  }else if(model == 'AR'){
+  }else if(model %in% c('BiasRW','AC')){
+    param_complexity = 1
+    param_status = 'data_driven'
+    driver_complexity = 0
+    driver_status = 'absent'
+  }else if(model == 'BaseDLM'){
     param_complexity = 2
     param_status = 'data_driven'
     driver_complexity = 0
     driver_status = 'absent'
-  }else if(model %in% c('DeltaSchmidt','MinWaterTemp','MinWaterTempLag', 'Precip','SchmidtLag', 'WaterTempMA','WindDir')){ # all single covariates
+  }else if(model %in% c('MinWaterTemp','MinWaterTempLag', 'SchmidtLag', 'WaterTempMA','WindDir')){ # all single covariates
     param_complexity = 3
     param_status = 'data_driven'
     driver_complexity = 1
@@ -515,12 +520,12 @@ get_model_metadata = function(model,
     param_status = 'data_driven'
     driver_complexity = 1
     driver_status = 'data_driven'
-  }else if(model %in% c('SchmidtAndPrecip', 'SchmidtAndTemp','TempAndPrecip')){
+  }else if(model %in% c('SchmidtAndWind', 'TempAndWind')){
     param_complexity = 4
     param_status = 'data_driven'
     driver_complexity = 2
     driver_status = 'data_driven'
-  }else if(model %in% c('PrecipAndGDD')){
+  }else if(model %in% c('WindAndGDD')){
     param_complexity = 5
     param_status = 'data_driven'
     driver_complexity = 2
