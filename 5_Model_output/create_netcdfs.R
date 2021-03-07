@@ -7,8 +7,8 @@ source('0_Function_library/metadata_functions.R')
 
 # combining all forecast issue times and valid times into a single NetCDF file for publishing on EDI
 
-csv_output_dir = 'edi.18.3/Gechinulata_hindcasts/Gechinulata_hindcasts/' # location of where Jake downloaded all hindcasts
-nc_output_dir = '5_Model_output/5.4_nc_files'
+csv_output_dir = 'C:/Users/Mary Lofton/Dropbox/Ch5/EDI.hindcasts.NLDAS.PRISM/5.2_Hindcasting' # location of where Jake downloaded all hindcasts
+nc_output_dir = 'C:/Users/Mary Lofton/Dropbox/Ch5/EDI.hindcasts.NLDAS.PRISM/Gechinulata_hindcasts'
 
 files = list.files(csv_output_dir)
 
@@ -22,11 +22,12 @@ n_valid_times = 4 # making forecasts 4 weeks into the future; used for setting d
 lon = -72.0304 # degrees east ****(need actual lon/lat of sampling location) ****
 lat = 43.4307 # degrees north
 depth = 1 # depth of prediction in meters
-forecast_project_id = 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20200909'
+forecast_project_id = 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20210307'
 
 for(m in models){
   # need to get the different types of uncertainty for given model
   model_files = files[grep(m, files)]
+  if(m == "RW"){model_files <- model_files[161:280]}
   uncertainty_types = sub('.*?_', '', model_files[grep(forecast_issue_times[1], model_files)]) %>% sub('\\_.*', '', .)
   for(u in uncertainty_types){
     # create a NetCDF for model + uncertainty type for hindcast output
@@ -93,7 +94,7 @@ for(m in models){
 
 # example of how to retrieve variables from netcdf files and return as tibble
 ## return all issue times, valid times, and ensemble members
-out = nc_hindcast_get(nc_file = '5_Model_output/5.4_nc_files/AR_IC.nc',
+out = nc_hindcast_get(nc_file = 'C:/Users/Mary Lofton/Dropbox/Ch5/EDI.hindcasts.NLDAS.PRISM/Gechinulata_hindcasts/AC_IC.nc',
                       var_name = 'Gloeo_abundance') # should be like >1,000,000 rows
 ## return the first two issue times, all valid times, and all ensemble members
 out = nc_hindcast_get(nc_file = '5_Model_output/5.4_nc_files/AR_IC.nc',
