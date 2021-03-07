@@ -336,7 +336,12 @@ create_hindcast_eml = function(model_out_nc_file,
   author <- list(individualName = list(givenName = "Mary",
                                        surName = "Lofton"),
                  electronicMailAddress = "melofton@vt.edu",
-                 id = 'orcid.org/0000-0003-3270-1330')  ## add other co-authors of paper / data release
+                 id = 'orcid.org/0000-0003-3270-1330',
+                 individualName = list(givenName = "Jacob",
+                                       surName = "Zwart"),
+                 electronicMailAddress = "jzwart@usgs.gov",
+                 id = 'orcid.org/0000-0002-3870-405X')  ## Jake I'm not sure this syntax looks right - help!
+
 
   coverage <- EML::set_coverage(begin = lubridate::as_datetime(dates[1]),
                                 end = lubridate::as_datetime(tail((dates)[1])),
