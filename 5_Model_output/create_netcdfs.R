@@ -112,4 +112,16 @@ out = nc_hindcast_get(nc_file = '5_Model_output/5.4_nc_files/AR_IC.nc',
                       forecast_valid_times = 28, # days since issue time
                       ens = sample(seq(1,n_mc,1), size = 200, replace = F)) # 200 random samples of ensemble output
 
+##2021-03-07 getting the following warnings when run this for-loop for each eml:
+# Warning messages:
+#   1: In set_attribute(attributes[i, ], factors = factors, missingValues = missingValues) :
+#   Unit 'degrees_east' is not a recognized standard unit; treating as custom unit. Please be sure you also define a custom unit in your EML record, or replace with a recognized standard unit. See set_unitList() for details.
+# 2: In set_attribute(attributes[i, ], factors = factors, missingValues = missingValues) :
+#   Unit 'degrees_north' is not a recognized standard unit; treating as custom unit. Please be sure you also define a custom unit in your EML record, or replace with a recognized standard unit. See set_unitList() for details.
+# 3: In set_attribute(attributes[i, ], factors = factors, missingValues = missingValues) :
+#   Unit 'log(colonies L-1)' is not a recognized standard unit; treating as custom unit. Please be sure you also define a custom unit in your EML record, or replace with a recognized standard unit. See set_unitList() for details.
+# 4: In readChar(path, nchar) : truncating string with embedded nuls
+# 5: In validate_units(doc, encoding = encoding) :
+#   Document is invalid. Found the following errors:
+#   not all 'custom units are defined.
 
