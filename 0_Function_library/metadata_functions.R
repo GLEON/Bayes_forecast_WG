@@ -57,11 +57,11 @@ nc_create_hindcast_out = function(lon,
                          longname = 'depth from lake surface',
                          vals = depth)
   lon_dim <- ncdim_def('lon',
-                       units = 'degrees_east',
+                       units = 'degrees',
                        longname = 'longitude',
                        vals = lon)
   lat_dim <- ncdim_def('lat',
-                       units = 'degrees_north',
+                       units = 'degrees',
                        longname = 'latitude',
                        vals = lat)
   ens_dim <- ncdim_def("ens",
@@ -308,11 +308,10 @@ create_hindcast_eml = function(model_out_nc_file,
     "forecast_issue_time",    "[dimension]{time}",    "date",     "YYYY-MM-DD", "numberType", 'date when forecast was issued',
     "forecast_valid_time",    "[dimension]{time}",    "date",     "YYYY-MM-DD", "numberType", 'date when forecast was valid',
     "depth",   "[dimension]{depth in lake}",     "meter",       NA,   "real",    NA,
-    "lon", "[dimension]{longitude}", "degrees_east", NA, "real", NA,
-    "lat", "[dimension]{latitude}", "degrees_north", NA, "real", NA,
+    "lon", "[dimension]{longitude degrees east}", "degree", NA, "real", NA,
+    "lat", "[dimension]{latitude degrees north}", "degree", NA, "real", NA,
     "ensemble",      "[dimension]{index of ensemble member}",   "dimensionless",    NA,    "integer", NA,
-    "Gloeo_abundance",     "[variable]{G. echinulata abundance}", "log(colonies L-1)", NA,  "real", NA,
-    "forecast",      "[flag]{whether time step used forecasted covariates}", "dimensionless",    NA, "integer",    NA,
+    "Gloeo_abundance", "[variable]{Log of G. echinulata abundance}", "numberPerLiter", NA, "real", NA,    "forecast",      "[flag]{whether time step used forecasted covariates}", "dimensionless",    NA, "integer",    NA,
     "data_assimilation", "[flag]{whether time step assimilated data}", "dimensionless",  NA, "integer",    NA
   )
   attrList <- set_attributes(attributes,
@@ -336,11 +335,7 @@ create_hindcast_eml = function(model_out_nc_file,
   author <- list(individualName = list(givenName = "Mary",
                                        surName = "Lofton"),
                  electronicMailAddress = "melofton@vt.edu",
-                 id = 'orcid.org/0000-0003-3270-1330',
-                 individualName = list(givenName = "Jacob",
-                                       surName = "Zwart"),
-                 electronicMailAddress = "jzwart@usgs.gov",
-                 id = 'orcid.org/0000-0002-3870-405X')  ## Jake I'm not sure this syntax looks right - help!
+                 id = 'orcid.org/0000-0003-3270-1330')  ## Jake I'm not sure this syntax looks right - help!
 
 
   coverage <- EML::set_coverage(begin = lubridate::as_datetime(dates[1]),
