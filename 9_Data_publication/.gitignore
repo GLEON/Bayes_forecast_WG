@@ -1,0 +1,7 @@
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+!9A_rename_hindcast_files.R
+!9B_create_netcdfs.R
+!9C_MakeEMLHindcasts_NLDAS_PRISM
