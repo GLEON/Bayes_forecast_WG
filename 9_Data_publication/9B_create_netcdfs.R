@@ -7,8 +7,8 @@ source('0_Function_library/metadata_functions.R')
 
 # combining all forecast issue times and valid times into a single NetCDF file for publishing on EDI
 
-csv_output_dir = 'C:/Users/Mary Lofton/Dropbox/Ch5/EDI.hindcasts.NLDAS.PRISM/5.2_Hindcasting' # location of where Jake downloaded all hindcasts
-nc_output_dir = 'C:/Users/Mary Lofton/Dropbox/Ch5/EDI.hindcasts.NLDAS.PRISM/Gechinulata_hindcasts'
+csv_output_dir = './9_Data_publication' # location of renamed hindcast .csv files
+nc_output_dir = './9_Data_publication' # where you want to write the nc and EML files
 
 files = list.files(csv_output_dir)
 
@@ -22,7 +22,7 @@ n_valid_times = 4 # making forecasts 4 weeks into the future; used for setting d
 lon = -72.0304 # degrees east ****(need actual lon/lat of sampling location) ****
 lat = 43.4307 # degrees north
 depth = 1 # depth of prediction in meters
-forecast_project_id = 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20210307'
+forecast_project_id = 'GLEON_Bayes_forecast_WG_Gloeo_uncertainty_partition_20210321'
 
 for(m in models){
   # need to get the different types of uncertainty for given model
@@ -94,34 +94,23 @@ for(m in models){
 
 # example of how to retrieve variables from netcdf files and return as tibble
 ## return all issue times, valid times, and ensemble members
-out = nc_hindcast_get(nc_file = 'C:/Users/Mary Lofton/Dropbox/Ch5/EDI.hindcasts.NLDAS.PRISM/Gechinulata_hindcasts/AC_IC.nc',
+out = nc_hindcast_get(nc_file = './9_Data_publication/AC_IC.nc',
                       var_name = 'Gloeo_abundance') # should be like >1,000,000 rows
 ## return the first two issue times, all valid times, and all ensemble members
-out = nc_hindcast_get(nc_file = '5_Model_output/5.4_nc_files/AR_IC.nc',
+out = nc_hindcast_get(nc_file = './9_Data_publication/AC_IC.nc',
                       var_name = 'Gloeo_abundance',
                       forecast_issue_times = as.Date(c('2015-05-14','2015-05-21')))
 ## return the first two issue times, last week valid time, and all ensemble members
-out = nc_hindcast_get(nc_file = '5_Model_output/5.4_nc_files/AR_IC.nc',
+out = nc_hindcast_get(nc_file = './9_Data_publication/AC_IC.nc',
                       var_name = 'Gloeo_abundance',
                       forecast_issue_times = as.Date(c('2015-05-14','2015-05-21')),
                       forecast_valid_times = 28) # days since issue time
 ## return the first two issue times, last week valid time, and random draw of ensemble members
-out = nc_hindcast_get(nc_file = '5_Model_output/5.4_nc_files/AR_IC.nc',
+out = nc_hindcast_get(nc_file = './9_Data_publication/AC_IC.nc',
                       var_name = 'Gloeo_abundance',
                       forecast_issue_times = as.Date(c('2015-05-14','2015-05-21')),
                       forecast_valid_times = 28, # days since issue time
                       ens = sample(seq(1,n_mc,1), size = 200, replace = F)) # 200 random samples of ensemble output
 
-##2021-03-07 getting the following warnings when run this for-loop for each eml:
-# Warning messages:
-#   1: In set_attribute(attributes[i, ], factors = factors, missingValues = missingValues) :
-#   Unit 'degrees_east' is not a recognized standard unit; treating as custom unit. Please be sure you also define a custom unit in your EML record, or replace with a recognized standard unit. See set_unitList() for details.
-# 2: In set_attribute(attributes[i, ], factors = factors, missingValues = missingValues) :
-#   Unit 'degrees_north' is not a recognized standard unit; treating as custom unit. Please be sure you also define a custom unit in your EML record, or replace with a recognized standard unit. See set_unitList() for details.
-# 3: In set_attribute(attributes[i, ], factors = factors, missingValues = missingValues) :
-#   Unit 'log(colonies L-1)' is not a recognized standard unit; treating as custom unit. Please be sure you also define a custom unit in your EML record, or replace with a recognized standard unit. See set_unitList() for details.
-# 4: In readChar(path, nchar) : truncating string with embedded nuls
-# 5: In validate_units(doc, encoding = encoding) :
-#   Document is invalid. Found the following errors:
-#   not all 'custom units are defined.
+
 

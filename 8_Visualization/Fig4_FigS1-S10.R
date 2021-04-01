@@ -13,29 +13,26 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Gloeo_env_covariate_timeseries
 hc_gloeo_data <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
 
 # onset water temp data
-water_temp_data <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all.csv")
+water_temp_data <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_HC.csv")
 
 # schmidt stability data
 schmidt_stability_data <- read_csv("./00_Data_files/Covariate_analysis_data/schmidt_stability_all.csv")
 
 # precip data
-precip_data <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precip_all.csv")
-
-# gdd
-gdd <- read_csv("./00_Data_files/Covariate_analysis_data/growing_degree_days.csv")
+precip_data <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precipitation_2009-2016.csv")
 
 # sw radiation
-swrad <- read_csv("./00_Data_files/Covariate_analysis_data/solar_radiation_daily_summary.csv")
+swrad <- read_csv("./00_Data_files/Covariate_analysis_data/NLDAS_solar_radiation_2009-2016.csv")
 
 # par
 par <- read_csv("./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")
 
 # wind speed data - a little data wrangling to fill filtered variables with 0 when
 # wind blowing away from cove
-wind_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data.csv")
+wind_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data_all.csv")
 
 #join all covariate data with gloeo
-covariates_all <- bind_cols(hc_gloeo_data[,c(1:10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], gdd[,3], swrad[,-1], par[,-1], wind_data[-1]) %>%
+covariates_all <- bind_cols(hc_gloeo_data[,c(1:10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], swrad[,-1], par[,-1], wind_data[-1]) %>%
   select(date, year, totalperL, HCS.tempC_min, HCS.tempC_min_lag, ma_7, schmidt.stability_median_diff,
          schmidt.stability_max_lag, gdd_sum, precip_mm, AveWindDir_cove_mean_2daylag)
 
@@ -241,6 +238,11 @@ winddir <- ggplot(data = covariates_all, aes(x = date, y = AveWindDir_cove_mean_
 winddir
 ggsave(winddir, filename = file.path(paste(my_directory,"winddir_timeseries.tif"),sep = ""),
        device = "tiff",height = 4, width = 8, units = "in", scale = 1.1)
+
+#Figure S1
+plot(covariates_all$gdd_sum, log(covariates_all$totalperL),
+     ylab = expression(paste("Ln (colonies ",L^-1,")")),
+     xlab = "Growing degree days")
 
 #Figure S2
 g <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))

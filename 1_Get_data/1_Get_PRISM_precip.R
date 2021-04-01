@@ -15,7 +15,7 @@ pacman::p_load(tidyverse, lubridate, googledrive)
 # EDI staging environment Package ID: edi.18.4
 # Citation: Lofton, M.E., J.A. Brentrup, W.S. Beck, J.A. Zwart, R. Bhattacharya, L.S. Brighenti, S.H. Burnet, I.M. McCullough, B.G. Steele, C.C. Carey, K.L. Cottingham, M.C. Dietze, H.A. Ewing, K.C. Weathers, and S.L. LaDeau. 2020. Lake Sunapee Gloeotrichia echinulata density near-term hindcasts from 2015-2016 and meteorological model driver data, including shortwave radiation and precipitation from 2009-2016 ver 4. Environmental Data Initiative. https://doi.org/DOI_PLACE_HOLDER (Accessed 2021-01-12).
 
-data  <- "https://portal-s.edirepository.org/nis/dataviewer?packageid=edi.18.4&entityid=e916fc13e0163fd93b32dafd8615ad72"
+data  <- "https://portal-s.edirepository.org/nis/dataviewer?packageid=edi.18.5&entityid=e916fc13e0163fd93b32dafd8615ad72"
 
 destination <- "./00_Data_files/EDI_data_clones"
 

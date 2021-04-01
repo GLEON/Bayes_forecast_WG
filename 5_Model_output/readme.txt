@@ -40,3 +40,13 @@ Note that not all models have all sources of uncertainty; for example, random-wa
 
 Files with "varRelative" in the file name contain a matrix with the relative contributions of each form of each type of hindcast (IC, IC.Pa, IC.Pa.D, etc) to total hindcast uncertainty. Files follow the same naming convention and structure as the varmat files.  
 
+5.4_Hindcasting_known_covars: output from script 4.3_Hindcasting_known_covars
+
+There are between 80-120 output files for each Bayesian state-space model, depending on how many sources of uncertainty can be partitioned given that model's structure. For example, a random walk model has only initial conditions, process, and observation error, while a dynamic linear model with one covariate additionally has parameter and driver error.
+The names of the .csv files for each model follow the naming convention below:
+[model name]_[sources of uncertainty included in hindcast]_[year of hindcast]_[week of year].csv
+For example, the following file:
+AR_det.prediction_2015_1.csv contains the 1-4 week hindcasts generated for weeks 1-4 of the 2015 sampling season for the AR model, with no forms of uncertainty included
+A second example: 
+GDD_hindcast.IC.Pa.D.P._2016_12.csv contains the 1-4 week hindcasts generated for weeks 12-15 of the 2016 sampling season for the GDD model, and includes initial conditions, parameter, driver, and process uncertainty
+
