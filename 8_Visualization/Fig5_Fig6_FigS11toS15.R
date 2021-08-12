@@ -16,7 +16,7 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
 
 #setting up counters and vectors for for-loop
 model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
-model_labels <- c("a. RW","b. BiasRW","c. AC","d. BaseDLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","WindDir","GDD","SchmidtLag","Schmidt+Wind","e. Temp+Wind","Wind+GDD")
+model_labels <- c("a. RW","b. OffsetRW","c. AC","d. BaseLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","WindDir","GDD","SchmidtLag","Schmidt+Wind","e. Temp+Wind","Wind+GDD")
 
 forecast_weeks <- c(1,4)
 
