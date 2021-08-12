@@ -17,7 +17,7 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Uncertainty_partitioning_analy
 
 #setting up counters and vectors for for-loop
 model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
-model_labels <- c("a. RW","b. BiasRW","c. AC","d. BaseDLM","a. MinWaterTemp","b. MinWaterTempLag","c. WaterTempMA","d. WindDir","e. GDD","f. SchmidtLag","g. Schmidt+Wind","e. Temp+Wind","h. Wind+GDD","i. Ensemble")
+model_labels <- c("a. RW","b. OffsetRW","c. AC","d. BaseLM","a. MinWaterTemp","b. MinWaterTempLag","c. WaterTempMA","d. WindDir","e. GDD","f. SchmidtLag","g. Schmidt+Wind","e. Temp+Wind","h. Wind+GDD","i. Ensemble")
 schmidt_title <- expression(paste("e. ",Delta,"Schmidt", sep = ""))
 forecast_weeks <- c(1:4)
 
@@ -125,9 +125,9 @@ for(n in 1:length(forecast_weeks)){
 
 }
 
-rm(list = ls())
 
 ############plot that just has legend to include in final figures
+
 tiff(file = file.path(paste(my_directory,paste0("Fig7_FigSX_legend.tif"),sep = "")),
      width = 4, height = 4, units = "in", res = 300)
 plot.new()
@@ -143,7 +143,7 @@ my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Uncertainty_partitioning_analy
 
 #setting up counters and vectors for for-loop
 model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD","ensemble")
-model_labels <- c("RW","BiasRW","AC","BaseDLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","WindDir","GDD","SchmidtLag","Schmidt+Wind","Temp+Wind","Wind+GDD","Ensemble")
+model_labels <- c("RW","OffsetRW","AC","BaseLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","WindDir","GDD","SchmidtLag","Schmidt+Wind","Temp+Wind","Wind+GDD","Ensemble")
 forecast_weeks <- c(1:4)
 plotdata <- NULL
 
@@ -200,7 +200,7 @@ plotdata <- as_tibble(plotdata) %>%
          V5 = as.double(V5),
          V6 = as.double(V6),
          V7 = as.double(V7),
-         V2 = fct_relevel(V2, "RW","BiasRW","AC","BaseDLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","SchmidtLag","WindDir","GDD","Schmidt+Wind","Temp+Wind","Wind+GDD","Ensemble"))
+         V2 = fct_relevel(V2, "RW","OffsetRW","AC","BaseLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","SchmidtLag","WindDir","GDD","Schmidt+Wind","Temp+Wind","Wind+GDD","Ensemble"))
 colnames(plotdata) <- c("model_name","mod_label","Initial Conditions","Parameter","Driver","Process","forecast_week")
 plotdata$best_delPL <- c(NA,NA,NA,1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,rep(NA, times = 14),rep(NA, times = 14),NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,1,NA,NA)
 

@@ -3,6 +3,13 @@
 #Date: 25MAY20
 library(tidyverse)
 
+#get sampling dates
+obs <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv") %>%
+  filter(year %in% c(2015:2016))
+dates <- as.character(obs$date)
+new_wks <- c("2015-05-14",dates[1:19],"2016-05-19",dates[21:39])
+
+#reset working directory
 setwd("./9_Data_publication/")
 
 startingDir <- "./5_Model_output/5.2_Hindcasting/"
@@ -10,15 +17,9 @@ startingDir <- "./5_Model_output/5.2_Hindcasting/"
 #create wks vector
 wks <- c(paste0("2015_",1:20),paste0("2016_",1:20))
 
-#get sampling dates
-obs <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv") %>%
-  filter(year %in% c(2015:2016))
-dates <- as.character(obs$date)
-new_wks <- c("2015-05-14",dates[1:19],"2016-05-19",dates[21:39])
-
 #create vector of model names
 model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","GDD","wnd_dir_2day_lag","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
-new_model_names <- c("RW","BiasRW","AC","BaseDLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","GDD","WindDir","SchmidtLag","SchmidtAndWind","TempAndWind","WindAndGDD")
+new_model_names <- c("RW","OffsetRW","AC","BaseLM","MinWaterTemp","MinWaterTempLag","WaterTempMA","GDD","WindDir","SchmidtLag","SchmidtAndWind","TempAndWind","WindAndGDD")
 
 for(n in 13:length(model_names)){
 
