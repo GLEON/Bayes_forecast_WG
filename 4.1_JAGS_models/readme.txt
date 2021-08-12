@@ -6,7 +6,7 @@ Refer to Table 2 and Table S4 of the Lofton et al. 2021 manuscript for descripti
 
 AC = null model with autocorrelation term; corresponds to AC model in manuscript
 
-base_DLM = null dynamic linear model; correspond to BaseDLM model in manuscript
+base_DLM = null dynamic linear model; correspond to BaseLM model in manuscript
 
 GDD = GDD model in manuscript
 
@@ -14,7 +14,7 @@ precip = Precip model in manuscript
 
 RW = random walk model with uninformed observation error prior; not presented in manuscript
 
-RW_bias = random walk null model with bias term; correspond to BiasRW in manuscript
+RW_bias = random walk null model with bias term; correspond to OffsetRW in manuscript
 
 RW_obs = random walk model with informed observation error prior; corresponds to RW model in manuscript
 

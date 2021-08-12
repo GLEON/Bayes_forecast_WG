@@ -17,7 +17,7 @@ There are between 80-120 output files for each Bayesian state-space model, depen
 The names of the .csv files for each model follow the naming convention below:
 [model name]_[sources of uncertainty included in hindcast]_[year of hindcast]_[week of year].csv
 For example, the following file:
-AR_det.prediction_2015_1.csv contains the 1-4 week hindcasts generated for weeks 1-4 of the 2015 sampling season for the AR model, with no forms of uncertainty included
+AC_det.prediction_2015_1.csv contains the 1-4 week hindcasts generated for weeks 1-4 of the 2015 sampling season for the AC model, with no forms of uncertainty included
 A second example: 
 GDD_hindcast.IC.Pa.D.P._2016_12.csv contains the 1-4 week hindcasts generated for weeks 12-15 of the 2016 sampling season for the GDD model, and includes initial conditions, parameter, driver, and process uncertainty
 
@@ -46,7 +46,7 @@ There are between 80-120 output files for each Bayesian state-space model, depen
 The names of the .csv files for each model follow the naming convention below:
 [model name]_[sources of uncertainty included in hindcast]_[year of hindcast]_[week of year].csv
 For example, the following file:
-AR_det.prediction_2015_1.csv contains the 1-4 week hindcasts generated for weeks 1-4 of the 2015 sampling season for the AR model, with no forms of uncertainty included
+AC_det.prediction_2015_1.csv contains the 1-4 week hindcasts generated for weeks 1-4 of the 2015 sampling season for the AC model, with no forms of uncertainty included
 A second example: 
 GDD_hindcast.IC.Pa.D.P._2016_12.csv contains the 1-4 week hindcasts generated for weeks 12-15 of the 2016 sampling season for the GDD model, and includes initial conditions, parameter, driver, and process uncertainty
 
