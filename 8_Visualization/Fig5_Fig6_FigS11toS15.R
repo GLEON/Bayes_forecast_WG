@@ -12,7 +12,8 @@
 pacman::p_load(tidyverse, lubridate)
 
 #set local directory for writing plots
-my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
+#my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
+my_directory <- "~/Documents/Gloeo Bayesian Modeling/R Output/Bayes_model_analysis_output/"
 
 #setting up counters and vectors for for-loop
 model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","wnd_dir_2day_lag","GDD","schmidt_max_lag","schmidt_and_wind","temp_and_wind","wind_and_GDD")
@@ -136,7 +137,7 @@ for (n in 1:length(forecast_weeks)){
     # legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n")}
     # if(model_names[i] == "RW_obs" & forecast_weeks[n]==4){
     #   legend("topleft",legend = c("median predicted","observed"),pch = c(16,17),col = c("black","red"),bty = "n",cex = 0.7)}
-    #legend("bottomright",legend = as.expression(bquote(bold("2015"))),bty = "n")
+    legend("bottomright",legend = as.expression(bquote(bold("2015"))),bty = "n")
 
     if(forecast_weeks[n]==1){
       plot(dates2016,ci2016_log[2,],pch = 16,xlab = "", las = 1,ylab = expression(paste("log total colonies",~~L^-1)),ylim = c(-8,5))}
@@ -148,7 +149,7 @@ for (n in 1:length(forecast_weeks)){
     arrows(dates2016, pi2016_log[2,]-(pi2016_log[2,]-pi2016_log[1,]), dates2016, pi2016_log[2,]+(pi2016_log[3,]-pi2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3, col = "gray")
     arrows(dates2016, ci2016_log[2,]-(ci2016_log[2,]-ci2016_log[1,]), dates2016, ci2016_log[2,]+(ci2016_log[3,]-ci2016_log[2,]), length=0.05, angle=90, code=3, lwd = 1.3)
     points(dates2016,obs_log[2,],pch = 17, col = "chartreuse3")
-    #legend("bottomright",legend = as.expression(bquote(bold("2016"))),bty = "n")
+    legend("bottomright",legend = as.expression(bquote(bold("2016"))),bty = "n")
 
     dev.off()
 
