@@ -21,7 +21,7 @@ destination <- "./00_Data_files/EDI_data_clones"
 download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method='libcurl')
 
 # Load onset water temp data into R ####
-dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
+dat <- read_csv("./00_Data_files/EDI_data_clones/wtrtemp_clean_2009-2016_allsites.csv",
                 col_types = list(year = col_double(),
                                  dayofyr = col_double(),
                                  time = col_time(),
@@ -45,8 +45,8 @@ dat1 <- dat %>%
 plot(temp_degC ~ datetime, data = dat1)
 
 # Low data at end of 2014 when logger was removed from lake, so changed to NA for 2014-09-17 10:00:00 - 2014-09-18 08:00:00
-
-dat1[17138:17160, 7] <- NA
+# 16 March 2022 - JB cleaned up data and removed outlier values
+#dat1[17138:17160, 7] <- NA
 
 # Add full time series to data to be able to calculate daily averages but cut-off days with water temp for only part of day
 full_datetime <- seq(from = ymd_hms("2009-05-21 00:00:00"), to = ymd_hms("2016-10-05 23:00:00"), by = dhours(1))
@@ -98,7 +98,7 @@ dat4_subset <- dat4 %>%
   mutate(month = month(date)) %>%
   filter(month %in% 5:9)
 
-dat4_subset1 <- dat4_subset[c(123, 277, 320, 430, 464, 588, 616, 739, 775, 892, 935, 1044, 1201),]
+dat4_subset1 <- dat4_subset[c(123, 161, 277, 320, 430, 464, 588, 616, 732, 782, 884, 935, 1044, 1201),]
 
 dat4_subset2 <- dat4_subset1 %>%
   mutate(date = date(date)) %>%
@@ -111,6 +111,8 @@ dat4_subset3 <- dat4_subset1 %>%
   mutate(date = date(date)) %>%
   filter(month == 5|month == 6) %>%
   mutate(date2 = date - ddays(1))
+
+dat4_subset3[1,10] <- ymd("2010-05-25") #3 days apart
 
 # Bind new dates together
 dat4_subset4 <- bind_rows(dat4_subset2, dat4_subset3) %>%
@@ -127,9 +129,9 @@ dat7 <- full_join(dat6, dat4_subset4) %>%
   arrange(date)
 
 # Write data for 2nd dataset with water temp holes filled in
-write_csv(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_SOTF.csv")
+#write_csv(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_SOTF.csv")
 
-saveRDS(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_SOTF.rds")
+#saveRDS(dat7, "./00_Data_files/Covariate_analysis_data/onset_watertemp_daily_summary_gap_filled_SOTF.rds")
 
 # Create 1 week lag water temp dataset ####
 
@@ -219,8 +221,6 @@ dat3_ma3 <- dat3_ma1 %>%
   summarize(date = max(date)) %>%
   filter(year!="NA")
 
-str(dat3_ma3)
-
 dat3_ma4 <- dat3_ma1 %>%
   filter(date %in% dat3_ma3$date)
 
@@ -252,23 +252,27 @@ gdd1 <- dat4_fill3 %>% # use daily water temp data summary for May-Sep
   filter(gdd!="NA") %>%
   spread(key = year, value = gdd) # make wide to do each year separately
 
+# Fix 2010
+gdd1[7,3] <- NA
+
 # Calculate gdd as column sum of daily data - separate each year since different number of missing points
 # Note could also try rollsum
-gdd_sum1 <- as_tibble(cumsum(na.omit(gdd1$`2009`)), column_name = "gdd_sum09")
-gdd_sum2 <- as_tibble(cumsum(na.omit(gdd1$`2010`)), column_name = "gdd_sum10")
-gdd_sum3 <- as_tibble(cumsum(na.omit(gdd1$`2011`)), column_name = "gdd_sum11")
-gdd_sum4 <- as_tibble(cumsum(na.omit(gdd1$`2012`)), column_name = "gdd_sum12")
-gdd_sum5 <- as_tibble(cumsum(na.omit(gdd1$`2013`)), column_name = "gdd_sum13")
-gdd_sum6 <- as_tibble(cumsum(na.omit(gdd1$`2014`)), column_name = "gdd_sum14")
-gdd_sum7 <- as_tibble(cumsum(na.omit(gdd1$`2015`)), column_name = "gdd_sum15")
-gdd_sum8 <- as_tibble(cumsum(na.omit(gdd1$`2016`)), column_name = "gdd_sum16")
+
+gdd_sum1 <- as_tibble_col(cumsum(na.omit(gdd1$`2009`)), column_name = "gdd_sum09")
+gdd_sum2 <- as_tibble_col(cumsum(na.omit(gdd1$`2010`)), column_name = "gdd_sum10")
+gdd_sum3 <- as_tibble_col(cumsum(na.omit(gdd1$`2011`)), column_name = "gdd_sum11")
+gdd_sum4 <- as_tibble_col(cumsum(na.omit(gdd1$`2012`)), column_name = "gdd_sum12")
+gdd_sum5 <- as_tibble_col(cumsum(na.omit(gdd1$`2013`)), column_name = "gdd_sum13")
+gdd_sum6 <- as_tibble_col(cumsum(na.omit(gdd1$`2014`)), column_name = "gdd_sum14")
+gdd_sum7 <- as_tibble_col(cumsum(na.omit(gdd1$`2015`)), column_name = "gdd_sum15")
+gdd_sum8 <- as_tibble_col(cumsum(na.omit(gdd1$`2016`)), column_name = "gdd_sum16")
 
 y1 <- gdd1[1:123,1]
-y2 <- gdd1[7:124,1]
+y2 <- gdd1[c(4,8:123,125),1]
 y3 <- gdd1[12:124,1]
 y4 <- gdd1[4:130,1]
-y5 <- gdd1[2:119,1]
-y6 <- gdd1[16:118,1]
+y5 <- gdd1[2:120,1]
+y6 <- gdd1[15:119,1]
 y7 <- gdd1[15:126,1]
 y8 <- gdd1[12:131,1]
 
@@ -293,8 +297,7 @@ gdd_sum_all <- left_join(gdd8,gdd_sum16,by = "dayofyr")
 
 
 # Fix 2010
-gdd_sum_all[124,11] <- NA
-gdd_sum_all[125,11] <- 2149.890
+gdd_sum_all[125,11] <- 2068.085
 
 # Convert back to long
 gdd_all2 <- gdd_sum_all %>%
@@ -318,7 +321,7 @@ gdd_all5 <- dat4_fill3 %>%
 gdd_all6 <- left_join(gdd_all5, gdd_all4, by = c("dayofyr", "year")) %>%
   select(date, gdd, gdd_sum)
 
-# Filter water temp 1 week difference data for sampling dates
+# Filter gdd data for sampling dates
 gdd_all7 <- gdd_all6 %>%
   filter(date %in% sampling_dates$date)
 
