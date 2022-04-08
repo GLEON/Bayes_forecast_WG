@@ -1,0 +1,1585 @@
+---
+title: "Gloeo Bins"
+author: "J. Brentrup"
+date: "2/17/2022"
+output:
+  html_document: default
+  pdf_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+```{r}
+pacman::p_load(tidyverse, lubridate, openair, knitr, ggpmisc)
+```
+
+# Read in gloeo data 2005-2016
+```{r}
+gloeo <- read_csv("00_Data_files/EDI_data_clones/weekly_surface_gloeo_4sites_2005_2016_v10April2020.csv",
+      col_types = list(
+      date = col_date(format = ""),
+      site = col_character(),
+      year = col_double(),
+      dayofyr = col_double(),
+      n_sample = col_double(),
+      coloniesperL = col_double(),
+      filbundperL = col_double(),
+      totalperL = col_double()
+    )
+  )
+
+```
+
+# Data wrangling
+```{r}
+# Create tibble with rows for missing observations in 2009-2016 
+date <- c(rep(c("2009-06-11","2009-09-28","2015-06-25","2016-06-09","2016-08-10"),times = 1,each = 4),"2014-07-17","2015-06-11","2015-07-23","2015-08-20","2016-08-04")
+
+site <- c(rep(c("NorthSunapeeHarbor","SouthOfTheFells","HerrickCoveSouth","Newbury"),times = 5),"Newbury","SouthOfTheFells","HerrickCoveSouth","SouthOfTheFells","NorthSunapeeHarbor")
+
+odd_obs <- as_tibble(cbind(site,date)) %>%
+  mutate(date = as.Date(date)) %>%
+  mutate(year = year(date), dayofyr = yday(date)) %>%
+  mutate(n_sample = NA, coloniesperL = NA, filbundperL = NA, totalperL = NA)
+
+
+# eliminate extra sampling day from original data file
+gloeo1 <- gloeo %>%
+  filter(!date %in% as.Date(c("2009-07-11")))#get rid of extra sampling days
+
+# combine missing and averaged duplicate observations with original data file
+# assign "sampling season weeks" numbering 1-20 each year to dates
+gloeo2 <- bind_rows(gloeo1, odd_obs) %>%
+  mutate(week = week(date)) %>%
+  filter(year %in% 2009:2016 & (week %in% 21:40 | dayofyr == 283))%>% #limit to study period
+  arrange(date, site) %>%
+  select(date, site, coloniesperL, filbundperL, totalperL, year, dayofyr) %>% #keep day of year too
+  mutate(season_week = rep(c(1:20),times = 8, each = 4))
+  
+# Add in month and ln of gloeo
+gloeo_final <- gloeo2 %>%
+  mutate(month = month(date)) %>%
+  select(date,year,month,dayofyr,season_week,site,coloniesperL,filbundperL,totalperL) %>% # rearrange columns to have date items together
+  mutate(ln_totalperL = log(totalperL + (1/141.4)))# add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
+# convert to natural log using  log + detection limit = 1/141.4
+
+```
+
+# Gloeo bins
+- Add new variable to bin gloeo into different categories - constant, growth, shrink c(0,1,-1)
+- For low growth, set threshold across all sites and set to 0
+- Divide growth into 2 categories
+
+## Count all sites
+- 84 samples gloeo = 0
+- 428 samples gloeo < 0.5, 1/4 of samples per site ~100
+- 503 samples gloeo < 1
+- 7 samples > 20, only Newbury (4) and Midge (3)
+- 105 samples > 1 and < 20, 1/4 of samples for Newbury and Midge
+
+
+```{r}
+# 84 samples gloeo = 0
+gloeo_final %>% 
+  group_by(site) %>% 
+  count(totalperL == 0) %>% 
+  filter(`totalperL == 0` == TRUE)
+
+# 428 samples gloeo < 0.5, 1/4 of samples per site ~100
+gloeo_final %>% 
+  group_by(site) %>% 
+  count(totalperL < 0.5) %>% 
+  filter(`totalperL < 0.5` == TRUE)
+
+
+# 503 samples gloeo < 1
+gloeo_final %>% 
+  group_by(site) %>% 
+  count(totalperL < 1) %>% 
+  filter(`totalperL < 1` == TRUE)
+
+# 7 samples > 20 only Newbury (4) and Midge (3)
+gloeo_final %>% 
+  group_by(site) %>% 
+  count(totalperL > 20) %>% 
+  filter(`totalperL > 20` == TRUE)
+
+# 105 samples > 1 and < 20, 1/4 of samples for Newbury and Midge
+gloeo_final %>%  
+  group_by(site) %>% 
+  count(totalperL > 1 & totalperL < 20)
+
+hist(gloeo_final$totalperL, breaks = 20) # 20 bins of 5
+
+hist(gloeo_final$totalperL, breaks = 50, ylim = c(0,50)) #50 bins of 2
+```
+
+
+```{r, eval=FALSE, include=FALSE}
+gloeo_new <- gloeo_final %>% 
+  filter(site == "Newbury") 
+
+## 22 samples gloeo = 0
+gloeo_new %>% 
+  count(totalperL == 0)
+
+## 101 samples gloeo < 0.5
+gloeo_new %>% 
+  count(totalperL < 0.5)
+
+## 116 samples gloeo < 1
+gloeo_new %>% 
+  count(totalperL < 1)
+
+# 4 samples > 20
+gloeo_new %>% 
+  count(totalperL > 20)
+
+# 34
+gloeo_new %>% 
+  count(totalperL > 1 & totalperL < 20)
+
+hist(gloeo_new$totalperL, breaks = 40) # bins of 1, 20 bins of 2
+```
+
+```{r, eval=FALSE, include=FALSE}
+#160 rows, 6 NA
+gloeo_new_noNA <- gloeo_new %>% 
+  filter(!is.na(totalperL))
+
+bin_shrink <- vector("double", nrow(gloeo_new_noNA))
+
+# If gloeo decreasing from 1 time point to the next, put a -1 in, otherwise, if gloeo growing put a 1, 0 for constant growth
+# had to remove NAs so bind back together with full data
+for(i in seq_along(gloeo_new_noNA$totalperL)) {
+  if(is.na(gloeo_new_noNA$totalperL[i+1])) {
+     bin_shrink[i+1] <- NA #print("Missing")
+  }
+    else if(gloeo_new_noNA$totalperL[i+1] < gloeo_new_noNA$totalperL[i]) {
+      bin_shrink[i+1] <- -1
+        }
+      else if (gloeo_new_noNA$totalperL[i+1] > gloeo_new_noNA$totalperL[i]) {
+        bin_shrink[i+1] <- 1 # if growth just put 1 or raw value?
+        }
+
+}
+
+# Drop last NA value
+bin_shrink2 <- bin_shrink[-155]
+
+```
+
+# Gloeo bins
+### growth (1), decline (-1), constant(0)
+- for loop to indicate if gloeo at timestep n + 1 < timestep n (shrinking)
+```{r}
+#640 rows, 25 NA
+gloeo_final_noNA <- gloeo_final %>% 
+  filter(!is.na(totalperL))
+
+bin_shrink_all <- vector("double", nrow(gloeo_final_noNA))
+
+# If gloeo decreasing from 1 time point to the next, put a -1 in, otherwise, if gloeo growing leave the raw data, 0 for constant growth
+# had to remove NAs so bind back together with full data
+for(i in seq_along(gloeo_final_noNA$totalperL)) {
+  if(is.na(gloeo_final_noNA$totalperL[i+1])) {
+     bin_shrink_all[i+1] <- NA #print("Missing")
+  }
+    else if(gloeo_final_noNA$totalperL[i+1] < gloeo_final_noNA$totalperL[i]) {
+      bin_shrink_all[i+1] <- -1
+        }
+      else if(gloeo_final_noNA$totalperL[i+1] > gloeo_final_noNA$totalperL[i]) {
+        bin_shrink_all[i+1] <- 1 # #gloeo_final_noNA$totalperL[i+1] # if growth just put raw value or 1
+        }
+
+}
+
+# Drop last NA value and bind back together with no NA data
+
+gloeo_final_noNA2 <- bind_cols(gloeo_final_noNA, bin_shrink_all[-616])
+colnames(gloeo_final_noNA2)[11] <- "bin1"
+
+# Add back in missing dates
+gloeo_final_NA <- gloeo_final %>% 
+  filter(is.na(totalperL)) %>% 
+  mutate(bin1 = NA)
+
+gloeo_final_bin <- bind_rows(gloeo_final_noNA2, gloeo_final_NA) %>% 
+  arrange(site, date)
+
+```
+
+# Difference in gloeo from 1 timestep to the next for all sites
+- Calculate the difference in gloeo at timestep  n+1 to n
+
+```{r}
+
+# Sort by site and then date
+gloeo_final <- gloeo_final %>% 
+  arrange(site, date)
+
+# Make vectors for output
+totalperL_diff_all <- vector("double", nrow(gloeo_final))
+ln_totalperL_diff_all <- vector("double", nrow(gloeo_final))
+
+
+for (i in 1:nrow(gloeo_final)) {
+  totalperL_diff_all[i+1] <- gloeo_final$totalperL[i+1] - gloeo_final$totalperL[i]
+  ln_totalperL_diff_all[i+1] <- gloeo_final$ln_totalperL[i+1] - gloeo_final$ln_totalperL[i]
+  
+}
+
+# drop NA from last extra row
+totalperL_diff_all <- totalperL_diff_all[-641]
+ln_totalperL_diff_all <-ln_totalperL_diff_all[-641]
+
+gloeo_final_diff_output <- data.frame(gloeo_final,totalperL_diff_all,ln_totalperL_diff_all)
+```
+
+### Combine gloeo proportional change and bin 1
+```{r}
+# combine change and bin 1 into 1 dataset
+gloeo_final_diff_output2 <- bind_cols(gloeo_final_diff_output, gloeo_final_bin$bin1) %>% 
+  rename(bin1 = ...13)
+
+# Set to 0 start of each new year by site and between sites
+# min dates same for all sites, each year different
+min_date <- gloeo_final_diff_output2 %>% 
+  group_by(year) %>% 
+  summarize(min_date = min(date))
+
+gloeo_final_diff_output3 <- gloeo_final_diff_output2 %>% 
+  mutate(totalperL_diff_all2 = ifelse(date %in% min_date$min_date, 0, totalperL_diff_all)) %>% 
+  mutate(ln_totalperL_diff_all2 = ifelse(date %in% min_date$min_date, 0, ln_totalperL_diff_all)) %>% 
+  mutate(bin2 = ifelse(date %in% min_date$min_date, 0, bin1)) %>% 
+  mutate(bin3 = ifelse(is.na(totalperL_diff_all2), NA, bin2)) %>% # change bin values to NA after NA (otherwise 2 week gap)
+  select(-c(totalperL_diff_all,ln_totalperL_diff_all, bin1, bin2)) %>% #drop extra columns
+  rename(totalperL_diff = totalperL_diff_all2, ln_totalperL_diff = ln_totalperL_diff_all2, bin1 = bin3)  # change back to original names
+  
+
+summary(gloeo_final_diff_output3)
+# max growth change = 72.193
+# max shrink/declining change = -81.176
+```
+
+# Histograms and counts for difference and bin data
+- 270 samples growth, 70 at Midge, Newbury, Fichter, Coffin ~45%
+- 73 samples no change(bin1==0), most at Coffin, Newbury, Midge/Fichter tied 12%
+- 248 samples shrink, 63 at Fichter, Coffin/Midge, Newbury ~42%
+- 49 NAs, 591 total data set
+
+```{r}
+hist(gloeo_final_diff_output3$bin1)
+
+
+gloeo_final_diff_output3 %>% 
+  group_by(site) %>% 
+  count(bin1 == 1) %>% 
+  filter(`bin1 == 1` == TRUE)
+
+hist(gloeo_final_diff_output3$totalperL_diff, ylim = c(0,50))
+
+
+```
+
+# Calculate proportional change in gloeo growth & gloeo declines
+- To calculate proportional change divide by max of growth change when bin is 1 and min of decline when bin -1
+
+```{r}
+gloeo_final_diff_output4 <- gloeo_final_diff_output3 %>% 
+  #filter(bin1==0) %>% 
+  mutate(prop_change_growth = ifelse(bin1==1, round((totalperL_diff/max(totalperL_diff, na.rm = T)*100),3), NA)) %>% 
+  mutate(prop_change_shrink = ifelse(bin1==-1, round((totalperL_diff/min(totalperL_diff, na.rm = T)*100),3), NA))
+```
+
+# Visualize proportional changes for growth
+- 213 < 2% out of 270 total where growth ~79% across all sites
+- 197 < 1% out of 270 total where growth ~73% across all sites
+- 171 < 0.5% out of 270 total where growth ~63% across all sites
+- 134 < 0.255% (median) out of 270 total where growth ~50% across all sites
+
+```{r}
+hist(gloeo_final_diff_output4$prop_change_growth, breaks = 40, ylim = c(0,50))
+
+summary(gloeo_final_diff_output4$prop_change_growth)
+
+gloeo_final_diff_output4 %>% 
+ # group_by(site) %>% 
+  count(prop_change_growth < 0.5) %>% 
+  filter(`prop_change_growth < 0.5` == TRUE)
+
+```
+
+## Constant growth threshold
+### Start at 0.5%
+- 1st attempt, set threshold to 0.5% for low gloeo growth as constant - but can alter later
+
+```{r}
+gloeo_final_diff_output5 <- gloeo_final_diff_output4 %>% 
+  mutate(bin_growth = ifelse(prop_change_growth < 0.5 & !is.na(prop_change_growth), 0, bin1))
+```
+
+## For high gloeo divide 1s into 2 categories
+- use median of above constant growth
+
+```{r}
+growth <- gloeo_final_diff_output5 %>% 
+  filter(bin_growth==1)
+
+summary(growth$prop_change_growth)
+
+# Median 2.567, higher for Newbury, lower for Coffin/Fichter
+gloeo_final_diff_output5 %>% 
+  filter(bin_growth==1) %>% 
+  group_by(site) %>% 
+  summarize(median_growth = median(prop_change_growth), mean_growth = mean(prop_change_growth))
+
+```
+
+- Set threshold to median value = 2.567 - above = bloom event is now 2, below = growth still 1
+- 50 bloom events across all 4 sites- most at Newbury (21), Midge (17)
+  - Reduce threshold to 0.25%, median = 1.1855, bloom events 68
+- 49 growth events - most at Fichter (15), Newbury/Midge (14)
+  - Reduce threshold to 0.25%, growth events 68
+
+```{r}
+gloeo_final_diff_output6 <- gloeo_final_diff_output5 %>% 
+  mutate(bin_bloom = ifelse(prop_change_growth >= 2.567 & !is.na(prop_change_growth), 2, bin_growth))
+
+gloeo_final_diff_output6 %>% 
+  count(bin_bloom) 
+
+gloeo_final_diff_output6 %>% 
+  group_by(site) %>% 
+  count(bin_bloom) 
+```
+
+# Plot growth & bloom thresholds
+```{r}
+viz <- gloeo_final_diff_output6 
+  # %>% filter(year == 2013) 
+  
+ggplot(viz, aes(x = dayofyr, y = bin_bloom, color = site))+
+  geom_point()+
+  geom_line()+
+  labs(y = "Bin", x = "Day of Year")+
+  facet_grid(year~site)
+
+```
+
+# Set thresholds for gloeo declines
+
+## Visualize proportional changes for shrink
+- 213 < 2% out of 248 total where growth ~86% across all sites
+- 197 < 1% out of 248 total where growth ~79% across all sites
+- 171 < 0.5% out of 248 total where growth ~69% across all sites
+- 132 < 0.244% (median) out of 248 total where growth ~53% across all sites
+
+```{r}
+hist(gloeo_final_diff_output4$prop_change_shrink, breaks = 40, ylim = c(0,50))
+
+summary(gloeo_final_diff_output4$prop_change_shrink)
+
+gloeo_final_diff_output4 %>% 
+ # group_by(site) %>% 
+  count(prop_change_growth < 0.5) %>% 
+  filter(`prop_change_growth < 0.5` == TRUE)
+
+```
+
+## Constant decline threshold
+### Start at 0.5%
+- 1st attempt, set threshold to 0.5% for low gloeo decline as constant - but can alter later
+
+```{r}
+# Use bin for growth to keep growth changes with declines
+gloeo_final_diff_output7 <- gloeo_final_diff_output6 %>% 
+  mutate(bin_shrink = ifelse(prop_change_shrink < 0.5 & !is.na(prop_change_shrink), 0, bin_growth))
+```
+
+## For low gloeo divide -1s into 2 categories
+- use median of below constant decline
+
+```{r}
+shrink <- gloeo_final_diff_output7 %>% 
+  filter(bin_shrink==-1)
+
+summary(shrink$prop_change_shrink)
+
+# Median 1.7905, higher for Newbury, lower for Coffin/Fichter
+gloeo_final_diff_output7 %>% 
+  filter(bin_shrink==-1) %>% 
+  group_by(site) %>% 
+  summarize(median_shrink = median(prop_change_shrink), mean_shrink = mean(prop_change_shrink))
+
+```
+
+- Set threshold to median value = 1.7905 - above = die off event is now -2, below = small decline still -1
+- 46 die off events across all 4 sites- most at Newbury (18), Midge (15)
+  - Reduce threshold to 0.25%, median = 1.168, die off events 63
+- 46 shrink events 
+  - Reduce threshold to 0.25%, shrinks events 62
+
+```{r}
+gloeo_final_diff_output8 <- gloeo_final_diff_output7 %>% 
+  mutate(bin_shrink2 = ifelse(prop_change_shrink < 0.5 & !is.na(prop_change_shrink), 0, bin_bloom)) %>% 
+  mutate(bin_die = ifelse(prop_change_shrink >= 1.7905 & !is.na(prop_change_shrink), -2, bin_shrink2)) %>% 
+  select(-bin_shrink2)
+
+gloeo_final_diff_output8 %>% 
+  count(bin_die) 
+
+gloeo_final_diff_output8 %>% 
+  group_by(site) %>% 
+  count(bin_die) 
+```
+
+# Plot growth & shrink thresholds (1 to -1)
+```{r}
+viz2 <- gloeo_final_diff_output8 #%>% 
+  #filter(year == 2010) 
+  
+ggplot(viz2, aes(x = dayofyr, y = bin_shrink, color = site))+
+  geom_point()+
+  geom_line()+
+  labs(y = "Bin", x = "Day of Year")+
+  facet_grid(year~site)
+
+ggplot(viz2, aes(x = dayofyr, y = bin_shrink, color = site))+
+  geom_point(show.legend = F)+
+  geom_line(show.legend = F)+
+  labs(y = "Bin", x = "Day of Year")+
+  facet_grid(site~year)
+
+```
+
+# Plot bloom & die thresholds (2 to -2)
+```{r}
+viz2 <- gloeo_final_diff_output8 #%>% 
+  #filter(year == 2010) 
+  
+ggplot(viz2, aes(x = dayofyr, y = bin_die, color = site))+
+  geom_point()+
+  geom_line()+
+  labs(y = "Bin", x = "Day of Year")+
+  facet_grid(year~site)
+
+ggplot(viz2, aes(x = dayofyr, y = bin_die, color = site))+
+  geom_point(show.legend = F)+
+  geom_line(show.legend = F)+
+  labs(y = "Bin", x = "Day of Year")+
+  facet_grid(site~year)
+
+# Overlay sites
+ggplot(viz2, aes(x = dayofyr, y = bin_die, color = site))+
+  geom_point()+
+  geom_line()+
+  labs(y = "Bin", x = "Day of Year")+
+  facet_wrap(~year)
+
+
+```
+
+## Read in Sunapee ice-out data
+```{r}
+ice_off <- read_csv("00_Data_files/Sunapee_IceOutDates_28Feb2022.csv")
+
+ice_off$year_date <- paste(ice_off$Year, "01", "01", sep = "-") 
+
+# Add date
+ice_off2 <- ice_off %>% 
+  mutate(year_date2 = ymd(year_date)) %>% 
+  mutate(ice_date = as_date(Sunapee_IceOut_DOY-1, origin = year_date2)) %>% 
+  select(-c(year_date, year_date2))
+
+str(ice_off2)
+
+plot(Sunapee_IceOut_DOY ~ Year, data = ice_off2)
+
+# Filter ice-off dates for gloeo period
+ice_off3 <- ice_off2 %>% 
+  filter(Year %in% 2009:2016) %>% 
+  rename(year = Year)
+
+plot(Sunapee_IceOut_DOY ~ year, data = ice_off3)+
+  abline(h = median(ice_off3$Sunapee_IceOut_DOY), col = "blue")
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/Ice-off.pdf", height = 8.5, width = 11)
+
+ggplot(data= ice_off3, aes(x = Sunapee_IceOut_DOY,y = 0, color = factor(year)))+
+  geom_hline(yintercept = 0, linetype = 1)+
+  geom_point(size = 4)+
+  scale_color_brewer(palette = "Blues", direction = -1)+
+  geom_vline(xintercept = 105, linetype = 2)+ 
+  theme_dark()
+
+```
+
+# Combine ice off and gloeo bin datasets
+```{r}
+gloeo_bin_ice <- full_join(gloeo_final_diff_output8, ice_off3, by = "year")
+```
+
+# Quick plot with gloeo bins and ice_off date now
+```{r}
+ggplot(gloeo_bin_ice, aes(x = dayofyr, y = bin_die, color = site))+
+  geom_point()+
+  geom_line()+
+#  annotate("segment", x=ice_dates, xend=ice_dates,y=-2,yend=2,linetype=2,size=1)+
+  geom_point(aes(x = Sunapee_IceOut_DOY, y = bin_die), color = "navy") +
+  geom_line(aes(x = Sunapee_IceOut_DOY, y = bin_die), color = "navy") +
+  labs(y = "Bin", x = "Day of Year")+
+  facet_grid(site~year)
+
+```
+
+# Calculate day of year for 1st growth and 1st bloom for each site and year
+- also calculate day of first non-0 gloeo
+- day of max gloeo
+```{r}
+# First growth
+gloeo_first_growth <- gloeo_bin_ice %>% 
+ # summarize(first_growth = first(bin_growth==1))
+  mutate(first_growth = ifelse(bin_growth==1, dayofyr, NA)) %>% 
+  group_by(year, site) %>% 
+  summarize(first_growth2 = min(first_growth, na.rm = T)) %>% 
+  mutate(first_growth2 = ifelse(first_growth2 == Inf, NA, first_growth2))
+
+# First bloom
+gloeo_first_bloom <- gloeo_bin_ice %>% 
+  mutate(first_bloom = ifelse(bin_bloom==2, dayofyr, NA)) %>% 
+  group_by(year, site) %>% 
+  summarize(first_bloom2 = min(first_bloom, na.rm = T)) %>% 
+  mutate(first_bloom2 = ifelse(first_bloom2 == Inf, NA, first_bloom2))
+
+# First day of non-0 zero
+gloeo_first_notzero <- gloeo_bin_ice %>% 
+  mutate(first_notzero = ifelse(totalperL>0, dayofyr, NA)) %>% 
+  group_by(year, site) %>% 
+  summarize(first_notzero2 = min(first_notzero, na.rm = T))
+
+# Day of Max Gloeo
+gloeo_max_bloom <- gloeo_bin_ice %>% 
+  group_by(year, site) %>% 
+  summarize(max_bloom = max(totalperL, na.rm = T))
+
+# filter full dataset for just max values to get DOY
+gloeo_max_bloom2 <- left_join(gloeo_max_bloom, gloeo_bin_ice, by = c("year", "site", "max_bloom" = "totalperL")) %>% 
+  select(year, site, dayofyr) %>% 
+  rename(max_bloom = dayofyr)
+
+# Join all together
+gloeo_first <- full_join(gloeo_first_growth, gloeo_first_bloom, by = c("year", "site"))
+gloeo_first2 <- full_join(gloeo_first_notzero, gloeo_max_bloom2, by = c("year", "site"))
+gloeo_first3 <- full_join(gloeo_first, gloeo_first2, by = c("year", "site"))
+
+# Join with ice dates
+gloeo_first_ice <- full_join(gloeo_first3, ice_off3, by = "year") %>% 
+  select(-ice_date) %>% 
+  mutate(growth_ice_diff = first_growth2 - Sunapee_IceOut_DOY) %>% 
+  mutate(bloom_ice_diff = first_bloom2 - Sunapee_IceOut_DOY) %>% 
+  mutate(maxbloom_ice_diff = max_bloom - Sunapee_IceOut_DOY)
+
+
+# Plot of doy of first growth for sites and years
+#First growth - all sites
+ggplot(gloeo_first_ice, aes(x = year , y = first_growth2, color = site))+
+  geom_point()+ #aes(size = first_growth2),
+  geom_line()+
+  geom_point(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy")+
+  geom_line(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy") + 
+  facet_wrap(~site)
+
+# Flip axis
+ggplot(gloeo_first_ice, aes(x = first_growth2, y = year, color = site))+
+  geom_point(position = "jitter")+ #aes(size = first_growth2),
+  #geom_line()+
+  geom_point(aes(x = Sunapee_IceOut_DOY, y = year), color = "navy")
+
+
+gloeo_first_ice2 <- gloeo_first_ice %>% 
+  filter(site %in% c("Newbury", "HerrickCoveSouth"))
+
+# First growth Newbury & Midge
+ggplot(gloeo_first_ice2, aes(x = year , y = first_bloom2, color = site))+
+  geom_point()+ #aes(size = first_growth2),
+  geom_line()+
+  geom_point(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy")+
+  geom_line(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy")
+
+#First bloom - all sites
+# Switch data to long
+gloeo_first_ice_long <- gloeo_first_ice %>% 
+  pivot_longer(3:7, names_to = "event", values_to = "event_day")
+
+gloeo_first_ice_long2 <-gloeo_first_ice_long %>% 
+  filter(event %in% c("first_growth2", "Sunapee_IceOut_DOY")) %>% 
+#filter(event %in% c("first_bloom2", "Sunapee_IceOut_DOY"))
+ # filter(event %in% c("first_bloom2", "first_growth2", "Sunapee_IceOut_DOY")) %>% 
+  filter(site %in% c("Newbury", "HerrickCoveSouth"))
+
+ggplot(gloeo_first_ice_long2, aes(x = year , y = event_day, color = event))+
+  geom_point()+ #aes(size = first_growth2),
+  geom_line()+
+ # geom_point(aes(y = first_growth2, x = year), color = "black")+
+ # geom_line(aes(y = first_growth2, x = year), color = "black") +
+ # geom_point(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy")+
+ # geom_line(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy") + 
+  facet_wrap(~site)
+
+# Flip axis
+ggplot(gloeo_first_ice, aes(x = first_bloom2, y = year, color = site))+
+  geom_point(position = "jitter")+ #aes(size = first_growth2),
+  #geom_line()+
+  geom_point(aes(x = Sunapee_IceOut_DOY, y = year), color = "navy")
+
+gloeo_first_ice3 <- gloeo_first_ice_long %>% 
+  filter(site == "Newbury")
+
+# First bloom Newbury 
+ggplot(gloeo_first_ice3, aes(x = year , y = event_day, color = event, shape = site))+
+  geom_point()+ #aes(size = first_growth2),
+  geom_line() #+
+  # geom_point(aes(y = first_growth2, x = year), color = "blue")+
+  # geom_line(aes(y = first_growth2, x = year), color = "blue")+
+  # geom_point(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy")+
+  # geom_line(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy")
+
+# Plot difference b/w ice-off and 1st growth
+gloeo_first_ice_long3 <- gloeo_first_ice_long %>% 
+  filter(event %in% c("growth_ice_diff")) #, "bloom_ice_diff"
+
+ggplot(gloeo_first_ice_long3, aes(x = year , y = event_day, color = site))+
+  geom_point()+ #aes(size = first_growth2),
+  geom_line()+
+ # geom_point(aes(y = first_growth2, x = year), color = "black")+
+ # geom_line(aes(y = first_growth2, x = year), color = "black") +
+ # geom_point(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy")+
+ # geom_line(aes(y = Sunapee_IceOut_DOY, x = year), color = "navy") + 
+  labs(title = "Difference in Number of Days between Ice-off and 1st day of gloeo growth")
+  facet_wrap(~site)
+
+
+```
+
+
+# Logistic Regression for Growth (just 0 or 1) with GDD & other driver variables
+
+## Load GDD data for All Sites
+```{r}
+
+onset_watertemp_all_NB <- read_csv("00_Data_files/Covariate_analysis_data/onset_watertemp_all_NB.csv")
+onset_watertemp_all_HC <- read_csv("00_Data_files/Covariate_analysis_data/onset_watertemp_all_HC.csv")
+onset_watertemp_all_SOTF <- read_csv("00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
+onset_watertemp_all_NSH <- read_csv("00_Data_files/Covariate_analysis_data/onset_watertemp_all_NSH.csv")
+
+```
+
+# Combine water temp metrics & GDD for all sites
+```{r}
+
+#Change names to drop site affiliations to able to join rows under same column heading
+onset_watertemp_all_HC <- onset_watertemp_all_HC %>% 
+  rename_with(~gsub("HCS.", "", .x))
+
+onset_watertemp_all_NB <- onset_watertemp_all_NB %>% 
+  rename_with(~gsub("NB.", "", .x))
+
+onset_watertemp_all_SOTF <- onset_watertemp_all_SOTF %>% 
+  rename_with(~gsub("SOTF.", "", .x))
+
+onset_watertemp_all_NSH <- onset_watertemp_all_NSH %>% 
+  rename_with(~gsub("NSH.", "", .x))
+
+
+watertemp_all <- bind_rows("Newbury" = onset_watertemp_all_NB, "HerrickCoveSouth" = onset_watertemp_all_HC, "SouthOfTheFells" = onset_watertemp_all_SOTF, "NorthSunapeeHarbor" = onset_watertemp_all_NSH, .id = "site")
+
+
+```
+
+
+## Combine GDD and Gloeo Bin data
+
+```{r}
+gloeo_bin_ice_wtr <- full_join(gloeo_bin_ice, watertemp_all, by = c("date", "site"))
+
+# filter for just 0 or 1 for growth
+gloeo_bin_ice_wtr2 <- gloeo_bin_ice_wtr %>% 
+  filter(bin_growth!=-1)
+
+```
+
+# GDD & Min water temp vs. Growth Plots
+
+- GDD cut-off for growth > 500
+- Min water temp > 17 for all sites
+-- > 19 for Newbury
+```{r}
+
+binomial_smooth <- function(...) {
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
+}
+
+summary(gloeo_bin_ice_wtr2$gdd_sum)
+
+# All sites - together
+ggplot(gloeo_bin_ice_wtr2, aes(y = bin_growth, x = gdd_sum, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth(inherit.aes = F, aes(y = bin_growth, x = gdd_sum))+
+  labs(title = "All Sites")
+  
+# All sites - indiv models
+ggplot(gloeo_bin_ice_wtr2, aes(y = bin_growth, x = gdd_sum, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth()+
+  labs(title = "All Sites")
+
+# All sites - facet wrap by site
+ggplot(gloeo_bin_ice_wtr2, aes(y = bin_growth, x = gdd_sum, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth()+
+  labs(title = "All Sites")+
+  facet_wrap(~site)
+
+
+# Min Water Temp
+summary(gloeo_bin_ice_wtr2$tempC_min)
+
+# All sites - together
+ggplot(gloeo_bin_ice_wtr2, aes(y = bin_growth, x = tempC_min, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth(inherit.aes = F, aes(y = bin_growth, x = tempC_min))+
+  scale_x_continuous(limits = c(10, 26.5), breaks=seq(10,26,by=2))+
+  labs(title = "All Sites")
+  
+# All sites - indiv models
+ggplot(gloeo_bin_ice_wtr2, aes(y = bin_growth, x = tempC_min, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth(se = F)+
+  scale_x_continuous(limits = c(10, 26.5), breaks=seq(10,26,by=2))+
+  labs(title = "All Sites")
+
+# All sites - facet wrap by site
+ggplot(gloeo_bin_ice_wtr2, aes(y = bin_growth, x = tempC_min, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth()+
+  scale_x_continuous(limits = c(10, 26.5), breaks=seq(10,26,by=2))+
+  labs(title = "All Sites")+
+  facet_wrap(~site)
+
+```
+
+
+## Fit Logistic Model - All sites GDD & Min Water Temp vs. Growth
+```{r}
+
+#gdd logistic model <- glm(response variable ~ var1 + var2 + var3, data = dataset, family = "binomial")
+
+logistic_model_gdd <- glm(bin_growth ~ gdd_sum, data = gloeo_bin_ice_wtr2, family = binomial)
+
+summary(logistic_model_gdd)
+confint(logistic_model_gdd)
+exp(coef(logistic_model_gdd))
+
+#Library broom functions
+library(broom)
+tidy(logistic_model_gdd)
+augment(logistic_model_gdd)
+glance(logistic_model_gdd)
+
+# Min water temp
+logistic_model_mintemp <- glm(bin_growth ~ tempC_min, data = gloeo_bin_ice_wtr2, family = binomial)
+
+summary(logistic_model_mintemp)
+confint(logistic_model_mintemp)
+exp(coef(logistic_model_mintemp))
+
+tidy(logistic_model_mintemp)
+augment(logistic_model_mintemp)
+glance(logistic_model_mintemp)
+```
+
+## Fit Logistic Model - Newbury
+```{r}
+gloeo_bin_ice_wtr2_newb <- gloeo_bin_ice_wtr2 %>% 
+  filter(site=="Newbury")
+
+# min water temp
+new_logistic_model_mintemp <- glm(bin_growth ~ tempC_min, data = gloeo_bin_ice_wtr2_newb, family = binomial)
+
+summary(new_logistic_model_mintemp)
+confint(new_logistic_model_mintemp)
+exp(coef(new_logistic_model_mintemp))
+
+# gdd
+new_logistic_model_gdd <- glm(bin_growth ~ gdd_sum, data = gloeo_bin_ice_wtr2_newb, family = binomial)
+
+summary(new_logistic_model_gdd)
+
+with(new_logistic_model_gdd, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
+
+
+```
+
+## Fit Logistic Model - Midge
+```{r}
+ gloeo_bin_ice_wtr2_hc <- gloeo_bin_ice_wtr2 %>% 
+  filter(site=="HerrickCoveSouth")
+
+#only gdd
+hc_logistic_model_gdd <- glm(bin_growth ~ gdd_sum, data = gloeo_bin_ice_wtr2_hc, family = binomial)
+
+summary(hc_logistic_model_gdd)
+confint(hc_logistic_model_gdd)
+exp(coef(hc_logistic_model_gdd))
+
+# min water temp
+hc_logistic_model_mintemp <- glm(bin_growth ~ tempC_min, data = gloeo_bin_ice_wtr2_hc, family = binomial)
+
+summary(hc_logistic_model_mintemp)
+confint(hc_logistic_model_mintemp)
+exp(coef(hc_logistic_model_mintemp))
+
+
+```
+
+
+# GDD & Min water temp vs. Bloom Plots
+
+- GDD cut-off for bloom > 
+- Min water temp > 17 for all sites
+-- > 19 for Newbury
+```{r}
+gloeo_bin_ice_wtr_bloom <- gloeo_bin_ice_wtr %>% 
+  filter(bin_bloom %in% c(0,2)) %>%  # 308 obs vs. 640
+  mutate(bin_bloom_recode = ifelse(bin_bloom==2, 1, bin_bloom))
+
+
+binomial_smooth <- function(...) {
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
+}
+
+summary(gloeo_bin_ice_wtr_bloom$gdd_sum)
+
+# All sites - together
+ggplot(gloeo_bin_ice_wtr_bloom, aes(y = bin_bloom_recode, x = gdd_sum, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth(inherit.aes = F, aes(y = bin_bloom_recode, x = gdd_sum))+
+  labs(title = "All Sites")
+  
+# All sites - indiv models
+ggplot(gloeo_bin_ice_wtr_bloom, aes(y = bin_bloom_recode, x = gdd_sum, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth(se = F)+
+  labs(title = "All Sites")
+
+# All sites - facet wrap by site
+ggplot(gloeo_bin_ice_wtr_bloom, aes(y = bin_bloom_recode, x = gdd_sum, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth()+
+  labs(title = "All Sites")+
+  facet_wrap(~site)
+
+
+# Min Water Temp
+summary(gloeo_bin_ice_wtr_bloom$tempC_min)
+
+# All sites - together
+ggplot(gloeo_bin_ice_wtr_bloom, aes(y = bin_bloom_recode, x = tempC_min, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth(inherit.aes = F, aes(y = bin_bloom_recode, x = tempC_min))+
+  scale_x_continuous(limits = c(10, 26.5), breaks=seq(10,26,by=2))+
+  labs(title = "All Sites")
+  
+# All sites - indiv models
+ggplot(gloeo_bin_ice_wtr_bloom, aes(y = bin_bloom_recode, x = tempC_min, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth(se = F)+
+  scale_x_continuous(limits = c(10, 26.5), breaks=seq(10,26,by=2))+
+  labs(title = "All Sites")
+
+# All sites - facet wrap by site
+ggplot(gloeo_bin_ice_wtr_bloom, aes(y = bin_bloom_recode, x = tempC_min, color = site))+
+#  geom_point()+
+  geom_jitter(height = 0.05)+
+  binomial_smooth()+
+  scale_x_continuous(limits = c(10, 26.5), breaks=seq(10,26,by=2))+
+  labs(title = "All Sites")+
+  facet_wrap(~site)
+
+```
+
+## Fit Logistic Model - All sites GDD & Min Water Temp vs. Bloom
+```{r}
+
+
+#gdd logistic model <- glm(response variable ~ var1 + var2 + var3, data = dataset, family = "binomial")
+
+logistic_model_gdd_bloom <- glm(bin_bloom_recode ~ gdd_sum, data = gloeo_bin_ice_wtr_bloom, family = binomial)
+
+summary(logistic_model_gdd_bloom)
+confint(logistic_model_gdd_bloom)
+exp(coef(logistic_model_gdd_bloom))
+
+tidy(logistic_model_gdd_bloom)
+augment(logistic_model_gdd_bloom)
+glance(logistic_model_gdd_bloom)
+
+# Min water temp
+logistic_model_mintemp_bloom <- glm(bin_bloom_recode ~ tempC_min, data = gloeo_bin_ice_wtr_bloom, family = binomial)
+
+summary(logistic_model_mintemp_bloom)
+confint(logistic_model_mintemp_bloom)
+exp(coef(logistic_model_mintemp_bloom))
+
+tidy(logistic_model_mintemp_bloom)
+augment(logistic_model_mintemp_bloom)
+glance(logistic_model_mintemp_bloom)
+```
+
+# GDD @ 1st growth and 1st bloom
+```{r}
+
+gloeo_first_ice$date <- paste(gloeo_first_ice$year, "01", "01", sep = "-") 
+
+gloeo_first_ice_date <- gloeo_first_ice %>% 
+  mutate(date2 = ymd(date)) %>% 
+  mutate(growth_date = as_date(first_growth2-1, origin = date2)) %>% 
+  mutate(bloom_date = as_date(first_bloom2-1, origin = date2)) %>% 
+  mutate(max_date = as_date(max_bloom-1, origin = date2)) %>% 
+  mutate(first_date = as_date(first_notzero2-1, origin = date2)) %>% 
+  select(-c(date,date2))
+
+#Newbury
+gloeo_first_ice_nb <- gloeo_first_ice_date %>% 
+  filter(site=="Newbury")
+
+# Filter GDD and min water temp for dates that align with 1st growth and 1st bloom & max bloom
+nb_gdd_mintemp_growth <- onset_watertemp_all_NB %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_nb$growth_date)
+
+nb_gdd_mintemp_bloom <- onset_watertemp_all_NB %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_nb$bloom_date) 
+
+nb_gdd_mintemp_max <- onset_watertemp_all_NB %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_nb$max_date) 
+
+nb_gdd_mintemp_bloom2 <- bind_rows("growth" = nb_gdd_mintemp_growth,"bloom" = nb_gdd_mintemp_bloom, "max" = nb_gdd_mintemp_max, .id = "first_date") %>% 
+  mutate(site = "Newbury")
+
+#Midge
+gloeo_first_ice_hc <- gloeo_first_ice_date %>% 
+  filter(site=="HerrickCoveSouth")
+
+# Filter GDD and min water temp for dates that align with 1st growth and 1st bloom
+hc_gdd_mintemp_growth <- onset_watertemp_all_HC %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_hc$growth_date)
+
+hc_gdd_mintemp_bloom <- onset_watertemp_all_HC %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_hc$bloom_date)
+
+hc_gdd_mintemp_max <- onset_watertemp_all_HC %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_hc$max_date)
+
+hc_gdd_mintemp_bloom2 <- bind_rows("growth" = hc_gdd_mintemp_growth,"bloom" = hc_gdd_mintemp_bloom,  "max" = hc_gdd_mintemp_max, .id = "first_date") %>% 
+  mutate(site = "HerrickCoveSouth")
+
+#Fichter
+gloeo_first_ice_sotf <- gloeo_first_ice_date %>% 
+  filter(site=="SouthOfTheFells")
+
+# Filter GDD and min water temp for dates that align with 1st growth and 1st bloom & max bloom
+sotf_gdd_mintemp_growth <- onset_watertemp_all_SOTF %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_sotf$growth_date)
+
+sotf_gdd_mintemp_bloom <- onset_watertemp_all_SOTF %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_sotf$bloom_date) 
+
+sotf_gdd_mintemp_max <- onset_watertemp_all_SOTF %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_sotf$max_date) 
+
+sotf_gdd_mintemp_bloom2 <- bind_rows("growth" = sotf_gdd_mintemp_growth,"bloom" = sotf_gdd_mintemp_bloom, "max" = sotf_gdd_mintemp_max, .id = "first_date") %>% 
+  mutate(site = "SouthOfTheFells")
+
+#Coffin
+gloeo_first_ice_nsh <- gloeo_first_ice_date %>% 
+  filter(site=="NorthSunapeeHarbor")
+
+# Filter GDD and min water temp for dates that align with 1st growth and 1st bloom & max bloom
+nsh_gdd_mintemp_growth <- onset_watertemp_all_NSH %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_nsh$growth_date)
+
+nsh_gdd_mintemp_bloom <- onset_watertemp_all_NSH %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_nsh$bloom_date) 
+
+nsh_gdd_mintemp_max <- onset_watertemp_all_NSH %>% 
+  select(date, tempC_min, tempC_max, tempC_sd, wtr_max_diff, gdd_sum) %>% 
+  filter(date %in% gloeo_first_ice_nsh$max_date) 
+
+nsh_gdd_mintemp_bloom2 <- bind_rows("growth" = nsh_gdd_mintemp_growth,"bloom" = nsh_gdd_mintemp_bloom, "max" = nsh_gdd_mintemp_max, .id = "first_date") %>% 
+  mutate(site = "NorthSunapeeHarbor")
+
+# Join all sites together
+all_gdd_mintemp <- bind_rows(hc_gdd_mintemp_bloom2, nb_gdd_mintemp_bloom2, sotf_gdd_mintemp_bloom2, nsh_gdd_mintemp_bloom2) %>% 
+  mutate(year = year(date)) %>% 
+  mutate(doy = yday(date)) 
+
+# Add bloom size variable
+gloeo_max <- gloeo_bin_ice %>% 
+  group_by(year, site) %>% 
+  summarize(max_gloeo = max(totalperL, na.rm = T))
+
+all_gdd_mintemp_bloomsize <- full_join(all_gdd_mintemp, gloeo_max, by =c("year", "site"))
+
+summary(all_gdd_mintemp_bloomsize$max_gloeo) # mean = 12.6, median = 4.6
+
+all_gdd_mintemp_bloomsize %>% 
+  group_by(site) %>% 
+  summarize(mean_gloeo = mean(max_gloeo), median_gloeo = median(max_gloeo))
+
+
+# Add indicator variable for bloom size - use median of max gloeo density
+# or need to do by site first? max relative to max @ each site?
+all_gdd_mintemp_bloomsize2 <- all_gdd_mintemp_bloomsize %>% 
+ # mutate(max_gloeo2 = ifelse(first_date!= "max", NA, max_gloeo)) %>% # change non max rows to NA
+  mutate(bloom_size_median = ifelse(max_gloeo > median(max_gloeo), "big", "small")) %>% 
+  mutate(bloom_size_mean = ifelse(max_gloeo > mean(max_gloeo), "big", "small"))
+
+# Plot min temp
+ggplot(data = all_gdd_mintemp, aes(x = date, y = tempC_min, color = first_date))+
+  geom_point(size= 4)+
+  geom_line()+
+  facet_wrap(~site)
+
+# GDD
+library(cowplot)
+
+all_gdd_mintemp_bloomsize5 <- all_gdd_mintemp_bloomsize2 %>% 
+  filter(first_date == "max")
+
+p1 <- ggplot(data = all_gdd_mintemp_bloomsize3, aes(y = doy, x = gdd_sum, color = factor(year)))+
+  geom_point(size= 4)+
+   #geom_line(inherit.aes = F, aes(y = doy, x = gdd_sum, color = site))+
+ facet_wrap(~site)+
+  labs(y = "First Growth Day of Year", x = "GDD on First Growth DOY", color = "Year")
+
+p2 <- ggplot(data = all_gdd_mintemp_bloomsize4, aes(y = doy, x = gdd_sum, color = factor(year)))+
+  geom_point(size= 4)+
+   #geom_line(inherit.aes = F, aes(y = doy, x = gdd_sum, color = site))+
+ facet_wrap(~site)+
+  labs(y = "First Bloom Day of Year", x = "GDD on First Bloom DOY", color = "Year")
+
+p3 <- ggplot(data = all_gdd_mintemp_bloomsize5, aes(y = doy, x = gdd_sum, color = factor(year)))+
+  geom_point(size= 4)+
+   #geom_line(inherit.aes = F, aes(y = doy, x = gdd_sum, color = site))+
+ facet_wrap(~site)+
+  labs(y = "Max Bloom Day of Year", x = "GDD on Max Bloom DOY", color = "Year")
+
+# cowplot
+plot_grid(p1, p2,p3, nrow = 3, labels = c('A', 'B', 'C'), label_size = 20, label_fontfamily = "Times")
+
+quartz.save("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/FirstDate_GDD.pdf", type="pdf", height = 13, width = 11, dpi = 300)
+
+
+# include bloom size - binary
+ggplot(data = all_gdd_mintemp_bloomsize2, aes(x = date, y = gdd_sum, color = first_date, shape = bloom_size_median))+
+  geom_point(size= 4)+
+  scale_shape_manual(values = c(8,16))+
+   geom_line(inherit.aes = F, aes(x = date, y = gdd_sum, color = first_date))+
+  facet_wrap(~site)
+
+# include bloom size - continuous 
+
+ggplot(data = all_gdd_mintemp_bloomsize, aes(x = date, y = gdd_sum, color = first_date, size = max_gloeo))+
+  geom_point()+
+ # scale_shape_manual(values = c(8,16))+
+   geom_line(inherit.aes = F, aes(x = date, y = gdd_sum, color = first_date))+
+  facet_wrap(~site)
+
+# GDD
+ggplot(data = all_gdd_mintemp_bloomsize, aes(x = doy, y = gdd_sum, color = first_date, size = max_gloeo))+
+  geom_jitter(height = 20)+
+   #geom_line()+
+  facet_grid(year~site)
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/FirstGloeo_GDD.pdf", height = 8.5, width = 11)
+
+
+# Min Water Temp
+ggplot(data = all_gdd_mintemp_bloomsize, aes(x = doy, y = tempC_min, color = first_date, size = max_gloeo))+
+  geom_jitter(height = 0.5)+
+   #geom_line()+
+  facet_grid(year~site)
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/FirstGloeo_MinTemp.pdf", height = 8.5, width = 11)
+
+
+# SD temp
+ggplot(data = all_gdd_mintemp_bloomsize, aes(x = date, y = tempC_sd, color = first_date, size = max_gloeo))+
+  geom_point()+
+ # scale_shape_manual(values = c(8,16))+
+   geom_line(inherit.aes = F, aes(x = date, y = tempC_sd, color = first_date))+
+  facet_wrap(~site)
+
+# Wtr diff
+ggplot(data = all_gdd_mintemp_bloomsize, aes(x = date, y = wtr_max_diff, color = first_date, size = max_gloeo))+
+  geom_point()+
+ # scale_shape_manual(values = c(8,16))+
+   geom_line(inherit.aes = F, aes(x = date, y = wtr_max_diff, color = first_date))+
+  facet_wrap(~site)
+
+all_gdd_mintemp_bloomsize <- all_gdd_mintemp_bloomsize %>% 
+  mutate(tempC_range = tempC_max - tempC_min)
+
+# Temp range
+ggplot(data = all_gdd_mintemp_bloomsize, aes(x = date, y = tempC_range, color = first_date, size = max_gloeo))+
+  geom_point()+
+ # scale_shape_manual(values = c(8,16))+
+   geom_line(inherit.aes = F, aes(x = date, y = tempC_range, color = first_date))+
+  facet_wrap(~site)
+
+summary(all_gdd_mintemp_bloomsize)
+
+t1 <- all_gdd_mintemp_bloomsize %>% 
+ # filter(year != 2015 & year != 2016) %>% 
+  group_by(first_date) %>% 
+  summarize(across(tempC_min:gdd_sum, list(median))) #~median (.x, na.rm = T), ~min(.x, na.rm = T), ~max(.x, na.rm = T)))
+
+all_gdd_mintemp_bloomsize %>% 
+ # filter(year != 2015 & year != 2016) %>% 
+  group_by(site, first_date) %>% 
+  summarize(across(tempC_min:gdd_sum, ~median (.x, na.rm = T)))
+
+```
+
+Years where day of 1st growth & 1st bloom same:
+Midge: 2009, 2010, 2013
+Newbury: 2010, 2014, 2016
+Fichter: none
+Coffin: 2010, 2011
+
+# Center ice-off date
+median ice-off doy = 105 April 15
+median 1st growth (all sites) = 209 July 28
+median 1st bloom (all sites) = 230 Aug. 18
+
+Years with ice-off **before** median 105
+-2009
+-2010
+-2012
+-2016
+
+# Plot of ice-off date vs. Day of 1st Growth, Bloom, Max
+
+```{r}
+summary(gloeo_first_ice)
+
+# First Growth vs. Ice-off - all sites together
+ggplot(data = gloeo_first_ice, aes(x = Sunapee_IceOut_DOY, y = first_growth2, color = site))+
+  geom_jitter(alpha = 0.75, size = 3, height = 0.5)+
+  geom_smooth(aes(x = Sunapee_IceOut_DOY, y = first_growth2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = Sunapee_IceOut_DOY, y = first_growth2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))+
+  labs(title = "Day of 1st Growth", y = "DOY 1st Growth")
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/FirstGrowth_Ice-off.pdf", height = 8.5, width = 11)
+
+# First Growth vs. Ice-off - sites separated
+ggplot(data = gloeo_first_ice, aes(x = Sunapee_IceOut_DOY, y = first_growth2, color = factor(year)))+
+  geom_point (size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Growth vs. Ice-off DOY", y = "Day of 1st Growth")+
+  geom_smooth(aes(x = Sunapee_IceOut_DOY, y = first_growth2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = Sunapee_IceOut_DOY, y = first_growth2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# First Bloom vs. Ice-off - all sites together
+ggplot(data = gloeo_first_ice, aes(x = Sunapee_IceOut_DOY, y = first_bloom2, color = site))+
+  geom_jitter(alpha = 0.75, size = 3, height = 0.5)+
+  geom_smooth(aes(x = Sunapee_IceOut_DOY, y = first_bloom2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = Sunapee_IceOut_DOY, y = first_bloom2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))+
+  labs(title = "Day of 1st Bloom", y = "DOY 1st Bloom")
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/FirstBloom_Ice-off.pdf", height = 8.5, width = 11)
+
+# First Bloom vs. Ice-off
+ggplot(data = gloeo_first_ice, aes(x = Sunapee_IceOut_DOY, y = first_bloom2, color = factor(year)))+
+  geom_point (size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Bloom vs. Ice-off DOY", y = "Day of 1st Bloom")+
+  geom_smooth(aes(x = Sunapee_IceOut_DOY, y = first_bloom2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = Sunapee_IceOut_DOY, y = first_bloom2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# Day of Max Bloom vs. Ice-off - all sites together
+ggplot(data = gloeo_first_ice, aes(x = Sunapee_IceOut_DOY, y = max_bloom, color = site))+
+  geom_jitter(alpha = 0.75, size = 3, height = 0.5)+
+  geom_smooth(aes(x = Sunapee_IceOut_DOY, y = max_bloom), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = Sunapee_IceOut_DOY, y = max_bloom, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))+
+  labs(title = "Day of Max Bloom", y = "DOY Max. Bloom")
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/MaxBloom_Ice-off.pdf", height = 8.5, width = 11)
+
+
+# Day of Max Bloom vs. Ice-off
+ggplot(data = gloeo_first_ice, aes(x = Sunapee_IceOut_DOY, y = max_bloom, color = factor(year)))+
+  geom_point (size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of Max Bloom vs. Ice-off DOY", y = "Day of Max Bloom")+
+  geom_smooth(aes(x = Sunapee_IceOut_DOY, y = max_bloom), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = Sunapee_IceOut_DOY, y = max_bloom, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+```
+
+# Plot of annual avg. min water temp vs. Day of 1st Growth, Bloom, Max
+
+```{r}
+
+# Calculate annual min water temp
+annual_min_temp <- gloeo_bin_ice_wtr %>% 
+  group_by(year, site) %>% 
+  summarize(annual_min_temp = mean(tempC_min, na.rm = T))
+
+# Merge with gloeo first ice dataset
+gloeo_first_ice_date_mintemp <- full_join(gloeo_first_ice_date, annual_min_temp, by = c("year", "site"))
+
+# Calculate annual max of gdd_sum and sum of gdd_sum?
+annual_gdd <- gloeo_bin_ice_wtr %>% 
+  group_by(year, site) %>% 
+  summarize(annual_gdd_mean = mean(gdd_sum, na.rm = T), annual_gdd_max = max(gdd_sum, na.rm = T), annual_gdd_sum = sum(gdd_sum, na.rm = T))
+
+gloeo_first_ice_date_mintemp_gdd <- full_join(gloeo_first_ice_date_mintemp, annual_gdd, by = c("year", "site"))
+
+# Min water temp vs. Day of 1st growth - all sites together
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_min_temp, y = first_growth2, color = site))+
+  geom_point(alpha = 0.75, size = 3)+
+  geom_smooth(aes(x = annual_min_temp, y = first_growth2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_min_temp, y = first_growth2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# First Growth vs. Min Temp
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_min_temp, y = first_growth2, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Growth vs. Min Water Temp", y = "Day of 1st Growth")+
+  geom_smooth(aes(x = annual_min_temp, y = first_growth2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_min_temp, y = first_growth2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# Min water temp vs. Day of 1st bloom - all sites together
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_min_temp, y = first_bloom2, color = site))+
+  geom_point(alpha = 0.75, size = 3)+
+  geom_smooth(aes(x = annual_min_temp, y = first_bloom2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_min_temp, y = first_bloom2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# First Bloom vs. Min Temp
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_min_temp, y = first_bloom2, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Bloom vs. Min Water Temp", y = "Day of 1st Bloom")+
+  geom_smooth(aes(x = annual_min_temp, y = first_bloom2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_min_temp, y = first_bloom2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# Day of Max Bloom vs. Min-temp
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_min_temp, y = max_bloom, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of Max Bloom vs. Annual Min Water Temp", y = "Day of Max Bloom")+
+  geom_smooth(aes(x = annual_min_temp, y = max_bloom), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_min_temp, y = max_bloom, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# Day of First non zero growth vs. Min Temp
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_min_temp, y = first_notzero2, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Non-Zero Growth vs. Annual Min Water Temp", y = "Day of First Non-Zero Growth")+
+  geom_smooth(aes(x = annual_min_temp, y = first_notzero2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_min_temp, y = first_notzero2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+```
+
+
+# Plot of annual gdd metrics vs. Day of 1st Growth, Bloom, Max
+
+```{r}
+summary(gloeo_bin_ice_wtr)
+which.max(gloeo_bin_ice_wtr$gdd_sum)
+
+# Calculate annual min water temp
+annual_min_temp <- gloeo_bin_ice_wtr %>% 
+  group_by(year, site) %>% 
+  summarize(annual_min_temp = mean(tempC_min, na.rm = T))
+
+# Merge with gloeo first ice dataset
+gloeo_first_ice_date_mintemp <- full_join(gloeo_first_ice_date, annual_min_temp, by = c("year", "site"))
+
+# Calculate annual max of gdd_sum and sum of gdd_sum?
+annual_gdd <- gloeo_bin_ice_wtr %>% 
+  group_by(year, site) %>% 
+  summarize(annual_gdd_mean = mean(gdd_sum, na.rm = T), annual_gdd_max = max(gdd_sum, na.rm = T), annual_gdd_sum = sum(gdd_sum, na.rm = T))
+
+gloeo_first_ice_date_mintemp_gdd <- full_join(gloeo_first_ice_date_mintemp, annual_gdd, by = c("year", "site"))
+
+# GDD vs. Day of 1st growth - all sites together
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_gdd_max, y = first_growth2, color = site))+
+  geom_point(alpha = 0.75, size = 3)+
+  geom_smooth(aes(x = annual_gdd_max, y = first_growth2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_gdd_max, y = first_growth2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/FirstGrowth_MaxGDD.pdf", height = 8.5, width = 11)
+
+
+# First Growth vs. GDD
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_gdd_max, y = first_growth2, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Growth vs. Annual Max GDD", y = "Day of 1st Growth")+
+  geom_smooth(aes(x = annual_gdd_max, y = first_growth2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_gdd_max, y = first_growth2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# GDD vs. Day of 1st bloom - all sites together
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_gdd_max, y = first_bloom2, color = site))+
+  geom_point(alpha = 0.75, size = 3)+
+  geom_smooth(aes(x = annual_gdd_max, y = first_bloom2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_gdd_max, y = first_bloom2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+ggsave("~/Documents/Gloeo Bayesian Modeling/Bayes_forecast_WG/Figures/FirstBloom_MaxGDD.pdf", height = 8.5, width = 11)
+
+
+# First Bloom vs. GDD
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_gdd_max, y = first_bloom2, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Bloom vs. Annual Max GDD", y = "Day of 1st Bloom")+
+  geom_smooth(aes(x = annual_gdd_max, y = first_bloom2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_gdd_max, y = first_bloom2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# GDD vs. Day of Max bloom - all sites together
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_gdd_max, y = max_bloom, color = site))+
+  geom_point(alpha = 0.75, size = 3)+
+  geom_smooth(aes(x = annual_gdd_max, y = max_bloom), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_gdd_max, y = max_bloom, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# Day of Max Bloom vs. GDD
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_gdd_max, y = max_bloom, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of Max Bloom vs. Annual Max GDD", y = "Day of Max Bloom")+
+  geom_smooth(aes(x = annual_gdd_max, y = max_bloom), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_gdd_max, y = max_bloom, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+# Day of First non zero growth vs. GDD
+ggplot(data = gloeo_first_ice_date_mintemp_gdd, aes(x = annual_gdd_max, y = first_notzero2, color = factor(year)))+
+  geom_point(size = 3)+
+  facet_wrap(~site)+
+  labs(title = "Day of First Non-Zero Growth vs. Annual Max GDD", y = "Day of First Non-Zero Growth")+
+  geom_smooth(aes(x = annual_gdd_max, y = first_notzero2), method = "lm", inherit.aes = F)+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = F,
+                     aes(x = annual_gdd_max, y = first_notzero2, label=paste(..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+```
+
+# When do blooms typically happen?
+## Median 1st growth = DOY 209 July 28 (3 weeks apart)
+## Median 1st bloom = DOY 230 Aug. 18th
+## Max bloom = DOY 233 Aug. 21
+```{r}
+summary(gloeo_first_ice_date)
+#Bloom_dates
+bloom_dates_table <- gloeo_first_ice_date %>% 
+ # filter(year != 2015 & year != 2016) %>% 
+  group_by(site) %>% 
+  summarize(across(first_growth2:max_bloom, ~median (.x, na.rm = T)))
+kable(bloom_dates_table)
+```
+
+# Plot water temp. SD to look at variation
+```{r}
+#SD water temp
+
+ggplot(data = gloeo_bin_ice_wtr, aes(x = dayofyr, y = tempC_sd, color = factor(bin_die)))+
+  geom_point(size = 2)+
+ # geom_line()+
+  facet_grid(year~site)
+
+#SD lag
+ggplot(data = gloeo_bin_ice_wtr, aes(x = dayofyr, y = tempC_sd_lag, color = factor(bin_die)))+
+  geom_point(size = 2)+
+ # geom_line()+
+  facet_grid(year~site)
+
+ggplot(data = gloeo_bin_ice_wtr, aes(x = bin_die, y = tempC_sd_lag))+
+  geom_point(size = 2)+
+  # geom_line()+
+  facet_grid(year~site)
+
+
+#wtr max diff
+ggplot(data = gloeo_bin_ice_wtr, aes(x = dayofyr, y = wtr_max_diff, color = factor(bin_die)))+
+  geom_point(size = 2)+
+ # geom_line()+
+  facet_grid(year~site)
+
+
+# Add CV of water temp
+
+gloeo_bin_ice_wtr <- gloeo_bin_ice_wtr %>% 
+  mutate(tempC_cv = tempC_sd/tempC_mean ) %>% 
+  mutate(tempC_range = tempC_max - tempC_min)
+
+#CV
+ggplot(data = gloeo_bin_ice_wtr, aes(x = dayofyr, y = tempC_cv, color = factor(bin_die)))+
+  geom_point(size = 2)+
+ # geom_line()+
+  facet_grid(year~site)
+
+# temp range max-min
+ggplot(data = gloeo_bin_ice_wtr, aes(x = dayofyr, y = tempC_range, color = factor(bin_die)))+
+  geom_point(size = 2)+
+ # geom_line()+
+  facet_grid(year~site)
+```
+
+# GDD at 1st growth - compare across years & sites
+```{r}
+gloeo_bin_ice_wtr_noF <- gloeo_bin_ice_wtr %>% 
+  filter(site!="SouthOfTheFells") 
+
+#Plot GDD data
+ggplot(gloeo_bin_ice_wtr_noF, aes(y=gdd_sum, x = dayofyr, color= site))+
+  geom_point(alpha = 0.5)+
+  facet_wrap(~year)+
+  geom_smooth()+
+  stat_poly_eq(formula=y~x,label.x = "left",label.y="top",parse=TRUE,inherit.aes = T,
+                     aes(y=gdd_sum, x = dayofyr, label=paste(..eq.label..,..adj.rr.label..,..p.value.label..,sep="~~~"),size=3))
+
+#Plot Min Water Temp
+ggplot(gloeo_bin_ice_wtr_noF, aes(y=tempC_min, x = dayofyr, color= site))+
+  geom_point(alpha = 0.5)+
+  geom_line()+
+  geom_hline(yintercept = 17)+
+  facet_wrap(~year)
+  
+min_first1 <- gloeo_bin_ice_wtr %>% 
+  filter(site!="SouthOfTheFells") %>% 
+  filter(bin_die==1) %>% 
+  group_by(site, year) %>% 
+  summarize(min_1 = min(date))
+
+first1 <- gloeo_bin_ice_wtr_noF %>% 
+  filter(bin_die==1) %>% 
+  filter(date %in% min_first1$min_1 & site %in% min_first1$site & year %in% min_first1$year) %>% 
+  slice(-9)
+
+# GDD @ first 1
+ggplot(first1, aes(y=gdd_sum, x = dayofyr, color= site))+
+  geom_point(alpha = 0.5)+
+  facet_wrap(~year)
+
+range(first1$gdd_sum) #[1]  342.425 1584.255
+range(first1$tempC_min) #[1]  20.48 25.56
+
+# Min water temp @ first 1
+ggplot(first1, aes(y=tempC_min, x = dayofyr, color= site))+
+  geom_point(alpha = 0.5)+
+  facet_wrap(~year)
+
+# Max gdd by year & site
+gdd_max <- gloeo_bin_ice_wtr %>% 
+  group_by(site, year) %>% 
+  summarize(max_gdd = max(gdd_sum, na.rm = T))
+
+```
+
+# GDD at 1st bloom - compare across years & sites
+```{r}
+gloeo_bin_ice_wtr_noF <- gloeo_bin_ice_wtr %>% 
+  filter(site!="SouthOfTheFells") 
+
+ggplot(gloeo_bin_ice_wtr_noF, aes(y=gdd_sum, x = dayofyr, color= site))+
+  geom_point(alpha = 0.5)+
+  facet_wrap(~year)
+  
+min_first2 <- gloeo_bin_ice_wtr %>% 
+  filter(site!="SouthOfTheFells") %>% 
+  filter(bin_die==2) %>% 
+  group_by(site, year) %>% 
+  summarize(min_2 = min(date))
+
+first2 <- gloeo_bin_ice_wtr_noF %>% 
+  filter(bin_die==2) %>% 
+  filter(date %in% min_first2$min_2) %>% 
+  slice(-c(6,14))
+
+# GDD @ first 1
+ggplot(first2, aes(y=gdd_sum, x = dayofyr, color= site))+
+  geom_point(alpha = 0.5)+
+  facet_wrap(~year)
+
+range(first2$gdd_sum) #[1]  309.10 1826.23
+range(first2$tempC_min) #[1]  19.53 25.73
+
+# Min water temp @ first 2
+ggplot(first2, aes(y=tempC_min, x = dayofyr, color= site))+
+  geom_point(alpha = 0.5)+
+  facet_wrap(~year)
+
+# Max gdd by year & site
+gdd_max <- gloeo_bin_ice_wtr %>% 
+  group_by(site, year) %>% 
+  summarize(max_gdd = max(gdd_sum, na.rm = T))
+
+# Min water temmp by year & site
+wtr_min <- gloeo_bin_ice_wtr %>% 
+  group_by(site, year) %>% 
+  summarize(wtr_min = min(tempC_min, na.rm = T))
+
+
+# Filter water temp for min to see gdd
+
+watertemp_all_filter <- watertemp_all %>% 
+  filter(17.4 < tempC_min & tempC_min < 19.5) %>% 
+  mutate(month = month(date)) %>% 
+  filter(month != 9)
+
+range(watertemp_all_filter$gdd_sum) # Sep - gdd: 1722.240- 2335.655 #June - gdd 14.78 965.45
+```
+

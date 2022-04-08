@@ -1,0 +1,81 @@
+---
+title: "Gloeo_Midge_Daily_Weekly_Compare"
+author: "J. Brentrup"
+date: "3/30/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+
+# Read in daily and weekly gloeo data
+KLC file sent 17 April 2019
+```{r}
+gloeo_midge <- read_csv("00_Data_files/CompareMidgeDailytoWeeklyGloeoSamples_17April2019.csv")
+str(gloeo_midge)
+```
+
+# Make date column
+```{r}
+gloeo_midge2 <- gloeo_midge %>% 
+  unite(col = "date", 2:4, sep = "-", remove = F)
+
+gloeo_midge2$date <- parse_date(gloeo_midge2$date, format = "%Y-%m-%d")
+```
+
+# Convert to long data and add ln of gloeo
+```{r}
+gloeo_midge3 <- gloeo_midge2 %>% 
+  pivot_longer(7:8, names_to = "sample_frequency", values_to = "gloeo_density") %>% 
+  #pivot_longer(7:8, names_to = "log_sample_frequency", values_to = "log10_gloeo_density") %>% 
+  mutate(sample_frequency = ifelse(sample_frequency == "OurWeekly_GloeoDensity", "Weekly", "Daily")) %>%
+  mutate(ln_gloeo_density = log(gloeo_density + (1/141.4)))# add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
+
+```
+
+# Plot daily vs. weekly data - not log
+```{r}
+ggplot(gloeo_midge3, aes(x = dayofyr, y = gloeo_density, color = sample_frequency))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~year, scales = "free_y")+
+  labs(title = "Midge Daily vs. Weekly Gloeo Data Comparison")
+
+```
+
+# Plot daily vs. weekly data -  log
+```{r}
+ggplot(gloeo_midge3, aes(x = dayofyr, y = ln_gloeo_density, color = sample_frequency))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~year)+ #, scales = "free_y"
+  labs(title = "Midge Daily vs. Weekly Ln Gloeo Data Comparison")
+
+```
+
+# Histograms
+```{r}
+ggplot(gloeo_midge3, aes(x = ln_gloeo_density, fill = sample_frequency))+
+  geom_histogram(color = "white", position = "identity")
+
+ggplot(gloeo_midge3, aes(x = ln_gloeo_density, fill = sample_frequency))+
+  geom_density(color = "white", position = "identity", alpha = 0.5)+
+  geom_vline(xintercept = median(gloeo_midge3$ln_gloeo_density)) +
+  geom_vline(xintercept = -1.25, linetype = 2, color = "red") +
+  geom_vline(xintercept = -0.641, linetype = 2, color = "aquamarine") 
+
+
+gloeo_midge3 %>% 
+  group_by(sample_frequency) %>% 
+  summarise(ln_gloeo_median = median(ln_gloeo_density))
+
+```
+
