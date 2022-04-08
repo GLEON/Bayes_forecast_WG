@@ -1,5 +1,6 @@
 # Script to download and wrangle Sunapee GLEON buoy wind data from EDI
 # Last updated 2020 May 20 - JB
+# New updates for Newbury site 2022 Feb 8
 
 # Load packages ####
 # run this line if you do not have pacman installed
@@ -74,9 +75,10 @@ buoy_wind3 <- left_join(full_datetime.df, buoy_wind2, by = "datetime") %>%
 windsp_hourly_mean <- timeAverage(buoy_wind3, avg.time = "hour", data.thresh = 75, statistic = "mean", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "10 min", vector.ws = T)
 
 # Add indicator variable for hourly wind direction ####
-# If wind is blowing towards Herrick Cove 180-359°, use 1 if blowing away 0-179°, use 0
+# If wind is blowing towards Herrick Cove 180-359°, use 1, if blowing away 0-179°, use 0
+# For newbury if wind is blowing towards the southern end of the lake (coming from the north) use 1 for 315-45°
 windsp_hourly_mean_filter <- windsp_hourly_mean %>%
-  mutate(AveWindDir_cove = ifelse(AveWindDir_deg >= 180 & AveWindDir_deg < 360, 1, 0))
+  mutate(AveWindDir_cove = ifelse(AveWindDir_deg >= 315 | AveWindDir_deg < 46, 1, 0))
 
 # Calculate daily summaries from hourly average data ####
 windsp_daily_mean <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "mean", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
@@ -89,9 +91,11 @@ windsp_daily_max <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", dat
 
 windsp_daily_sd <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "sd", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
 
+windsp_daily_sum <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "sum", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
+
 #Bind summaries together
-windsp_daily_summary <- bind_cols(windsp_daily_mean, windsp_daily_median[,3], windsp_daily_min[,3], windsp_daily_max[,3], windsp_daily_sd[,3])
-colnames(windsp_daily_summary)[3:8] <- c("AveWindSp_ms_mean","AveWindDir_cove_mean","AveWindSp_ms_median","AveWindSp_ms_min","AveWindSp_ms_max","AveWindSp_ms_sd")
+windsp_daily_summary <- bind_cols(windsp_daily_mean, windsp_daily_median[,3], windsp_daily_min[,3], windsp_daily_max[,3], windsp_daily_sd[,3], windsp_daily_sum[,3:4])
+colnames(windsp_daily_summary)[3:10] <- c("AveWindSp_ms_mean","AveWindDir_cove_mean","AveWindSp_ms_median","AveWindSp_ms_min","AveWindSp_ms_max","AveWindSp_ms_sd", "AveWindSp_ms_sum", "AveWindDir_cove_sum")
 
 # rename columns
 windsp_daily_summary2 <- windsp_daily_summary
@@ -99,7 +103,7 @@ windsp_daily_summary2 <- windsp_daily_summary
 # Limit wind speed data to sampling dates ####
 
 # Read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates_NB.csv")
 
 windsp_daily_summary3 <- windsp_daily_summary2 %>%
   mutate(date = date(date)) %>%
@@ -108,7 +112,7 @@ windsp_daily_summary3 <- windsp_daily_summary2 %>%
 # Create 1-3 day & 1 week lag ####
 
 # Read in sampling dates lag
-sampling_dates_lag <- read_csv("./00_Data_files/sampling_dates_lag.csv")
+sampling_dates_lag <- read_csv("./00_Data_files/sampling_dates_lag_NB.csv")
 
 # Join wind speed data with 1 DAY lag date
 windsp_daily_summary2_lag_1day <- windsp_daily_summary2 %>%
@@ -180,7 +184,7 @@ wind.speed_diff_output3 <- left_join(wind.speed_diff_output2, windsp_daily_summa
 # Use hourly wind speed full time dataset
 
 # Filter for wind direction coming towards Herrick Cove and calculates cumulative sum just for wind speed blowing in
-windsp_cum_sum_filter_in <- windsp_hourly_mean_filter[-c(1:1656),] %>%
+windsp_cum_sum_filter_in <- windsp_hourly_mean_filter[-c(1:1656),] %>% # Remove missing data at start of 2009
   mutate(AveWindSp_ms_filter = ifelse(AveWindDir_cove==0, 0, AveWindSp_ms))
 
 # Filter missing hours
@@ -202,13 +206,13 @@ windsp_cum_sum_max_day_in <- windsp_cum_sum_filter_in1 %>%
   mutate(date = date(datetime)) %>%
   filter(sum_1 !="NA") %>%
   group_by(date) %>%
-  distinct(max(datetime)) %>% # Check code - might only keep 1 date, can use summarize instead   summarize(max_datetime = max(datetime))
-
-  rename(datetime = "max(datetime)")
+  summarize(max_datetime = max(datetime))
+  #distinct(max(datetime)) %>%
+  rename(datetime = "max_datetime)")
 
 windsp_cum_sum_filter_in2 <- windsp_cum_sum_filter_in1 %>%
   rename(datetime = date) %>%
-  filter(datetime %in% windsp_cum_sum_max_day_in$datetime) %>%
+  filter(datetime %in% windsp_cum_sum_max_day_in$max_datetime) %>%
   mutate(date = date(datetime)) %>%
   select(date,sum_1:sum_2) %>% #no data for 5-14 days
   rename(windsp_cumsum_1day_in = sum_1, windsp_cumsum_2day_in = sum_2)
@@ -221,39 +225,40 @@ windsp_all <- bind_cols(windsp_daily_summary3,windsp_daily_summary2_lag_1day_joi
 
 # exclude raw wind direction data
 wind_speed_data_no_windsp_filter <- windsp_all %>%
-  select(-starts_with(c("AveWindDir_deg")))
+  select(-starts_with(c("AveWindDir_deg_")))
 
 # Write csv no wind sp filtered data
 #write_csv(wind_speed_data_no_windsp_filter, "./00_Data_files/Covariate_analysis_data/wind_speed_all_no_windsp_filter.csv")
 
 # Filter for wind direction blowing into cove and create lags ####
+# Changed to 0.25 - wind direction rarely blowing south 50% of the time - reduced to 25%
 wind_speed_data_in <- wind_speed_data_no_windsp_filter %>%
-  select(1:7) %>%
-  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean >=0.5,.,0))) %>%
+  select(1:8) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean >=0.25,.,0))) %>%
   select(-starts_with("AveWindDir"))
 
 lag_1day_wind_speed_data_in <- wind_speed_data_no_windsp_filter %>%
   select(ends_with("1daylag")) %>%
-  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1daylag >=0.5,.,0))) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1daylag >=0.25,.,0))) %>%
   select(-starts_with("AveWindDir"))
 
 lag_2day_wind_speed_data_in <- wind_speed_data_no_windsp_filter %>%
   select(ends_with("2daylag")) %>%
-  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_2daylag >=0.5,.,0))) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_2daylag >=0.25,.,0))) %>%
   select(-starts_with("AveWindDir"))
 
 lag_3day_wind_speed_data_in <- wind_speed_data_no_windsp_filter %>%
   select(ends_with("3daylag")) %>%
-  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_3daylag >=0.5,.,0))) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_3daylag >=0.25,.,0))) %>%
   select(-starts_with("AveWindDir"))
 
 lag_1week_wind_speed_data_in <- wind_speed_data_no_windsp_filter %>%
   select(ends_with("1weeklag")) %>%
-  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1weeklag >=0.5,.,0))) %>%
+  mutate_at(vars(starts_with("AveWindSp_ms")),funs(ifelse(AveWindDir_cove_mean_1weeklag >=0.25,.,0))) %>%
   select(-starts_with("AveWindDir"))
 
 # combine all wind speed filtered for directions blowing into cove together and cummulative sum wind speed data in
-wind_speed_data_in_all <- bind_cols(wind_speed_data_in,lag_1day_wind_speed_data_in,lag_2day_wind_speed_data_in,lag_3day_wind_speed_data_in,lag_1week_wind_speed_data_in,wind_speed_data_no_windsp_filter[,32:33])
+wind_speed_data_in_all <- bind_cols(wind_speed_data_in,lag_1day_wind_speed_data_in[,-6],lag_2day_wind_speed_data_in[,-6],lag_3day_wind_speed_data_in[,-6],lag_1week_wind_speed_data_in[,-6],wind_speed_data_no_windsp_filter[,43:44])
 
 # Add 'in' to column names to differentiate
 colnames(wind_speed_data_in_all)[-c(1,27:28)] = paste0(colnames(wind_speed_data_in_all)[-c(1,27:28)], '_in')
@@ -262,8 +267,11 @@ colnames(wind_speed_data_in_all)[-c(1,27:28)] = paste0(colnames(wind_speed_data_
 wind_dir <- wind_speed_data_no_windsp_filter %>%
   select(starts_with("AveWindDir"))
 
-wind_data_all <- bind_cols(wind_speed_data_in_all, wind_dir)
+wind_data_all_nb <- bind_cols(wind_speed_data_in_all, wind_dir)
+
+wind_data_all_nb2 <- wind_data_all_nb[,-c(29, 31, 33, 35, 37, 39)]
+# drop column 29, 31, 33, 35, 37, 39
 
 # Write final wind data ####
 
-write_csv(wind_data_all, "./00_Data_files/Covariate_analysis_data/wind_data_all.csv")
+write_csv(wind_data_all_nb2, "./00_Data_files/Covariate_analysis_data/wind_data_all_nb.csv")
