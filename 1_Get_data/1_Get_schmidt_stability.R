@@ -27,7 +27,7 @@ download.file(buoy_data,destfile = "./00_Data_files/EDI_data_clones/2007_e2019_b
 download.file(hobo_data,destfile = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", method='libcurl')
 
 # Load buoy data into R ####
-buoy <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv",
+buoy <- read_csv("./00_Data_files/EDI_data_clones/2007-2020_buoy_templine_v26Feb2021.csv",
                  col_types = list(
                    datetime = col_datetime(format = ""),
                    location = col_character(),
@@ -232,7 +232,7 @@ schmidt_hobo_2015 <- schmidt_hobo %>%
   mutate(date = date(datetime)) %>%
   mutate(schmidt.stability = ifelse(schmidt.stability < 0,0, schmidt.stability)) # set negative values to 0
 
-# Bind all rows for schmidt togeher
+# Bind all rows for schmidt together
 
 schmidt_buoy1 <- bind_rows(schmidt_buoy_2009, schmidt_buoy_2010, schmidt_buoy_2011_2012_2016, schmidt_buoy_2013, schmidt_buoy_2014,schmidt_hobo_2015) %>%
   arrange(datetime) %>%
@@ -330,7 +330,7 @@ lines(schmidt.stability_max ~ date, data = schmidt_daily_summary3, col = "red")
 # Limit schmidt data to sampling dates ####
 
 #read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates_NB.csv")
 
 schmidt_daily_summary4 <- schmidt_daily_summary3 %>%
   filter(date %in% sampling_dates$date)
@@ -367,7 +367,7 @@ schmidt_daily_summary3_fill2 <- full_join(schmidt_daily_summary3_fill, schmidt_d
   arrange(date)
 
 # Read in sampling dates lag
-sampling_dates_lag <- read_csv("./00_Data_files/sampling_dates_lag.csv")
+sampling_dates_lag <- read_csv("./00_Data_files/sampling_dates_lag_NB.csv")
 
 #Join schmidt with 1 week lag date
 schmidt_weeklag <- schmidt_daily_summary3_fill2 %>%
@@ -403,7 +403,7 @@ for (i in 1:nrow(schmidt_daily_summary3_fill3)) {
   schmidt_diff_output <- data.frame(date = schmidt_daily_summary3_fill3$date + ddays(7), schmidt.stability_mean_diff, schmidt.stability_median_diff, schmidt.stability_min_diff, schmidt.stability_max_diff, schmidt.stability_sd_diff)
 }
 
-# Filter water temp 1 week difference data for sampling dates
+# Filter schmidt 1 week difference data for sampling dates
 schmidt_diff_output2 <- left_join(sampling_dates, schmidt_diff_output, by = "date")
 
 # Write water temp 1 week difference data
