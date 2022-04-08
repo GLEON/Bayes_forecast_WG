@@ -65,7 +65,7 @@ download.file(data, destfile = "./00_Data_files/Covariate_analysis_data/NLDAS_so
 # # Limit solar radiation data to sampling dates ####
 #
 # # Read in sampling dates
-# sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
+# sampling_dates <- read_csv("./00_Data_files/sampling_dates_NB.csv")
 #
 # solar_rad3 <- solar_rad2 %>%
 #   filter(date %in% sampling_dates$date)
