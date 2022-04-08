@@ -202,7 +202,8 @@ windsp_cum_sum_max_day_in <- windsp_cum_sum_filter_in1 %>%
   mutate(date = date(datetime)) %>%
   filter(sum_1 !="NA") %>%
   group_by(date) %>%
-  distinct(max(datetime)) %>%
+  distinct(max(datetime)) %>% # Check code - might only keep 1 date, can use summarize instead   summarize(max_datetime = max(datetime))
+
   rename(datetime = "max(datetime)")
 
 windsp_cum_sum_filter_in2 <- windsp_cum_sum_filter_in1 %>%
