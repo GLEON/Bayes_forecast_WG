@@ -17,10 +17,10 @@ pacman::p_load(tidyverse, lubridate, openair)
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.234.3&entityid=e7e5f1961a054ef9b4146e82a8f77aa4"
 destination <- "./00_Data_files/EDI_data_clones"
 
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv", method='libcurl')
+download.file(data,destfile = "./00_Data_files/EDI_data_clones/2007_e2019_PAR_L1.csv", method='libcurl')
 
 # Load buoy PAR data into R ####
-par <- read_csv("./00_Data_files/EDI_data_clones/2007-e2019_PAR_L1.csv",
+par <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_PAR_L1.csv",
                 col_types = list(datetime = col_datetime(format = ""),
                                  location = col_character(),
                                  PAR_umolm2s = col_double(),
@@ -77,7 +77,7 @@ par_daily_sum <- par2 %>%
   summarize(daily_sum = sum(PAR_umolm2s, na.rm = T), daily_count = sum(!is.na(PAR_umolm2s))) %>%
   mutate(daily_sum2 = ifelse(daily_count < 108, NA, daily_sum))
 
-#Bind summaries together
+# Bind summaries together
 par_daily_summary <- bind_cols(par_daily_mean, par_daily_median[,2], par_daily_min[,2], par_daily_max[,2], par_daily_sd[,2], par_daily_sum[,4])
 
 # rename columns
@@ -87,7 +87,7 @@ par_daily_summary2 <- par_daily_summary
 # Limit PAR data to sampling dates ####
 
 #read in sampling dates
-sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
+sampling_dates <- read_csv("./00_Data_files/sampling_dates_NB.csv")
 
 par_daily_summary3 <- par_daily_summary2 %>%
   mutate(date = date(date)) %>%
