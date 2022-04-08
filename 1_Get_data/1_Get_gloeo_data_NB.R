@@ -1,6 +1,7 @@
 # Script to download and wrangle Gloeo data from EDI
 # Last updated 2020 May 22 - JB
 # New Update 2022 Jan 20 - JB
+# Download Newbury data to test on HC Models
 
 # Load packages ####
 # run this line if you do not have pacman installed
@@ -64,20 +65,37 @@ dat2 <- bind_rows(dat1, odd_obs) %>%
   select(date, site, coloniesperL, filbundperL, totalperL, year, dayofyr) %>% #keep day of year too
   mutate(season_week = rep(c(1:20),times = 8, each = 4))
 
-# Filter for Herrick Cove South site, add month and ln of gloeo column ####
+# Filter for Newbury site, add month and ln of gloeo column ####
 # Time period = 2009-2016, weeks 21-40 (last week of May to 1st week of Oct)
 
-hc_gloeo_data <- dat2 %>%
-  filter(site == "HerrickCoveSouth") %>%
+nb_gloeo_data <- dat2 %>%
+  filter(site == "Newbury") %>%
   mutate(month = month(date)) %>%
   select(date,year,month,dayofyr,season_week,site,coloniesperL,filbundperL,totalperL) %>% # rearrange columns to have date items together
   mutate(ln_totalperL = log(totalperL + (1/141.4)))# add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
 # convert to natural log using  log + detection limit = 1/141.4
 
-# Write Herrick Cove South gloeo data as a csv ####
-write_csv(hc_gloeo_data, "./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
+# Write Newbury gloeo data as a csv ####
+write_csv(nb_gloeo_data, "./00_Data_files/Covariate_analysis_data/NB_Gechinulata_long.csv")
 
 # # Write sampling dates as a csv - only needs done once, as this file will stay in repo
 # sampling_dates <- tibble(hc_gloeo_data$date)
 # colnames(sampling_dates) <- "date"
 # write_csv(sampling_dates, "./00_Data_files/sampling_dates.csv")
+
+# Check sampling dates for Newbury vs. Midge same for Fichter, Coffin also off by 1 same as Newbury
+
+sampling_dates_hcs <- read_csv("00_Data_files/sampling_dates.csv")
+
+# compare to Midge sampling dates 1 difference for 2010-09-22 (NB/Coffin) instead of 2010-09-23 (Midge/Fichter)
+sampling_dates_NB_check <- nb_gloeo_data %>%
+  filter(!date %in% sampling_dates_hcs$date)
+
+# Write new sampling dates for Newbury
+sampling_dates_NB <- nb_gloeo_data %>%
+  select(date) %>%
+  #rows_insert(tibble(date = ymd("2010-09-22"))) %>%
+  arrange(date)
+
+#write.csv(sampling_dates_NB, "00_Data_files/sampling_dates_NB.csv", row.names = F)
+
