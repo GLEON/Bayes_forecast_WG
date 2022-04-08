@@ -1,0 +1,394 @@
+---
+title: "Sunapee Buoy Water Temp - GDD"
+author: "Jennie Brentrup"
+date: "7 Feb 2022"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Description
+Script to download, wrangle and clean buoy water temp data from thermistor string to calculate GDD from surface water temp data
+
+# Load packages
+```{r}
+#run this line if you do not have pacman installed
+#install.packages('pacman') 
+
+pacman::p_load(tidyverse, lubridate, rLakeAnalyzer, openair)
+```
+
+# Download data from EDI to local folder
+
+- Lake Sunapee Instrumented Buoy: High Frequency Water Temperature and Dissolved Oxygen Data – 2007-2019
+- EDI Package ID: edi.499.1
+- Citation: LSPA, K.C. Weathers, and B.G. Steele. 2020. Lake Sunapee Instrumented Buoy: High Frequency Water Temperature and Dissolved Oxygen Data – 2007-2019 ver 1. Environmental Data Initiative. https://doi.org/10.6073/pasta/70c41711d6199ac2758764ecfcb9815e. Accessed 2020-05-21.
+
+Update:
+LSPA, K.C. Weathers, and B.G. Steele. 2021. Lake Sunapee Instrumented Buoy: High Frequency Water Temperature and Dissolved Oxygen Data - 2007-2020 ver 2. Environmental Data Initiative. https://doi.org/10.6073/pasta/0c5298c55a128be56ba57449c795df63 (Accessed 2022-02-07).
+
+```{r eval=FALSE, include=TRUE}
+
+buoy_data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=06da1cc93c1eaa69f819ce8610f5cd33"
+
+hobo_data <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.499.1&entityid=14340fa6419a6b4bc82cfe4713c25ea6"
+
+destination <- "./00_Data_files/EDI_data_clones"
+
+# Buoy temp string data
+download.file(buoy_data,destfile = "./00_Data_files/EDI_data_clones/2007_e2019_buoy_templine_v22April2020.csv", method='libcurl')
+
+# HOBO data
+download.file(hobo_data,destfile = "./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", method='libcurl')
+```
+
+## Load buoy data into R 
+```{r}
+buoy <- read_csv("./00_Data_files/EDI_data_clones/2007-2020_buoy_templine_v26Feb2021.csv",
+                 col_types = list(
+                   datetime = col_datetime(format = ""),
+                   location = col_character(),
+                   TempC_0p5m = col_double(),
+                   TempC_0p75m = col_double(),
+                   TempC_0p85m = col_double(),
+                   TempC_1m = col_double(),
+                   TempC_1p5m = col_double(),
+                   TempC_1p75m = col_double(),
+                   TempC_1p85m = col_double(),
+                   TempC_2m = col_double(),
+                   TempC_2p5m = col_double(),
+                   TempC_2p75m = col_double(),
+                   TempC_2p85m = col_double(),
+                   TempC_3m = col_double(),
+                   TempC_3p5m = col_double(),
+                   TempC_3p75m = col_double(),
+                   TempC_3p85m = col_double(),
+                   TempC_4p5m = col_double(),
+                   TempC_4p75m = col_double(),
+                   TempC_4p85m = col_double(),
+                   TempC_5p5m = col_double(),
+                   TempC_5p75m = col_double(),
+                   TempC_5p85m = col_double(),
+                   TempC_6p5m = col_double(),
+                   TempC_6p75m = col_double(),
+                   TempC_6p85m = col_double(),
+                   TempC_7p5m = col_double(),
+                   TempC_7p75m = col_double(),
+                   TempC_7p85m = col_double(),
+                   TempC_8p5m = col_double(),
+                   TempC_8p75m = col_double(),
+                   TempC_8p85m = col_double(),
+                   TempC_9p5m = col_double(),
+                   TempC_9p75m = col_double(),
+                   TempC_9p85m = col_double(),
+                   TempC_10p5m = col_double(),
+                   TempC_11p5m = col_double(),
+                   TempC_13p5m = col_double(),
+                   temp_flag = col_character()
+                 ))
+```
+
+
+## Load HOBO data from 2015 into R 
+```{r}
+hobo <- read_csv("./00_Data_files/EDI_data_clones/2015_hobotempstring_L1.csv", col_types = list(
+    datetime = col_datetime(format = ""),
+    TempC_0p5m = col_double(),
+    TempC_1p5m = col_double(), #col_logical(), no data just NA
+    TempC_2p5m = col_double(),
+    TempC_3p5m = col_double(),
+    TempC_4p5m = col_double(),
+    TempC_5p5m = col_double(),
+    TempC_6p5m = col_double(),
+    TempC_7p5m = col_double(),
+    TempC_8p5m = col_double()
+  )
+)
+
+```
+
+## Water temp data cleaning for buoy & hobo data
+
+### BUOY
+eliminate data where bottom water thermistors may have been in sediment
+```{r}
+buoy1 <- buoy %>%
+  mutate(date = date(datetime)) %>%
+  mutate(year = year(datetime)) %>%
+  mutate(month = month(datetime)) %>%
+  filter(year %in% 2009:2016 & month %in% 5:10)
+
+#set colnames for rLakeAnalyzer
+colnames(buoy1)[3:38] <- c("wtr_0.5","wtr_0.75","wtr_0.85","wtr_1","wtr_1.5","wtr_1.75",
+                           "wtr_1.85","wtr_2","wtr_2.5","wtr_2.75","wtr_2.85","wtr_3",
+                           "wtr_3.5","wtr_3.75","wtr_3.85","wtr_4.5","wtr_4.75","wtr_4.85",
+                           "wtr_5.5","wtr_5.75","wtr_5.85","wtr_6.5","wtr_6.75","wtr_6.85",
+                           "wtr_7.5","wtr_7.75","wtr_7.85","wtr_8.5","wtr_8.75","wtr_8.85",
+                           "wtr_9.5","wtr_9.75","wtr_9.85","wtr_10.5","wtr_11.5","wtr_13.5")
+
+
+# To see data flags
+print(unique(buoy1$temp_flag)) #  "11.5b, 13.5b" "i", "10.5dn"
+
+buoy2 <- buoy1 %>%
+  select(-ends_with(c(".75", ".85"))) %>%  # remove extra depths for data not part of time series
+  mutate(wtr_10.5 = ifelse(temp_flag == "10.5dn",NA,wtr_10.5),
+        wtr_11.5 = ifelse(temp_flag == "11.5b, 13.5b",NA,wtr_11.5),
+         wtr_13.5 = ifelse(temp_flag == "11.5b, 13.5b",NA,wtr_13.5)) %>%
+  filter(year!=2015) %>%    # no buoy data, use HOBO temp string data instead
+  select(datetime,wtr_0.5:wtr_10.5) # remove 11.5 & 13.5 m - no data
+```
+
+### HOBO
+```{r}
+#set colnames for rLakeAnalyzer
+colnames(hobo)[2:10] <- c("wtr_0.5","wtr_1.5","wtr_2.5",
+                           "wtr_3.5","wtr_4.5",
+                           "wtr_5.5","wtr_6.5",
+                           "wtr_7.5","wtr_8.5")
+
+```
+
+## Add full time series to data to be able to calculate daily averages but cut-off days with water temp data for only part of day
+
+```{r}
+full_datetime <- seq(from = ymd_hms("2009-05-21 00:00:00"), to = ymd_hms("2016-10-05 23:00:00"), by = dminutes(10))
+
+full_datetime.df <- as_tibble(full_datetime) %>%
+  mutate(year = year(value))
+
+colnames(full_datetime.df) <- c("datetime", "year")
+
+# Separate time series for 2015 since data were 15 minute intervals instead of 10
+full_datetime_2015 <- seq(from = ymd_hms("2015-05-21 00:00:00"), to = ymd_hms("2015-10-05 23:00:00"), by = dminutes(15))
+full_datetime_2015.df <- as_tibble_col(full_datetime_2015, column_name = "datetime")
+
+# remove 2015 from full time series
+full_datetime.df_no2015 <- full_datetime.df %>%
+  filter(year != 2015) %>%
+  select(-year)
+
+buoy3 <- left_join(full_datetime.df_no2015, buoy2, by = "datetime") %>%
+  rename(date = datetime) # open air function needs date column so renamed datetime
+
+# 2015 join
+
+hobo_2015_fulltime <- left_join(full_datetime_2015.df, hobo, by = "datetime") %>%
+  rename(date = datetime) # open air function needs date column so renamed datetime
+
+```
+
+## Calculate daily average of water temp data
+### Buoy data
+
+```{r}
+# Set threshold to 75% of hourly data needs to be present to calculate the daily summary
+# Test 50%
+
+buoy_watertemp_daily_mean <- timeAverage(buoy3, avg.time = "day", data.thresh = 50, statistic = "mean", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "10 min")
+buoy_watertemp_daily_median <- timeAverage(buoy3, avg.time = "day", data.thresh = 50, statistic = "median", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "10 min")
+buoy_watertemp_daily_min <- timeAverage(buoy3, avg.time = "day", data.thresh = 50, statistic = "min", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "10 min")
+buoy_watertemp_daily_max <- timeAverage(buoy3, avg.time = "day", data.thresh = 50, statistic = "max", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "10 min")
+buoy_watertemp_daily_sd <- timeAverage(buoy3, avg.time = "day", data.thresh = 50, statistic = "sd", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "10 min")
+
+# Bind summaries together
+# Grab data from surface depth 0.5 m to max of 2 m
+buoy_watertemp_daily_summary <- bind_cols(buoy_watertemp_daily_mean[,1:5], buoy_watertemp_daily_median[,2:5], buoy_watertemp_daily_min[,2:5], buoy_watertemp_daily_max[,2:5], buoy_watertemp_daily_sd[,2:5])
+
+# Rename columns
+colnames(buoy_watertemp_daily_summary)[-1] <- c("wtr_0.5_mean","wtr_1_mean","wtr_1.5_mean","wtr_2_mean",
+                                           "wtr_0.5_median","wtr_1_median","wtr_1.5_median","wtr_2_median",
+                                           "wtr_0.5_min","wtr_1_min", "wtr_1.5_min","wtr_2_min",
+                                           "wtr_0.5_max","wtr_1_max","wtr_1.5_max","wtr_2_max",
+                                           "wtr_0.5_sd", "wtr_1_sd","wtr_1.5_sd","wtr_2_sd")
+
+
+# remove 2015 to be able to bind separate data
+buoy_watertemp_daily_summary1 <- buoy_watertemp_daily_summary %>%
+  mutate(date = date(date)) %>%
+  mutate(year = year(date)) %>%
+  filter(year !=2015) %>% 
+  select(-year)
+
+```
+
+### 2015 HOBO data
+```{r}
+
+# just 2015
+hobo_daily_mean_2015 <- timeAverage(hobo_2015_fulltime, avg.time = "day", data.thresh = 75, statistic = "mean", start.date = "2015-05-21 00:00:00", end.date = "2015-10-05 23:00:00", interval = "15 min")
+
+hobo_daily_median_2015 <- timeAverage(hobo_2015_fulltime, avg.time = "day", data.thresh = 75, statistic = "median", start.date = "2015-05-21 00:00:00", end.date = "2015-10-05 23:00:00", interval = "15 min")
+
+hobo_daily_min_2015 <- timeAverage(hobo_2015_fulltime, avg.time = "day", data.thresh = 75, statistic = "min", start.date = "2015-05-21 00:00:00", end.date = "2015-10-05 23:00:00", interval = "15 min")
+
+hobo_daily_max_2015 <- timeAverage(hobo_2015_fulltime, avg.time = "day", data.thresh = 75, statistic = "max", start.date = "2015-05-21 00:00:00", end.date = "2015-10-05 23:00:00", interval = "15 min")
+
+hobo_daily_sd_2015 <- timeAverage(hobo_2015_fulltime, avg.time = "day", data.thresh = 75, statistic = "sd", start.date = "2015-05-21 00:00:00", end.date = "2015-10-02 23:00:00", interval = "15 min")
+
+# Bind 2015 HOBO summaries together
+# Grab data from just surface depth 0.5 m (no 1.5 m data)
+hobo_watertemp_daily_summary <- bind_cols(hobo_daily_mean_2015[,1:2], hobo_daily_median_2015[,2], hobo_daily_min_2015[,2], hobo_daily_max_2015[,2], hobo_daily_sd_2015[,2])
+
+# Rename column
+colnames(hobo_watertemp_daily_summary)[-1] <- c("wtr_0.5_mean",
+                                                "wtr_0.5_median",
+                                                "wtr_0.5_min", 
+                                                "wtr_0.5_max", 
+                                                "wtr_0.5_sd")
+```
+
+### Join buoy and water temp daily summary data
+```{r}
+buoy_watertemp_daily_summary2 <- bind_rows(buoy_watertemp_daily_summary1, hobo_watertemp_daily_summary) %>% 
+  arrange(date)
+  
+```
+
+## Filter for sampling months
+
+```{r}
+#shorten dataset to sampling time period May-Oct
+buoy_watertemp_daily_summary3 <- buoy_watertemp_daily_summary2 %>%
+  mutate(month = month(date)) %>%
+  filter(month %in% 5:10) 
+
+```
+
+## Filter for single surface depth each year
+```{r}
+# grab 1 m water temp data for 2009 and 2010 and change name to bind columns
+buoy_watertemp_daily_summary_a <- buoy_watertemp_daily_summary3 %>% 
+  mutate(year = year(date)) %>% 
+  filter(year==2009|year==2010) %>% 
+  select(date, wtr_1_min, wtr_1_max) %>% 
+  rename(surface_min = wtr_1_min, surface_max = wtr_1_max)
+
+# grab 0.5 m water temp data for 2011, 2012, 2015
+buoy_watertemp_daily_summary_b <- buoy_watertemp_daily_summary3 %>% 
+  mutate(year = year(date)) %>% 
+  filter(year %in% c(2011,2012,2015)) %>% 
+  select(date, wtr_0.5_min, wtr_0.5_max) %>% 
+  rename(surface_min = wtr_0.5_min, surface_max = wtr_0.5_max)
+
+# grab 1.5 m water temp data for 2013, 2014, 2016
+buoy_watertemp_daily_summary_c <- buoy_watertemp_daily_summary3 %>% 
+  mutate(year = year(date)) %>% 
+  filter(year %in% c(2013,2014,2016)) %>% 
+  select(date, wtr_1.5_min, wtr_1.5_max) %>% 
+  rename(surface_min = wtr_1.5_min, surface_max = wtr_1.5_max)
+
+buoy_watertemp_daily_summary4 <- bind_rows(buoy_watertemp_daily_summary_a,buoy_watertemp_daily_summary_b,buoy_watertemp_daily_summary_c) %>% 
+  arrange(date)
+```
+
+### Plot buoy water temp data
+- Check surface data for outliers
+
+```{r}
+ggplot(data = buoy_watertemp_daily_summary4, aes(x = date, y = surface_max))+
+  geom_point()+
+  geom_point(aes(x = date, y = surface_min), color = "blue")
+```
+
+
+# Calculate Growing Degree Days GDD
+- base temp set @ 4°C
+
+```{r}
+# set base temp to 4°C - water temp limit for growth of gloeo
+base_temp <- 4
+
+gdd_buoy <- buoy_watertemp_daily_summary4 %>% # use daily water temp data summary for May-Sep
+  mutate(gdd = ((surface_max + surface_min)/2) - base_temp) %>%
+  mutate(year = year(date), dayofyr = yday(date)) %>%
+  select(year,dayofyr,gdd) %>%
+  filter(!is.na(gdd)) %>%
+  spread(key = year, value = gdd) # make wide to do each year separately
+
+# Calculate gdd as column sum of daily data - separate each year since different number of missing points
+# Note could also try rollsum
+gdd_sum1 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2009`)), column_name = "gdd_sum09")
+gdd_sum2 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2010`)), column_name = "gdd_sum10")
+gdd_sum3 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2011`)), column_name = "gdd_sum11")
+gdd_sum4 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2012`)), column_name = "gdd_sum12")
+gdd_sum5 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2013`)), column_name = "gdd_sum13")
+gdd_sum6 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2014`)), column_name = "gdd_sum14")
+gdd_sum7 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2015`)), column_name = "gdd_sum15")
+gdd_sum8 <- as_tibble_col(cumsum(na.omit(gdd_buoy$`2016`)), column_name = "gdd_sum16")
+
+y1 <- gdd_buoy[89:183,1]
+y2 <- gdd_buoy[19:177,1]
+y3 <- gdd_buoy[11:177,1]
+y4 <- gdd_buoy[1:162,1]
+y5 <- gdd_buoy[c(14:105,132:167),1] 
+y6 <- gdd_buoy[c(40:42,47:49, 58:59, 84:165),1]
+y7 <- gdd_buoy[99:149,1]
+y8 <- gdd_buoy[c(3:44, 46:158),1]
+
+gdd_sum09 <- bind_cols(y1, gdd_sum1)
+gdd_sum10 <- bind_cols(y2, gdd_sum2)
+gdd_sum11 <- bind_cols(y3, gdd_sum3)
+gdd_sum12 <- bind_cols(y4, gdd_sum4)
+gdd_sum13 <- bind_cols(y5, gdd_sum5)
+gdd_sum14 <- bind_cols(y6, gdd_sum6)
+gdd_sum15 <- bind_cols(y7, gdd_sum7)
+gdd_sum16 <- bind_cols(y8, gdd_sum8)
+
+# Left join with original data
+gdd2 <- left_join(gdd_buoy,gdd_sum09,by = "dayofyr")
+gdd3 <- left_join(gdd2,gdd_sum10,by = "dayofyr")
+gdd4 <- left_join(gdd3,gdd_sum11,by = "dayofyr")
+gdd5 <- left_join(gdd4,gdd_sum12,by = "dayofyr")
+gdd6 <- left_join(gdd5,gdd_sum13,by = "dayofyr")
+gdd7 <- left_join(gdd6,gdd_sum14,by = "dayofyr")
+gdd8 <- left_join(gdd7,gdd_sum15,by = "dayofyr")
+gdd_sum_all <- left_join(gdd8,gdd_sum16,by = "dayofyr")
+
+# Convert back to long for just gdd data
+gdd_all2 <- gdd_sum_all %>%
+  select(1:9) %>%
+  gather(key = "year", value = "gdd", -dayofyr)
+
+gdd_all3 <- gdd_sum_all %>%
+  select(1,10:17) %>%
+  gather(key = "year", value = "gdd_sum", -dayofyr)
+
+gdd_all4 <- bind_cols(gdd_all2,gdd_all3[,3]) %>%
+  mutate(year = as.numeric(year))
+
+# Join with original buoy water temp data to get dates back
+
+gdd_all5 <- buoy_watertemp_daily_summary4 %>%
+  mutate(dayofyr = yday(date)) %>%
+  mutate(year = year(date))
+
+gdd_all6 <- left_join(gdd_all5, gdd_all4, by = c("dayofyr", "year")) %>%
+  select(date, gdd, gdd_sum)
+
+```
+
+## Join with sampling dates 
+ read in sampling dates for Newbury
+```{r}
+sampling_dates <- read_csv("./00_Data_files/sampling_dates_NB.csv")
+
+
+# Filter gdd for sampling dates
+gdd_all7 <- gdd_all6 %>%
+    mutate(date = date(date)) %>%
+  filter(date %in% sampling_dates$date)
+```
+
+# Write growing degree days data for buoy
+- just write sum data
+```{r}
+write.csv(gdd_all7[-2], "./00_Data_files/Covariate_analysis_data/buoy_growing_degree_days.csv", row.names = F)
+```
+

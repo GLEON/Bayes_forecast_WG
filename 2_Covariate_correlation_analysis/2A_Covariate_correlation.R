@@ -12,6 +12,8 @@ pacman::p_load(tidyverse)
 # set local directory for plots
 # my_directory <- ("C:/Users/Mary Lofton/Dropbox/Ch5/Covariate_analysis_output/")
 
+my_directory <- "~/Documents/Gloeo Bayesian Modeling/Site Model/R Data Output/Covariate_analysis_plots_9Feb2022/"
+
 #define function to extract p-value for linear and quadratic models
 lmp <- function (modelobject) {
   if (class(modelobject) != "lm") stop("Not an object of class 'lm' ")
@@ -25,10 +27,11 @@ lmp <- function (modelobject) {
 # Load all covariates ####
 
 # gloeo data
-hc_gloeo_data <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
+#hc_gloeo_data <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
+nb_gloeo_data <- read_csv("./00_Data_files/Covariate_analysis_data/NB_Gechinulata_long.csv")
 
 # onset water temp data
-water_temp_data <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_HC.csv")
+water_temp_data <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_NB.csv")
 
 # schmidt stability data
 schmidt_stability_data <- read_csv("./00_Data_files/Covariate_analysis_data/schmidt_stability_all.csv")
@@ -43,10 +46,10 @@ swrad <- read_csv("./00_Data_files/Covariate_analysis_data/NLDAS_solar_radiation
 par <- read_csv("./00_Data_files/Covariate_analysis_data/par_daily_summary.csv")
 
 # wind data
-wind_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data_all.csv")
+wind_data <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data_all_nb.csv")
 
 # Join all covariate data with gloeo
-covariates_all <- bind_cols(hc_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], swrad[,-1], par[,-1], wind_data[-1])
+covariates_all <- bind_cols(nb_gloeo_data[,c(1:5,10)], water_temp_data[,-1], schmidt_stability_data[,-1], precip_data[,-1], swrad[,-1], par[,-1], wind_data[-1])
 
 # Filter for just 2009-2014
 covariates_all_filter <- covariates_all %>%
@@ -73,16 +76,16 @@ for(i in 7:ncol(covariates_all_filter)) {
   output[i-6,1] <- colnames(covariates_all_filter[,i])
 
   #prepare data to do exploratory viz plot
-  # plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
+   plotdata <- data.frame(covariates_all_filter[,i],covariates_all_filter[,6])
   #
   # #write exploratory viz plots to file
-  # png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
-  # plot(plotdata)
-  # dev.off()
+   png(filename = paste(my_directory,paste0("gloeo_vs_",colnames(covariates_all_filter[,i]),".png")))
+   plot(plotdata)
+   dev.off()
   #
-  # png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_hist.png")))
-  # hist(as.numeric(unlist(covariates_all_filter[,i])), main = colnames(covariates_all_filter[,i]))
-  # dev.off()
+   png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_hist.png")))
+   hist(as.numeric(unlist(covariates_all_filter[,i])), main = colnames(covariates_all_filter[,i]))
+   dev.off()
   #
   # png(filename = paste(my_directory,paste0(colnames(covariates_all_filter[,i]),"_QQplot.png")))
   # qqnorm(as.numeric(unlist(covariates_all_filter[,i])), pch = 1, frame = FALSE,main = colnames(covariates_all_filter[,i]))
@@ -163,10 +166,13 @@ colnames(output) <- c("covariate_name","global_linear_r2","global_Pearsons_r","g
 # "linear_r2_2013","Pearsons_r_2013","Spearmans_r_2013","quad_r2_2013",
 # "linear_r2_2014","Pearsons_r_2014","Spearmans_r_2014","quad_r2_2014")
 
-write.csv(output, file = "./2_Covariate_correlation_analysis/output.csv",row.names = FALSE)
+write.csv(output, file = "./2_Covariate_correlation_analysis/output_nb.csv",row.names = FALSE)
 
 #####################FILTERING FOR VARIABLES TO INCLUDE IN BAYES MODELS################
-bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output.csv") %>%
+bayes_variables <- read_csv("./2_Covariate_correlation_analysis/output_nb.csv") %>%
+  mutate(adj_Spearmans_pvalue = p.adjust(Spearmans_pvalue, method = "holm"))
+
+bayes_variables2 <- read_csv("./2_Covariate_correlation_analysis/output.csv") %>%
   mutate(adj_Spearmans_pvalue = p.adjust(Spearmans_pvalue, method = "holm"))
 
 bayes_variables_keep <- bayes_variables %>%
@@ -183,3 +189,5 @@ mean(bayes_variables$global_Spearmans_r, na.rm = TRUE)
 #6. schmidt.stability_median_diff
 #7. precip_sum
 #8. AveWindDir_cove_mean_2daylag
+
+# Newbury
