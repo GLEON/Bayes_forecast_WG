@@ -1,0 +1,657 @@
+---
+title: "Gloeo Data Exploration"
+author: "J. Brentrup"
+date: "1/21/2022"
+output: 
+  html_document: 
+    fig_caption: yes
+    toc: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+```{r}
+pacman::p_load(tidyverse, lubridate, openair, knitr)
+```
+
+
+# Read in gloeo data 2005-2016
+```{r}
+gloeo <- read_csv("00_Data_files/EDI_data_clones/weekly_surface_gloeo_4sites_2005_2016_v10April2020.csv",
+      col_types = list(
+      date = col_date(format = ""),
+      site = col_character(),
+      year = col_double(),
+      dayofyr = col_double(),
+      n_sample = col_double(),
+      coloniesperL = col_double(),
+      filbundperL = col_double(),
+      totalperL = col_double()
+    )
+  )
+
+```
+
+# Data wrangling
+```{r}
+# Create tibble with rows for missing observations in 2009-2016 
+date <- c(rep(c("2009-06-11","2009-09-28","2015-06-25","2016-06-09","2016-08-10"),times = 1,each = 4),"2014-07-17","2015-06-11","2015-07-23","2015-08-20","2016-08-04")
+
+site <- c(rep(c("NorthSunapeeHarbor","SouthOfTheFells","HerrickCoveSouth","Newbury"),times = 5),"Newbury","SouthOfTheFells","HerrickCoveSouth","SouthOfTheFells","NorthSunapeeHarbor")
+
+odd_obs <- as_tibble(cbind(site,date)) %>%
+  mutate(date = as.Date(date)) %>%
+  mutate(year = year(date), dayofyr = yday(date)) %>%
+  mutate(n_sample = NA, coloniesperL = NA, filbundperL = NA, totalperL = NA)
+
+
+# eliminate extra sampling day from original data file
+gloeo1 <- gloeo %>%
+  filter(!date %in% as.Date(c("2009-07-11")))#get rid of extra sampling days
+
+# combine missing and averaged duplicate observations with original data file
+# assign "sampling season weeks" numbering 1-20 each year to dates
+gloeo2 <- bind_rows(gloeo1, odd_obs) %>%
+  mutate(week = week(date)) %>%
+  filter(year %in% 2009:2016 & (week %in% 21:40 | dayofyr == 283))%>% #limit to study period
+  arrange(date, site) %>%
+  select(date, site, coloniesperL, filbundperL, totalperL, year, dayofyr) %>% #keep day of year too
+  mutate(season_week = rep(c(1:20),times = 8, each = 4))
+  
+# Add in month and ln of gloeo
+gloeo_final <- gloeo2 %>%
+  mutate(month = month(date)) %>%
+  select(date,year,month,dayofyr,season_week,site,coloniesperL,filbundperL,totalperL) %>% # rearrange columns to have date items together
+  mutate(ln_totalperL = log(totalperL + (1/141.4)))# add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
+# convert to natural log using  log + detection limit = 1/141.4
+
+```
+
+# Plot Gloeo data over time - y-scale varies
+Y-scale set to free for each year
+```{r}
+names(gloeo_final)
+ggplot(data = gloeo_final, aes(x = dayofyr, y = totalperL, color = site))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~year, scales = "free_y")+
+  labs(title = "Y-Scale Varies Gloeo 2009-2016")
+
+```
+
+# Plot Gloeo data over time - y-scale fixed
+Y-scale set to max of 45 to exclude 80 for Midge
+```{r}
+ggplot(data = gloeo_final, aes(x = dayofyr, y = totalperL, color = site))+
+  geom_point()+
+  geom_line()+
+  scale_y_continuous(limits = c(0,45), breaks = seq(0,45,by = 5))+
+  facet_wrap(~year) +
+  labs(title = "Y-Scale Fixed Gloeo 2009-2016")
+
+```
+
+# Plot LN Gloeo data over time - y-scale fixed
+```{r}
+ggplot(data = gloeo_final, aes(x = dayofyr, y = ln_totalperL, color = site))+
+  geom_point()+
+  geom_line()+
+ # scale_y_continuous(limits = c(0,45), breaks = seq(0,45,by = 5))+
+  facet_wrap(~year)+
+  labs(title = "LN Gloeo 2009-2016")
+```
+
+
+## Pre 2009 data for observation error prior
+- Filter data for pre 2009 to look at mean + variability for each site
+- Midge data 2005-2008
+- Newbury data 2005, 2007-2008
+- Fichter/Coffin 2007-2008
+
+```{r}
+unique(gloeo$site)
+
+gloeo_pre_2009 <- gloeo %>% 
+  filter(year < 2009) %>% 
+  group_by(site, year) %>% 
+  summarize_at(vars(totalperL), list(~ mean(., na.rm = TRUE), ~ median(., na.rm = TRUE),~ max(., na.rm = TRUE), ~ sd(., na.rm = TRUE), ~ IQR(., na.rm = TRUE), ~n()))
+
+gloeo_pre_2009
+
+kable(gloeo_pre_2009, digits = 2, caption = "Pre-2009 Gloeo Data Summary - All Sites")
+
+# Natural log gloeo data
+ln_gloeo_pre_2009 <- gloeo %>% 
+   mutate(ln_totalperL = log(totalperL + (1/141.4))) %>% # add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L convert to natural log using  log + detection limit = 1/141.4
+  filter(year < 2009) %>% 
+  group_by(site, year) %>% 
+  summarize_at(vars(ln_totalperL), list(~ mean(., na.rm = TRUE), ~ median(., na.rm = TRUE),~ max(., na.rm = TRUE), ~ sd(., na.rm = TRUE), ~ IQR(., na.rm = TRUE), ~n()))
+
+ln_gloeo_pre_2009
+
+kable(ln_gloeo_pre_2009, digits = 2, caption = "Pre-2009 LN Gloeo Data Summary - All Sites")
+
+# Filter for early season data only - 2008 earliest 1st week of June
+ln_gloeo_2008_June <- gloeo %>% 
+   mutate(ln_totalperL = log(totalperL + (1/141.4))) %>% # add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L convert to natural log using  log + detection limit = 1/141.4
+  filter(year == 2008) %>% 
+  mutate(month = month(date)) %>% 
+  filter(month == 6) %>% 
+  filter(date < "2008-06-13")
+
+summary(ln_gloeo_2008_June) # Median :0.01400  ln: -3.860
+
+ggplot(ln_gloeo_2008_June, aes(x = ln_totalperL))+
+  geom_density()
+
+ln_gloeo_2008_June_summary <- gloeo %>% 
+   mutate(ln_totalperL = log(totalperL + (1/141.4))) %>% # add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L convert to natural log using  log + detection limit = 1/141.4
+  filter(year == 2008) %>% 
+  mutate(month = month(date)) %>% 
+  filter(month == 6) %>% 
+  filter(date < "2008-06-13") %>% 
+   summarize_at(vars(ln_totalperL), list(~ mean(., na.rm = TRUE), ~ median(., na.rm = TRUE),~ min(., na.rm = TRUE),~ max(., na.rm = TRUE), ~ sd(., na.rm = TRUE), ~ IQR(., na.rm = TRUE), ~n()))
+
+kable(ln_gloeo_2008_June_summary, digits = 2, caption = "June 2008 LN Gloeo Data Summary - All Sites")
+
+```
+
+# Histograms
+```{r}
+# Gloeo colonies - no log
+ggplot(data = gloeo_final, aes(x = totalperL)) +
+  geom_histogram(color = "white")+
+  facet_wrap(~site, scales = "free_x")
+
+# Gloeo colonies - log
+ggplot(data = gloeo_final, aes(x = ln_totalperL)) +
+  geom_histogram(binwidth = 1, color = "white")+
+  facet_wrap(~site)
+
+```
+
+# Viz by site and years overlayed
+```{r}
+gloeo_viz <- gloeo_final %>% 
+  mutate(Year = as.factor(year(date)))
+
+ggplot(gloeo_viz, aes(x = season_week, y = totalperL, group = Year, color = Year))+
+  geom_line(size = 1.5)+
+  geom_point(size = 2) +
+ # scale_y_continuous(limits = c(0,45), breaks = seq(0,45,by = 5))+
+  scale_color_brewer(palette = "BrBG")+
+  theme_classic()+
+  labs(x = "Week of sampling season", y = "Gloeo (colonies per L)", title = "All Sites- Y Scale Varies")+
+  theme(axis.title = element_text(size = 16),axis.text = element_text(size = 14),legend.title = element_text(size = 16),legend.text = element_text(size = 14))+
+  facet_wrap(~site, scales = "free_y")
+
+```
+
+
+# Water Temp data from Onset Loggers @ each site
+## Load onset water temp data into R 
+```{r}
+wtr <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
+                col_types = list(year = col_double(),
+                                 dayofyr = col_double(),
+                                 time = col_time(),
+                                 datetime = col_datetime(),
+                                 site = col_character(),
+                                 temp_degC = col_double()))
+```
+
+## Data wrangling - all sites
+
+- limit logger data to sampling years & sampling weeks and remove 30 min data in 2009 so consistent with other years
+
+```{r}
+wtr1 <- wtr %>%
+  mutate(date = date(datetime)) %>%
+  filter(year %in% 2009:2016) %>%
+  mutate(min = minute(time)) %>%
+  filter(min!=30) %>%
+  select(-min) %>%
+  mutate(week = week(datetime)) %>%
+  filter(week %in% 21:40 | dayofyr == 283) %>% 
+  select(datetime, date, year, dayofyr, time, week, site, temp_degC)
+```
+
+## Plot water temp data over time - y-scale varies
+Y-scale set to free for each year
+```{r}
+names(wtr1)
+# Remember hourly data - so plots look a little funky with dayofyr on x-axis but can do facet
+ggplot(data = wtr1, aes(x = dayofyr, y = temp_degC, color = site))+
+  #geom_point()+
+  geom_line()+
+  facet_wrap(~year, scales = "free_y")
+```
+
+## Plot water temp data over time - y-scale fixed
+Y-scale set to min of 10 and max of 30 max = 28.62 @ Newbury 2013 July 19
+```{r}
+summary(wtr1)
+
+# Remember hourly data - so plots look a little funky with dayofyr on x-axis
+ggplot(data = wtr1, aes(x = dayofyr, y = temp_degC, color = site))+
+  #geom_point()+
+  geom_line()+
+  scale_y_continuous(limits = c(10,30), breaks = seq(10,30,by = 5))+
+  facet_wrap(~year)
+```
+
+### Remove outlier values
+```{r}
+# High values @ North Sunapee Harbor 2013 pre DOY 160 start after 2013-05-30 11:00:00
+# 2014 - ~DOY 260 spike @ Fichter last value 2014-09-17 09:00:00, Coffin last value same
+sum(is.na(wtr1)) #1348
+
+# Plots zoomed in by year and site
+wtr_site <- wtr1 %>% 
+  filter(year == 2014) %>% 
+ # filter(dayofyr < 153) %>% 
+  filter(site == "SouthOfTheFells")
+
+# Hourly dataset - plot with datetime on x-axis
+ggplot(data = wtr_site, aes(x = datetime, y = temp_degC, color = site))+
+  geom_point() +
+  geom_line()
+
+# Jagged warm up @ Newbury at beginning of season for many years
+
+# Clean data remove high values @ Fichter and Coffin in 2013 & 2014
+wtr2 <- wtr1 %>% 
+  mutate(temp_degC = ifelse(site == "NorthSunapeeHarbor" & datetime >= "2013-05-23 11:00:00" & datetime < "2013-05-30 7:00:00", NA, temp_degC)) %>% 
+  mutate(temp_degC = ifelse(site == "NorthSunapeeHarbor" & datetime >= "2014-09-17 05:00:00" & datetime < "2014-09-30 7:00:00", NA, temp_degC)) %>% 
+  mutate(temp_degC = ifelse(site == "SouthOfTheFells" & datetime >= "2014-09-17 05:00:00" & datetime < "2014-09-30 7:00:00", NA, temp_degC))
+
+#write.csv(wtr2, "00_Data_files/EDI_data_clones/wtrtemp_clean_2009-2016_allsites.csv", row.names = F)
+```
+
+### Difference in hourly water temp between Midge & Newbury
+```{r}
+# Calculate difference in water temp between Midge - Newbury for hourly water temp data
+wtr_diff <- wtr2 %>% 
+  filter(site == "HerrickCoveSouth"|site == "Newbury") %>% 
+  pivot_wider(names_from = site, values_from = temp_degC) %>% 
+  mutate(wtr_diff = HerrickCoveSouth - Newbury)
+ 
+# Plot water temp diff over time 
+ggplot(data = wtr_diff, aes(x = dayofyr, y = wtr_diff))+
+  #geom_point(color = "blue") +
+  geom_line() +
+  scale_y_continuous(limits = c(-5.3,9), breaks = seq(-5,9,by = 2))+
+  geom_hline(yintercept = 0, linetype = 2, color = "red")+
+  facet_wrap(~year)
+
+summary(wtr_diff) # max = 8.85 deg difference - wow
+  
+```
+
+### Temp visualization
+```{r}
+wtr2_viz <- wtr2 %>% 
+  group_by(site, date) %>% 
+  summarize(temp_degC_mean = mean(temp_degC, na.rm = T)) %>% 
+  mutate(doy = yday(date), Year = as.factor(year(date)))
+
+# Facet by sites
+ggplot(wtr2_viz, aes(x = doy, y = temp_degC_mean, group = Year, color = Year))+
+  geom_line(size = 1.3)+
+  scale_color_brewer(palette = "PRGn")+
+  theme_classic()+
+  xlab("DOY")+
+  ylab("Water temp. (°C)")+
+  theme(axis.title = element_text(size = 16),axis.text = element_text(size = 14),legend.title = element_text(size = 16),legend.text = element_text(size = 14),strip.text = element_text(size = 14))+
+  facet_wrap(~site)
+
+# Facet by year
+ggplot(wtr2_viz, aes(x = doy, y = temp_degC_mean, group = site, color = site))+
+  geom_line(size = 1.3)+
+  scale_color_brewer(palette = "Spectral")+
+  theme_classic()+
+  xlab("DOY")+
+  ylab("Water temp. (°C)")+
+  theme(axis.title = element_text(size = 16),axis.text = element_text(size = 14),legend.title = element_text(size = 16),legend.text = element_text(size = 14),strip.text = element_text(size = 14))+
+  facet_wrap(~Year)
+
+```
+
+### Difference in daily water temp between Midge & Newbury
+
+```{r}
+# Calculate difference in water temp between Midge - Newbury for hourly water temp data
+wtr_diff_daily <- wtr2_viz %>% 
+  filter(site == "HerrickCoveSouth"|site == "Newbury") %>% 
+  pivot_wider(names_from = site, values_from = temp_degC_mean) %>% 
+  mutate(wtr_diff = HerrickCoveSouth - Newbury) %>% 
+  mutate(year = year(date))
+ 
+# Plot water temp diff over time 
+ggplot(data = wtr_diff_daily, aes(x = doy, y = wtr_diff))+
+  geom_point(color = "blue") +
+  geom_line() +
+ # scale_y_continuous(limits = c(-5.3,9), breaks = seq(-5,9,by = 2))+
+  geom_hline(yintercept = 0, linetype = 2, color = "red")+
+  facet_wrap(~year)
+
+summary(wtr_diff_daily) # max = 7 deg difference - wow
+
+```
+
+# Buoy vs. Onset GDD
+- compare buoy GDD calculation vs. onset hobo GDD
+```{r}
+buoy_GDD <- read_csv("00_Data_files/Covariate_analysis_data/buoy_growing_degree_days.csv")
+onset_GDD <- read_csv("00_Data_files/Covariate_analysis_data/onset_watertemp_all_NB.csv")
+
+plot(gdd_sum ~ date, data = buoy_GDD)
+points(gdd_sum ~ date, data = onset_GDD, col = "red")
+
+plot(buoy_GDD$gdd_sum ~ onset_GDD$gdd_sum)
+
+onset_GDD1 <- onset_GDD %>% 
+  mutate(dayofyr = yday(date), year = year(date)) %>% 
+  select(date, dayofyr, year, gdd_sum)
+
+buoy_GDD1 <- buoy_GDD %>% 
+  mutate(dayofyr = yday(date), year = year(date)) 
+
+GDD_join <- full_join(onset_GDD1, buoy_GDD1, by = c("date", "dayofyr", "year")) %>% 
+  rename(onset_gdd = gdd_sum.x, buoy_gdd = gdd_sum.y) %>% 
+  pivot_longer(4:5, names_to = "sensor_type", values_to = "gdd")
+
+ggplot(data = GDD_join, aes(x = dayofyr, y = gdd, color = sensor_type)) +
+  geom_point() +
+  facet_wrap(~year)
+
+ggplot(data = GDD_join, aes(x = gdd, y = gdd, color = sensor_type)) +
+  geom_point() +
+  facet_wrap(~year)
+```
+
+# Load PRISM data all sites
+```{r}
+files <- dir("00_Data_files/PRISM_precip_data_all_sites", pattern = "\\.csv$", full.names = TRUE)
+head(files)
+df_list <- vector("list", length(files))
+
+# Full data
+for (i in seq_along(files)) {
+        df_list[[i]] <- read_csv(files[[i]], skip = 10,
+                   col_types = list(Date = col_date(format = ""),
+                                    `ppt (mm)` = col_double(),
+                                    `tmin (degrees C)` = col_double(),
+                                    `tmean (degrees C)` = col_double(),
+                                    `tmax (degrees C)` = col_double()))
+        
+        colnames(df_list[[i]]) <- c("date", "precip_mm", "air.tempC_min", "air.tempC_mean", "air.tempC_max")
+
+        df_list[[i]] <-  df_list[[i]] %>% 
+                select(date, precip_mm) %>%
+                mutate(site = i) %>% 
+                mutate(year = year(date)) %>%
+                mutate(month = month(date)) %>%
+                filter(year %in% 2009:2016) %>%
+                filter(month %in% 5:10)
+       
+}
+
+precip_all_sites <- bind_rows(df_list)
+str(precip_all_sites)
+```
+
+# Compare PRISM precip data for all sites
+```{r}
+#Rename sites
+precip_all_sites1 <- precip_all_sites %>% 
+  mutate(site_name = ifelse(site==1, "NorthSunapeeHarbor", site)) %>% 
+  mutate(site_name = ifelse(site==2, "SouthOfTheFells", site_name)) %>% 
+  mutate(site_name = ifelse(site==3, "HerrickCoveSouth", site_name)) %>% 
+  mutate(site_name = ifelse(site==4, "Newbury", site_name)) %>% 
+  mutate(dayofyr = yday(date))
+```
+
+# Plot precip all sites
+```{r}
+ggplot(data = precip_all_sites1, aes(x = dayofyr, y = precip_mm, color = site_name))+
+  geom_line()+
+  geom_point(data = gloeo_final, aes(x = dayofyr, y = totalperL, color = site), shape = 17, size = 3)+ #Try adding in gloeo data on top
+  scale_color_brewer(palette = "Spectral")+
+  facet_wrap(~year, scales = "free_y")
+```
+
+```{r}
+# Join with sampling dates 
+#read in sampling dates
+sampling_dates <- read_csv("./00_Data_files/sampling_dates_NB.csv")
+
+# Filter precip data for sampling dates
+precip_all_sites2 <- precip_all_sites1 %>%
+  filter(date %in% sampling_dates$date)
+
+ggplot(data = precip_all_sites2, aes(x = dayofyr, y = precip_mm, color = site_name))+
+  geom_line()+
+  geom_point()+
+  geom_point(data = gloeo_final, aes(x = dayofyr, y = totalperL, color = site), shape = 17, size = 3)+#Try adding in gloeo data on top
+  scale_color_brewer(palette = "Spectral")+
+  facet_wrap(~year, scales = "free_y")
+```
+
+# Wind data wrangling
+```{r}
+# Load buoy wind data into R ####
+buoy_wind <- read_csv("./00_Data_files/EDI_data_clones/2007_e2019_wind_L1.csv", col_types = cols(
+  datetime = col_datetime(format = ""),
+  location = col_character(),
+  WindDir_deg = col_double(),
+  WindSp_ms = col_double(),
+  AveWindDir_deg = col_double(),
+  AveWindSp_ms = col_double(),
+  MaxWindSp_ms = col_double(),
+  MaxWindDir_deg = col_double(),
+  wind_flag = col_character()))
+```
+
+# Check and filter wind data
+```{r}
+buoy_wind1 <- buoy_wind %>%
+  mutate(date = as_date(datetime)) %>%
+  mutate(year = year(datetime)) %>%
+  mutate(month = month(datetime)) %>%
+  filter(year %in% 2009:2016) %>%
+  filter(month %in% 5:10)
+
+print(unique(buoy_wind1$wind_flag)) #NA, so no flags to worry about
+
+# Use instantaneous data for 2011-2012 - no Avg wind speed data
+buoy_wind_inst <- buoy_wind1 %>%
+  filter(year %in% 2011:2012) %>%
+  select(1,10:12,2:4) %>%
+  rename(AveWindSp_ms = WindSp_ms, AveWindDir_deg = WindDir_deg) # rename to be able to join columns
+
+# Use average wind data for the rest of the years - no instantaneous data for 2015-2016
+buoy_wind_avg <- buoy_wind1 %>%
+  filter(year %in% c(2009:2010, 2013:2016)) %>%
+  select(1,10:12,2,5:6)
+
+# Join wind datasets
+buoy_wind2 <- bind_rows(buoy_wind_inst, buoy_wind_avg) %>%
+  select(-c(date, year, month))
+
+# check data
+plot(AveWindSp_ms ~ datetime, data = buoy_wind2)
+summary(buoy_wind2)
+```
+
+# Combine wind data with full time series
+```{r}
+full_datetime <- seq(from = ymd_hms("2009-05-21 00:00:00"), to = ymd_hms("2016-10-05 23:00:00"), by = dminutes(10))
+full_datetime.df <- as_tibble_col(full_datetime, column_name = "datetime")
+
+buoy_wind3 <- left_join(full_datetime.df, buoy_wind2, by = "datetime") %>%
+  rename(date = datetime) # open air function needs date column so renamed datetime
+
+# Calculate hourly mean of wind speed and wind direction data ####
+windsp_hourly_mean <- timeAverage(buoy_wind3, avg.time = "hour", data.thresh = 75, statistic = "mean", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "10 min", vector.ws = T)
+```
+
+
+# Add indicator variable for hourly wind direction
+```{r}
+# If wind is blowing towards Herrick Cove 180-359°, use 1, if blowing away 0-179°, use 0
+# For newbury if wind is blowing towards the southern end of the lake (coming from the north) use 1 for 315-45°
+windsp_hourly_mean_filter <- windsp_hourly_mean %>%
+  mutate(AveWindDir_cove = ifelse(AveWindDir_deg >= 315 | AveWindDir_deg < 46, 1, 0))
+```
+
+
+# Calculate daily summaries from hourly average data
+```{r}
+
+windsp_daily_mean <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "mean", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
+
+windsp_daily_median <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "median", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
+
+windsp_daily_min <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "min", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
+
+windsp_daily_max <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "max", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
+
+windsp_daily_sd <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "sd", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
+
+windsp_daily_sum <- timeAverage(windsp_hourly_mean_filter, avg.time = "day", data.thresh = 50, statistic = "sum", start.date = "2009-05-21 00:00:00", end.date = "2016-10-05 23:00:00", interval = "60 min", vector.ws = T)
+
+#Bind summaries together
+windsp_daily_summary <- bind_cols(windsp_daily_mean, windsp_daily_median[,3], windsp_daily_min[,3], windsp_daily_max[,3], windsp_daily_sd[,3], windsp_daily_sum[,3:4])
+colnames(windsp_daily_summary)[3:10] <- c("AveWindSp_ms_mean","AveWindDir_cove_mean","AveWindSp_ms_median","AveWindSp_ms_min","AveWindSp_ms_max","AveWindSp_ms_sd", "AveWindSp_ms_sum", "AveWindDir_cove_sum")
+```
+
+# Wind data visualization
+```{r}
+# filter for sampling months
+windsp_daily_summary2 <- windsp_daily_summary %>% 
+  mutate(year = year(date)) %>% 
+  mutate(month = month(date)) %>% 
+  filter(month %in% 5:10) %>% 
+  mutate(doy = yday(date))
+
+ggplot(data = windsp_daily_summary2, aes(x = doy, y = AveWindSp_ms_mean))+
+  geom_line()+
+  geom_point()+
+  facet_wrap(~year)
+
+sum(is.na(windsp_daily_summary2$AveWindSp_ms_mean))
+```
+
+# Wind rose
+```{r}
+# wind rose function in openair package
+
+# Daily summary of wind data
+windRose(windsp_daily_summary2, ws = "AveWindSp_ms_mean", wd = "AveWindDir_deg", type = "year",paddle = F , breaks = c(0,2,4,6,8,10))
+
+windRose(windsp_daily_summary2, ws = "AveWindSp_ms_mean", wd = "AveWindDir_deg", type = "month",paddle = F , breaks = c(0,2,4,6,8,10))
+
+# Compare with raw 10 min data
+buoy_wind4 <- buoy_wind3 %>% 
+  mutate(year = year(date)) %>% 
+  mutate(month = month(date)) %>% 
+  filter(month %in% 5:10)
+
+# 10 min raw wind data
+windRose(buoy_wind4, ws = "AveWindSp_ms", wd = "AveWindDir_deg", type = "year",paddle = F , breaks = c(0,2,4,6,8,10))
+
+windRose(buoy_wind4, ws = "AveWindSp_ms", wd = "AveWindDir_deg", type = "month",paddle = F , breaks = c(0,2,4,6,8,10))
+```
+
+Wind rose for high years 2013-Midge, 2010 high for both, 2009 highest for Newbury
+```{r}
+
+# use 10 min data but filter for year & month
+buoy_wind5 <- buoy_wind4 %>% 
+  filter(year == 2013) %>% 
+  filter(month == 9) %>% 
+  mutate(day = day(date)) %>% 
+  mutate(day_fac = as.factor(day(date))) # functions needs factor for figure
+  #filter(day > 12)
+
+str(buoy_wind5)
+
+windRose(buoy_wind5, ws = "AveWindSp_ms", wd = "AveWindDir_deg", type = "day_fac",paddle = F, breaks = c(0,2,4,6,8,10))
+
+
+```
+
+# Sunapee Master data LMP
+```{r}
+sunapee_master_http <- 'https://raw.githubusercontent.com/Lake-Sunapee-Protective-Association/LMP/main/master%20files/LSPALMP_1986-2020_v2021-03-29.csv'
+
+sunapee_master <- read_csv(sunapee_master_http,
+                           col_types = cols(.default = col_character()))
+unique(sunapee_master$station) #Midge (site110) and Newbury (site90)    
+unique(sunapee_master$site_type)
+
+#subset for sites 110 and 90, secchi and TP, 2009-2016, May-Oct
+sunapee_filter <- sunapee_master %>%
+  filter(station == 110|station == 90) %>%
+  filter(parameter == 'secchidepth_m' | parameter == 'TP_mgl') %>%
+  filter(!is.na(value)) %>%
+  mutate(date = as.Date(date),
+         month = as.numeric(format(date, '%m')),
+         value = as.numeric(value)) %>%
+  filter(date >= as.Date('2009-01-01') & date < as.Date('2017-01-01') & month >= 5 & month < 11)
+
+# convert TP to ugl
+sunapee_filter <- sunapee_filter %>%
+  mutate(value = case_when(parameter == 'TP_mgl' ~ value * 1000,
+                           TRUE ~ value),
+         parameter = case_when(parameter == 'TP_mgl' ~ 'TP_ugl',
+                               TRUE ~ parameter))
+
+```
+
+# Plot TP data over time - y-scale varies
+Y-scale set to free for each year
+```{r}
+names(sunapee_filter)
+sunapee_TP <- sunapee_filter %>% 
+  filter(parameter == "TP_ugl")
+
+ggplot(data = sunapee_TP, aes(x = date, y = value, shape = station, color = depth_m))+
+  geom_point()+
+  geom_line()
+```
+
+# Table with Hindcasting results for week 1
+```{r}
+hindcast_output_analysis_wk_1 <- read_csv("6_Output_analysis/hindcast_output_analysis_wk_1.csv")
+names(hindcast_output_analysis_wk_1)
+
+hindcast_wk1 <- hindcast_output_analysis_wk_1 %>% 
+  mutate(changePL = pred_loss-min(pred_loss)) %>% 
+  select(model_name, RMSE, pred_SD, pred_loss, changePL, coverage, peak_timing, mean_bias)
+
+header <- c("Model Name", "RMSE", "Predictive S.D.", "Predictive Loss","Change PL",  "% Coverage", "Peak Timing", "Bias")
+
+kable(hindcast_wk1, digits = 2, col.names = header, caption = "Table 1. Newbury 1-Week Hindcast", align = "lcccccc")
+```
+
+# Table with Hindcasting results for week 4
+```{r}
+hindcast_output_analysis_wk_4 <- read_csv("6_Output_analysis/hindcast_output_analysis_wk_4.csv")
+names(hindcast_output_analysis_wk_4)
+
+hindcast_wk4 <- hindcast_output_analysis_wk_4 %>% 
+  mutate(changePL = pred_loss-min(pred_loss)) %>% 
+  select(model_name, RMSE, pred_SD, pred_loss, changePL, coverage, peak_timing, mean_bias)
+
+header <- c("Model Name", "RMSE", "Predictive S.D.", "Predictive Loss","Change PL",  "% Coverage", "Peak Timing", "Bias")
+
+kable(hindcast_wk4, digits = 2,  col.names = header, caption = "Table 2. Newbury 4-Week Hindcast", align = "lccccccc")
+```
+
