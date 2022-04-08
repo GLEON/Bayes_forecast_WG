@@ -13,8 +13,8 @@
 pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #set a directory to use as a local file repository for plots if desire to write to file
-my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output"
-write_plots <- FALSE
+my_directory <- "~/Documents/Gloeo Bayesian Modeling/R Output/Bayes_model_calibration_output/" #"C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output"
+write_plots <- TRUE #FALSE
 
 #make vector of model names for for-loop
 my_models <- c("RW","RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wind","wind_and_GDD","schmidt_and_GDD","schmidt_and_temp","temp_and_wind","RY")
