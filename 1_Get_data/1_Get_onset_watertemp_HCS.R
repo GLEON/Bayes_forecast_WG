@@ -15,9 +15,10 @@ pacman::p_load(tidyverse, lubridate, openair, zoo)
 # Citation: Cottingham, K.L., C.C. Carey, and K.C. Weathers. 2020. High-frequency temperature data from four near-shore sites, Lake Sunapee, NH, USA, 2006-2018 ver 1. Environmental Data Initiative. https://doi.org/10.6073/pasta/3e325757f0e981d91cd297f257f05f55. Accessed 2020-05-21.
 
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.498.1&entityid=b4f60789ceb87db613924ca43a2f71ed"
+
 destination <- "./00_Data_files/EDI_data_clones"
 
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method='libcurl')
+download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method="libcurl")
 
 # Load onset water temp data into R ####
 dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
@@ -268,7 +269,7 @@ gdd_sum14 <- bind_cols(y6, gdd_sum6)
 gdd_sum15 <- bind_cols(y7, gdd_sum7)
 gdd_sum16 <- bind_cols(y8, gdd_sum8)
 
-# Left join with origina data
+# Left join with original data
 gdd2 <- left_join(gdd1,gdd_sum09,by = "dayofyr")
 gdd3 <- left_join(gdd2,gdd_sum10,by = "dayofyr")
 gdd4 <- left_join(gdd3,gdd_sum11,by = "dayofyr")
