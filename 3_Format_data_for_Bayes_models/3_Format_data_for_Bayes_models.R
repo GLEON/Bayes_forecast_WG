@@ -1,6 +1,7 @@
 #Title: 3 Format G. echinulata and covariate data for Bayesian models
 #Author: Mary Lofton
 #Date: 15APR20
+# JB edits 24 Jan 2022 to read in Newbury instead of Herrick cove data on line 15
 
 #Load packages
 
@@ -11,7 +12,7 @@
 pacman::p_load(tidyverse, lubridate)
 
 ##############format G. echinulata data
-gloeo <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv") %>%
+gloeo <- read_csv("./00_Data_files/Covariate_analysis_data/NB_Gechinulata_long.csv") %>% #read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
   select(year, season_week, ln_totalperL) %>%
   spread(key = season_week, value = ln_totalperL) %>%
   select(-year)
@@ -179,7 +180,7 @@ write.csv(wnd1, "./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.
 ##############format precip data
 ppt <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precipitation_2009-2016.csv")
 
-#avg. wind direction with a 2 day lag
+# precipitation data
 ppt1 <- ppt %>%
   select(date, precip_mm) %>%
   mutate(season_week = rep(c(1:20),times = 8),

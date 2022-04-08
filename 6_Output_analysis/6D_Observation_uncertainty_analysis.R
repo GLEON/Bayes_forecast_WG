@@ -9,7 +9,8 @@
 pacman::p_load(tidyverse, lubridate)
 
 #set local directory for writing plots
-my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
+#my_directory <- "C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_analysis_output/"
+#my_directory <- "~/Documents/Gloeo Bayesian Modeling/R Output/Bayes_model_uncertainty_analysis_output/"
 
 #setting up counters and vectors for for-loop
 model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_max_lag","wnd_dir_2day_lag","GDD","schmidt_and_wind","temp_and_wind","wind_and_GDD")
