@@ -19,7 +19,12 @@
 pacman::p_load(tidyverse)
 
 #setting up counters and vectors for for-loop
-model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_temp","schmidt_max_lag","precip","schmidt_and_precip","temp_and_precip","precip_and_GDD")
+# Old model names? -JAB 25 Jan 2022
+# model_names <- c("RW","RW_obs","AR","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_and_temp","schmidt_max_lag","precip","schmidt_and_precip","temp_and_precip","precip_and_GDD")
+
+# New model names? JAB 25 Jan 2022
+model_names <- c("RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_max_lag","wnd_dir_2day_lag","GDD","schmidt_and_wind","temp_and_wind","wind_and_GDD")
+
 forecast_weeks <- c(1,4)
 
 ########################CALCULATE ASSESSMENT METRICS#####################################
@@ -34,14 +39,14 @@ for (n in 1:length(forecast_weeks)){
     varRel <- as.matrix(read_csv(file=file.path(paste("./5_Model_output/5.3_Uncertainty_partitioning/",paste0(model_names[i],'_varRelative_',forecast_weeks[n],'.csv')))))
 
     #IC
-    png(filename = paste0("C:/Users/Mary Lofton/Dropbox/Ch5/histograms_for_KLC/",model_names[i],"_IC_",forecast_weeks[n],".png"))
+    png(filename = paste0("~/Documents/Gloeo Bayesian Modeling/Bayes_model_calibration_output/",model_names[i],"_IC_",forecast_weeks[n],".png"))
     plot(density(varRel[1,], na.rm = TRUE),main = paste(model_names[i],"IC"))
     abline(v = mean(varRel[1,], na.rm = TRUE), col = "red")
     dev.off()
 
     #Parameter
     if(!model_names[i] %in% c("RW","RW_obs")){
-      png(filename = paste0("C:/Users/Mary Lofton/Dropbox/Ch5/histograms_for_KLC/",model_names[i],"_PARAMETER_",forecast_weeks[n],".png"))
+      png(filename = paste0("~/Documents/Gloeo Bayesian Modeling/Bayes_model_calibration_output/",model_names[i],"_PARAMETER_",forecast_weeks[n],".png"))
       plot(density(varRel[2,] - varRel[1,], na.rm = TRUE),main = paste(model_names[i],"Parameter"))
       abline(v = mean(varRel[2,] - varRel[1,], na.rm = TRUE), col = "red")
       dev.off()
@@ -50,7 +55,7 @@ for (n in 1:length(forecast_weeks)){
 
     #Driver
     if(!model_names[i] %in% c("RW","RW_obs","AR")){
-      png(filename = paste0("C:/Users/Mary Lofton/Dropbox/Ch5/histograms_for_KLC/",model_names[i],"_DRIVER_",forecast_weeks[n],".png"))
+      png(filename = paste0("~/Documents/Gloeo Bayesian Modeling/Bayes_model_calibration_output/",model_names[i],"_DRIVER_",forecast_weeks[n],".png"))
       plot(density(varRel[3,] - varRel[2,], na.rm = TRUE),main = paste(model_names[i],"Driver"))
       abline(v = mean(varRel[3,] - varRel[2,], na.rm = TRUE), col = "red")
       dev.off()
@@ -60,21 +65,21 @@ for (n in 1:length(forecast_weeks)){
 
     #Process
     if(model_names[i] %in% c("RW","RW_obs")){
-      png(filename = paste0("C:/Users/Mary Lofton/Dropbox/Ch5/histograms_for_KLC/",model_names[i],"_PROCESS_",forecast_weeks[n],".png"))
+      png(filename = paste0("~/Documents/Gloeo Bayesian Modeling/Bayes_model_calibration_output/",model_names[i],"_PROCESS_",forecast_weeks[n],".png"))
       plot(density(varRel[2,] - varRel[1,], na.rm = TRUE), main = paste(model_names[i],"Process"))
       abline(v = mean(varRel[2,] - varRel[1,], na.rm = TRUE), col = "red")
       dev.off()
 
 
     } else if (model_names[i] == "AR") {
-      png(filename = paste0("C:/Users/Mary Lofton/Dropbox/Ch5/histograms_for_KLC/",model_names[i],"_PROCESS_",forecast_weeks[n],".png"))
+      png(filename = paste0("~/Documents/Gloeo Bayesian Modeling/Bayes_model_calibration_output/",model_names[i],"_PROCESS_",forecast_weeks[n],".png"))
       plot(density(varRel[3,] - varRel[2,], na.rm = TRUE), main = paste(model_names[i],"Process"))
       abline(v = mean(varRel[3,] - varRel[2,], na.rm = TRUE), col = "red")
       dev.off()
 
 
     } else {
-      png(filename = paste0("C:/Users/Mary Lofton/Dropbox/Ch5/histograms_for_KLC/",model_names[i],"_PROCESS_",forecast_weeks[n],".png"))
+      png(filename = paste0("~/Documents/Gloeo Bayesian Modeling/Bayes_model_calibration_output/",model_names[i],"_PROCESS_",forecast_weeks[n],".png"))
       plot(density(varRel[4,] - varRel[3,], na.rm = TRUE), main = paste(model_names[i],"Process"))
       abline(v = mean(varRel[4,] - varRel[3,], na.rm = TRUE), col = "red")
       dev.off()
