@@ -17,10 +17,9 @@ pacman::p_load(tidyverse, lubridate)
 
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.497.2&entityid=9d9fbe6e3a69067569085435051d562e"
 
-destination <- "./00_Data_filesEDI_data_clones"
+destination <- "./00_Data_files/EDI_data_clones/weekly_surface_gloeo_4sites_2005_2016_v10April2020.csv"
 
-# Original code
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/weekly_surface_gloeo_4sites_2005_2016_v10April2020.csv", method='libcurl')
+download.file(data, destfile = destination, method='libcurl')
 
 
 # Load gloeo data into R ####
