@@ -16,12 +16,12 @@ pacman::p_load(tidyverse, lubridate, openair, zoo)
 
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.498.1&entityid=b4f60789ceb87db613924ca43a2f71ed"
 
-destination <- "./00_Data_files/EDI_data_clones"
+destination <- "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv"
 
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method='libcurl')
+download.file(data,destfile = destination, method='libcurl')
 
 # Load onset water temp data into R ####
-dat <- read_csv("./00_Data_files/EDI_data_clones/wtrtemp_clean_2009-2016_allsites.csv",
+dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
                 col_types = list(year = col_double(),
                                  dayofyr = col_double(),
                                  time = col_time(),
@@ -45,8 +45,7 @@ dat1 <- dat %>%
 plot(temp_degC ~ datetime, data = dat1)
 
 # Low data at end of 2014 when logger was removed from lake, so changed to NA for 2014-09-17 10:00:00 - 2014-09-18 08:00:00
-# 16 March 2022 - JB cleaned up data and removed outlier values
-#dat1[17138:17160, 7] <- NA
+dat1[17138:17160, 7] <- NA
 
 # Add full time series to data to be able to calculate daily averages but cut-off days with water temp for only part of day
 full_datetime <- seq(from = ymd_hms("2009-05-21 00:00:00"), to = ymd_hms("2016-10-05 23:00:00"), by = dhours(1))
@@ -74,9 +73,9 @@ sotf_watertemp_daily_sd <- timeAverage(dat3, avg.time = "day", data.thresh = 75,
 
 #Bind summaries together
 sotf_watertemp_daily_summary <- bind_cols(sotf_watertemp_daily_mean[,-4], sotf_watertemp_daily_median[,5], sotf_watertemp_daily_min[,5], sotf_watertemp_daily_max[,5], sotf_watertemp_daily_sd[,5])
-colnames(sotf_watertemp_daily_summary)[4:8] <- c("SOTF.tempC_mean","SOTF.tempC_median","SOTF.tempC_min","SOTF.tempC_max","SOTF.tempC_sd")
 
 # rename columns
+colnames(sotf_watertemp_daily_summary)[4:8] <- c("SOTF.tempC_mean","SOTF.tempC_median","SOTF.tempC_min","SOTF.tempC_max","SOTF.tempC_sd")
 dat4 <- sotf_watertemp_daily_summary
 
 # Join with sampling dates ####

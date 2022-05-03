@@ -17,28 +17,24 @@ pacman::p_load(tidyverse, lubridate, openair, zoo)
 
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.498.1&entityid=b4f60789ceb87db613924ca43a2f71ed"
 
-destination <- "./00_Data_files/EDI_data_clones"
+destination <- "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv"
 
-download.file(url = data, destfile = "./00_Data_files/temp_2006-2018_QAQC_vert_09May2020.csv")
+download.file(url = data, destfile = destination, method = "libcurl")
 
 # Load onset water temp data into R ####
-dat <- read_csv("./00_Data_files/EDI_data_clones/wtrtemp_clean_2009-2016_allsites.csv",
-                col_types = list(
-                  datetime = col_datetime(format = ""),
-                  date = col_date(format = ""),
-                  year = col_double(),
-                  dayofyr = col_double(),
-                  time = col_time(format = ""),
-                  week = col_double(),
-                  site = col_character(),
-                  temp_degC = col_double()
-                ))
+dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
+                col_types = list(year = col_double(),
+                                 dayofyr = col_double(),
+                                 time = col_time(),
+                                 datetime = col_datetime(),
+                                 site = col_character(),
+                                 temp_degC = col_double()))
 
 
 # limit logger data to sampling years, site
 dat1 <- dat %>%
   filter(site == "Newbury") %>%
-  select(datetime, date, year, dayofyr, time, site, temp_degC)
+  select(datetime, year, dayofyr, time, site, temp_degC)
 
 # plot data to check
 plot(temp_degC ~ datetime, data = dat1)
@@ -55,7 +51,6 @@ dat2 <- left_join(full_datetime.df, dat1, by = "datetime")
 
 # open air function needs date column so renamed datetime
 dat3 <- dat2 %>%
-  select(-date) %>%
   rename(date = datetime)
 
 # Set threshold to 75% of hourly data needs to be present to calculate the daily summary
@@ -68,10 +63,10 @@ watertemp_daily_sd <- timeAverage(dat3, avg.time = "day", data.thresh = 75, stat
 
 # Bind summaries together
 watertemp_daily_summary <- bind_cols(watertemp_daily_mean[,-4], watertemp_daily_median[,5], watertemp_daily_min[,5], watertemp_daily_max[,5], watertemp_daily_sd[,5])
-colnames(watertemp_daily_summary)[4:8] <- c("NB.tempC_mean","NB.tempC_median","NB.tempC_min","NB.tempC_max","NB.tempC_sd")
-
 
 # rename columns
+colnames(watertemp_daily_summary)[4:8] <- c("NB.tempC_mean","NB.tempC_median","NB.tempC_min","NB.tempC_max","NB.tempC_sd")
+
 dat4 <- watertemp_daily_summary
 
 # Join with sampling dates ####
@@ -247,7 +242,7 @@ gdd1 <- dat4_fill3 %>% # use daily water temp data summary for May-Oct
   filter(!is.na(gdd)) %>%
   spread(key = year, value = gdd) # make wide to do each year separately
 
-# Fix 2010
+# Fix 2010 ??
 gdd1[7,3] <- NA
 
 # Calculate gdd as column sum of daily data - separate each year since different number of missing points

@@ -17,31 +17,38 @@ pacman::p_load(tidyverse, lubridate, openair, zoo)
 
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.498.1&entityid=b4f60789ceb87db613924ca43a2f71ed"
 
-destination <- "./00_Data_files/EDI_data_clones"
+destination <- "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv"
 
-download.file(url = data, destfile = "./00_Data_files/temp_2006-2018_QAQC_vert_09May2020.csv")
+download.file(url = data, destfile = destination, method = "libcurl")
 
 # Load onset water temp data into R ####
-dat <- read_csv("./00_Data_files/EDI_data_clones/wtrtemp_clean_2009-2016_allsites.csv",
-                col_types = list(
-                  datetime = col_datetime(format = ""),
-                  date = col_date(format = ""),
-                  year = col_double(),
-                  dayofyr = col_double(),
-                  time = col_time(format = ""),
-                  week = col_double(),
-                  site = col_character(),
-                  temp_degC = col_double()
-                ))
+dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
+                col_types = list(year = col_double(),
+                                 dayofyr = col_double(),
+                                 time = col_time(),
+                                 datetime = col_datetime(),
+                                 site = col_character(),
+                                 temp_degC = col_double()
+                                 ))
 
 
 # limit logger data to sampling years, site
 dat1 <- dat %>%
+  mutate(date = date(datetime)) %>%
+  filter(year %in% 2009:2016) %>%
   filter(site == "NorthSunapeeHarbor") %>%
+  mutate(min = minute(time)) %>%
+  filter(min!=30) %>%
+  select(-min) %>%
   select(datetime, date, year, dayofyr, time, site, temp_degC)
 
 # plot data to check
 plot(temp_degC ~ datetime, data = dat1)
+
+# remove outlier values @ beginning of 2013 & end of 2014
+dat1[11486:11648, 7] <- NA
+
+dat1[17138:17160, 7] <- NA
 
 # Add full time series to data to be able to calculate daily averages but cut-off days with water temp for only part of day
 full_datetime <- seq(from = ymd_hms("2009-05-21 00:00:00"), to = ymd_hms("2016-10-05 23:00:00"), by = dhours(1))
@@ -68,10 +75,10 @@ watertemp_daily_sd <- timeAverage(dat3, avg.time = "day", data.thresh = 75, stat
 
 # Bind summaries together
 watertemp_daily_summary <- bind_cols(watertemp_daily_mean[,-4], watertemp_daily_median[,5], watertemp_daily_min[,5], watertemp_daily_max[,5], watertemp_daily_sd[,5])
-colnames(watertemp_daily_summary)[4:8] <- c("NSH.tempC_mean","NSH.tempC_median","NSH.tempC_min","NSH.tempC_max","NSH.tempC_sd")
-
 
 # rename columns
+colnames(watertemp_daily_summary)[4:8] <- c("NSH.tempC_mean","NSH.tempC_median","NSH.tempC_min","NSH.tempC_max","NSH.tempC_sd")
+
 dat4 <- watertemp_daily_summary
 
 # Join with sampling dates ####
@@ -247,8 +254,8 @@ gdd1 <- dat4_fill3 %>% # use daily water temp data summary for May-Oct
   filter(!is.na(gdd)) %>%
   spread(key = year, value = gdd) # make wide to do each year separately
 
-# Fix 2010
-gdd1[8,3] <- NA
+# Fix 2010 - not needed for NSH
+#gdd1[7,3] <- NA
 
 # Calculate gdd as column sum of daily data - separate each year since different number of missing points
 # Note could also try rollsum
@@ -261,10 +268,8 @@ gdd_sum6 <- as_tibble_col(cumsum(na.omit(gdd1$`2014`)), column_name = "gdd_sum14
 gdd_sum7 <- as_tibble_col(cumsum(na.omit(gdd1$`2015`)), column_name = "gdd_sum15")
 gdd_sum8 <- as_tibble_col(cumsum(na.omit(gdd1$`2016`)), column_name = "gdd_sum16")
 
-
-
 y1 <- gdd1[1:123,1]
-y2 <- gdd1[c(4,9:124),1]
+y2 <- gdd1[c(4,8:124),1]
 y3 <- gdd1[12:124,1]
 y4 <- gdd1[4:130,1]
 y5 <- gdd1[9:120,1] #127 for HCS
