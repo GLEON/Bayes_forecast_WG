@@ -39,7 +39,7 @@ dat <- read_csv("00_Data_files/EDI_data_clones/weekly_surface_gloeo_4sites_2005_
 
 # Create tibble with rows for missing observations in 2009-2016 ####
 date <- c(rep(c("2009-06-11","2009-09-28","2015-06-25","2016-06-09","2016-08-10"),times = 1,each = 4),"2014-07-17","2015-06-11","2015-07-23","2015-08-20","2016-08-04")
-site <- c(rep(c("NorthSunapeeHarbor","SouthoftheFells","HerrickCoveSouth","Newbury"),times = 5),"Newbury","SouthoftheFells","HerrickCoveSouth","SouthoftheFells","NorthSunapeeHarbor")
+site <- c(rep(c("NorthSunapeeHarbor","SouthOfTheFells","HerrickCoveSouth","Newbury"),times = 5),"Newbury","SouthOfTheFells","HerrickCoveSouth","SouthOfTheFells","NorthSunapeeHarbor")
 
 odd_obs <- as_tibble(cbind(site,date)) %>%
   mutate(date = as.Date(date)) %>%
