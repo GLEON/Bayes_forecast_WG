@@ -16,9 +16,9 @@ pacman::p_load(tidyverse, lubridate, openair, zoo)
 
 data  <- "https://portal.edirepository.org/nis/dataviewer?packageid=edi.498.1&entityid=b4f60789ceb87db613924ca43a2f71ed"
 
-destination <- "./00_Data_files/EDI_data_clones"
+destination <- "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv"
 
-download.file(data,destfile = "./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv", method="libcurl")
+download.file(data, destfile = destination, method="libcurl")
 
 # Load onset water temp data into R ####
 dat <- read_csv("./00_Data_files/EDI_data_clones/temp_2006-2018_QAQC_vert_09May2020.csv",
