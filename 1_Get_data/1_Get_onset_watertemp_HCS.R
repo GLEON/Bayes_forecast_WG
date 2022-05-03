@@ -68,10 +68,10 @@ hcs_watertemp_daily_sd <- timeAverage(dat3, avg.time = "day", data.thresh = 75, 
 
 # Bind summaries together
 hcs_watertemp_daily_summary <- bind_cols(hcs_watertemp_daily_mean[,-4], hcs_watertemp_daily_median[,5], hcs_watertemp_daily_min[,5], hcs_watertemp_daily_max[,5], hcs_watertemp_daily_sd[,5])
-colnames(hcs_watertemp_daily_summary)[4:8] <- c("HCS.tempC_mean","HCS.tempC_median","HCS.tempC_min","HCS.tempC_max","HCS.tempC_sd")
-
 
 # rename columns
+colnames(hcs_watertemp_daily_summary)[4:8] <- c("HCS.tempC_mean","HCS.tempC_median","HCS.tempC_min","HCS.tempC_max","HCS.tempC_sd")
+
 dat4 <- hcs_watertemp_daily_summary
 
 # Join with sampling dates ####
@@ -91,7 +91,7 @@ dat4_subset <- dat4 %>%
   mutate(month = month(date)) %>%
   filter(month %in% 5:9)
 
-dat4_subset1 <- dat4_subset[c(123, 277, 320, 430, 464, 588, 616, 739, 775, 892, 935, 1044, 1201),]
+dat4_subset1 <- dat4_subset[c(123, 161, 277, 320, 430, 464, 588, 616, 739, 775, 892, 935, 1044, 1201),]
 
 dat4_subset2 <- dat4_subset1 %>%
   mutate(date = date(date)) %>%
@@ -104,6 +104,8 @@ dat4_subset3 <- dat4_subset1 %>%
   mutate(date = date(date)) %>%
   filter(month == 5|month == 6) %>%
   mutate(date2 = date - ddays(1))
+
+dat4_subset3[1,10] <- ymd("2010-05-25") #3 days apart
 
 # Bind new dates together
 dat4_subset4 <- bind_rows(dat4_subset2, dat4_subset3) %>%
@@ -240,6 +242,9 @@ gdd1 <- dat4_fill3 %>% # use daily water temp data summary for May-Sep
   filter(gdd!="NA") %>%
   spread(key = year, value = gdd) # make wide to do each year separately
 
+# Fix 2010
+gdd1[7,3] <- NA
+
 # Calculate gdd as column sum of daily data - separate each year since different number of missing points
 # Note could also try rollsum
 gdd_sum1 <- as_tibble_col(cumsum(na.omit(gdd1$`2009`)), column_name = "gdd_sum09")
@@ -252,7 +257,7 @@ gdd_sum7 <- as_tibble_col(cumsum(na.omit(gdd1$`2015`)), column_name = "gdd_sum15
 gdd_sum8 <- as_tibble_col(cumsum(na.omit(gdd1$`2016`)), column_name = "gdd_sum16")
 
 y1 <- gdd1[1:123,1]
-y2 <- gdd1[7:124,1]
+y2 <- gdd1[c(4,8:123,125),1]
 y3 <- gdd1[12:124,1]
 y4 <- gdd1[4:130,1]
 y5 <- gdd1[2:127,1]
@@ -278,11 +283,6 @@ gdd6 <- left_join(gdd5,gdd_sum13,by = "dayofyr")
 gdd7 <- left_join(gdd6,gdd_sum14,by = "dayofyr")
 gdd8 <- left_join(gdd7,gdd_sum15,by = "dayofyr")
 gdd_sum_all <- left_join(gdd8,gdd_sum16,by = "dayofyr")
-
-
-# Fix 2010
-gdd_sum_all[124,11] <- NA
-gdd_sum_all[125,11] <- 2149.890
 
 # Convert back to long
 gdd_all2 <- gdd_sum_all %>%
