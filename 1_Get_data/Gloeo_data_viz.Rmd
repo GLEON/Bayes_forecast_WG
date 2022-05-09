@@ -253,9 +253,9 @@ sum(is.na(wtr1)) #1348
 
 # Plots zoomed in by year and site
 wtr_site <- wtr1 %>% 
-  filter(year == 2014) %>% 
+  filter(year == 2013) %>% 
  # filter(dayofyr < 153) %>% 
-  filter(site == "SouthOfTheFells")
+  filter(site == "NorthSunapeeHarbor")
 
 # Hourly dataset - plot with datetime on x-axis
 ggplot(data = wtr_site, aes(x = datetime, y = temp_degC, color = site))+
