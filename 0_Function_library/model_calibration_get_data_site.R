@@ -25,15 +25,16 @@ gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/Gloeo_HC.csv")
 # Add in year as numeric number, drop year and rename columns, output as matrix
 gloeo2 <- gloeo %>%
   mutate(year_no = as.numeric(as.factor(year))) %>%
-  select(year_no, season_week, hc_gloeo_ln) %>%
-  rename(season_weeks = season_week, y = hc_gloeo_ln)
+  mutate(season_weeks = 1:160) %>% # create continuous season week column to loop through sites instead of years
+  select(season_weeks, hc_gloeo_ln) %>% # drop year_no?
+  rename(y = hc_gloeo_ln)
 
 # turn into matrix
 gloeo3 <- as.matrix(gloeo2)
 
-year_no = gloeo3[,1]
-season_weeks = gloeo3[,2]
-y = gloeo3[,3]
+#year_no = gloeo3[,1]
+season_weeks = gloeo3[,1]
+y = gloeo3[,2]
 
 
 ###############################GLOEO-ONLY MODELS#####################################
@@ -421,7 +422,7 @@ if(model_name == "wtrtemp_min_and_GDD"){
   # repeat 8 times to match long format data
   week_avg2 <- rep(week_avg2, 8)
 
-  return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Temp, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2))
+  return(list(season_weeks = season_weeks, y = y, covar1 = Temp, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2)) #removed year_no = year_no,
 
 }
 
