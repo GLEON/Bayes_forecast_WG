@@ -14,27 +14,38 @@ get_calibration_data <- function(model_name){
 #set calibration years and weeks of season - do not edit
 # years <- c(2009:2016) # changed to full time period now
 # year_no = as.numeric(as.factor(years))
-# season_weeks = c(1:20)
+season_weeks = c(1:160) # full season weeks instead of 1:20
+
+site_no = c(1:4)
 
 #read in Gloeo data
 gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/Gloeo_HC.csv")
 
+#y <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/Gechinulata_Site1.csv"))
+
 # #remove 2015-2016 data
 # y <- y[-c(7:8),]
 
-# Add in year as numeric number, drop year and rename columns, output as matrix
+# # Add in year as numeric number, drop year and rename columns, output as matrix
 gloeo2 <- gloeo %>%
   mutate(year_no = as.numeric(as.factor(year))) %>%
   mutate(season_weeks = 1:160) %>% # create continuous season week column to loop through sites instead of years
-  select(season_weeks, hc_gloeo_ln) %>% # drop year_no?
-  rename(y = hc_gloeo_ln)
+  mutate(site_no = 1) %>%
+  select(season_weeks, site_no, hc_gloeo_ln) %>% # drop year_no?
+  rename(y = hc_gloeo_ln) %>%
+  pivot_wider(values_from = y, names_from = season_weeks) %>%
+  select(-site_no)
 
-# turn into matrix
-gloeo3 <- as.matrix(gloeo2)
+colnames(gloeo2) <- paste("wk", colnames(gloeo2), sep = "_")
 
-#year_no = gloeo3[,1]
-season_weeks = gloeo3[,1]
-y = gloeo3[,2]
+#
+# # turn into matrix
+y <- as.matrix(gloeo2)
+#
+# #year_no = gloeo3[,1]
+# season_weeks = gloeo3[,1]
+# site_no = gloeo3 [,2]
+# y = gloeo3[,3]
 
 
 ###############################GLOEO-ONLY MODELS#####################################
@@ -325,7 +336,7 @@ y = gloeo3[,2]
 ###############################TWO COVARIATE QUADRATIC MODELS#####################################
 
 #for wtrtemp_min_and_GDD
-if(model_name == "wtrtemp_min_and_GDD"){
+if(model_name == "wtrtemp_min_and_GDD_v2"){
 
   #read in covariate 1 (min water temp)  data from Herrick Cove
   Temp <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_HC.csv")
@@ -334,8 +345,15 @@ if(model_name == "wtrtemp_min_and_GDD"){
   #center covariate data
   Temp$HCS.tempC_min_stand <- (Temp$HCS.tempC_min - mean(Temp$HCS.tempC_min, na.rm = TRUE))/sd(Temp$HCS.tempC_min, na.rm = TRUE)
 
+  Temp2 <- Temp %>%
+    mutate(season_weeks = 1:160) %>%
+    select(season_weeks, HCS.tempC_min_stand) %>%
+    pivot_wider(values_from = HCS.tempC_min_stand, names_from = season_weeks)
+
+  colnames(Temp2) <- paste("wk", colnames(Temp2), sep = "_")
+
   # convert to matrix
-  Temp <- as.matrix(Temp[, 4])
+  Temp <- as.matrix(Temp2)
 
   #read in data from Fichter for data gap-filling
   Temp_prior <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_SOTF.csv")
@@ -351,6 +369,8 @@ if(model_name == "wtrtemp_min_and_GDD"){
     select(-SOTF.tempC_min) %>%
     pivot_wider(1:3, names_from = season_week, values_from = SOTF.tempC_min_stand)
 
+  colnames(Temp_prior_wide) <- paste("wk", colnames(Temp_prior_wide), sep = "_")
+
   week_avg1 = colMeans(Temp_prior_wide[,-1], na.rm = TRUE)
   #use weekly average from last sampled week (18) to serve as prior for weeks 19 & 20
   week_avg1[is.na(week_avg1)] <- week_avg1[19] # not sure if should be 18? more data available
@@ -358,8 +378,14 @@ if(model_name == "wtrtemp_min_and_GDD"){
   # repeat 8 times to match long format data
   week_avg1 <- rep(week_avg1, 8)
 
+  week_avg1_v2 <- as_tibble(week_avg1) %>%
+    mutate(season_weeks = c(1:160)) %>%
+    pivot_wider(values_from = value, names_from = season_weeks)
+
+  colnames(week_avg1_v2) <- paste("wk", colnames(week_avg1_v2), sep = "_")
+
   # convert to matrix
-  Temp_prior <- as.matrix(Temp_prior[,-3])
+  week_avg1 <- as.matrix(week_avg1_v2)
 
   #read in covariate 2 (GDD) data
   GDD <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_HC.csv")
@@ -382,9 +408,16 @@ if(model_name == "wtrtemp_min_and_GDD"){
    GDD_long <- as.data.frame(GDD_trans) %>%
      pivot_longer(cols = 1:20, names_to = "season_week", values_to = "hc_gdd_sum", names_transform = list(season_week = as.integer)) %>%
      mutate(year = rep(2009:2016,times = 1, each = 20)) %>%
-     select(year, season_week, hc_gdd_sum)
+     mutate(season_weeks = c(1:160)) %>%
+    select(season_weeks, hc_gdd_sum) %>%
+    pivot_wider(values_from = hc_gdd_sum, names_from = season_weeks)
 
-  GDD <-  as.matrix(GDD_long[,3]) # only keep standardized GDD data, year and season week added outside loop
+   colnames(GDD_long) <- paste("wk", colnames(GDD_long), sep = "_")
+
+   # convert to matrix
+   GDD <- as.matrix(GDD_long)
+
+#  GDD <-  as.matrix(GDD_long[,3]) # only keep standardized GDD data, year and season week added outside loop
 
   #read in data from Fichter for data gap-filling
   GDD_prior <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_SOTF.csv")
@@ -396,6 +429,9 @@ if(model_name == "wtrtemp_min_and_GDD"){
   # convert to wide first
   GDD_prior_wide <- GDD_prior %>%
     pivot_wider(1:3, names_from = season_week, values_from = sotf_gdd_sum)
+
+  colnames(GDD_prior_wide) <- paste("wk", colnames(GDD_prior_wide), sep = "_")
+
 
   GDD_prior_stand <- apply(GDD_prior_wide[,-1],1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
 
@@ -422,7 +458,16 @@ if(model_name == "wtrtemp_min_and_GDD"){
   # repeat 8 times to match long format data
   week_avg2 <- rep(week_avg2, 8)
 
-  return(list(season_weeks = season_weeks, y = y, covar1 = Temp, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2)) #removed year_no = year_no,
+  week_avg2_v2 <- as_tibble(week_avg2) %>%
+    mutate(season_weeks = c(1:160)) %>%
+    pivot_wider(values_from = value, names_from = season_weeks)
+
+  colnames(week_avg2_v2) <- paste("wk", colnames(week_avg2_v2), sep = "_")
+
+  # convert to matrix
+  week_avg2 <- as.matrix(week_avg2_v2)
+
+  return(list(season_weeks = season_weeks, site_no = site_no, y = y, covar1 = Temp, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2)) #removed year_no = year_no,
 
 }
 
