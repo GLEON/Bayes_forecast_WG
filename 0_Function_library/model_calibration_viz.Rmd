@@ -1,0 +1,68 @@
+---
+title: "model_viz"
+author: "J. Brentrup"
+date: "5/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries
+```{r}
+library(rjags)
+devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
+
+```
+
+#Read in Data
+```{r}
+###get calibration data - 1 site
+#read in data matrix
+gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/data_site_model_format.csv")
+#gloeo is already on log scale, covars are already standardized
+
+sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
+date = sampling_dates$date
+#model below requires data with k obs: y, covar1, covar2, week_avg1, week_avg2, 
+#and constants mu.0, a_proc,r_proc, a_obs,r_obs, seasons_weeks, site_no
+y=gloeo$y
+covar1=gloeo$Temp
+covar2=gloeo$GDD
+week_avg1=gloeo$week_avg1
+week_avg2=gloeo$week_avg2
+mu.0=-10 ###-10 true value still on log scale but close to zero? -4.95 0+1/141.4 =0.007
+a_obs=0.01; r_obs=0.01
+a_proc=0.01; r_proc=0.01
+season_weeks=gloeo$season_weeks
+```
+
+# Code to visualize actual vs. predicted model output
+1. First model = wtrtemp_min_and_GDD
+
+
+Given the full joint posterior samples, we're next going to visualize the output by just looking at the **95% credible interval of the time-series of X's** and compare that to the observed Y's. To do so we'll convert the coda output into a matrix and then calculate the quantiles. Looking at colnames(out) will show you that the first two columns are `tau_add` and `tau_obs`, so we calculate the CI starting from the 3rd column. We also transform the samples back from the log domain to the linear domain.
+```{r}
+time = date
+time = season_weeks
+time.rng = c(1,length(time))       ## adjust to zoom in and out
+time.rng = c(81,100)              ## zoom in on 2013
+#out <- as.matrix(jags.out)         ## convert from coda to matrix  
+mu.cols <- grep("^mu",colnames(out)) ## grab all columns that start with the letter x
+ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
+
+plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], xaxt = "n") #log='y', don't need on log scale
+## adjust x-axis label to be monthly if zoomed
+if(diff(time.rng) < 100){ 
+  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='week'), format = "%Y-%m-%d", labels = T)
+}
+ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+points(time,y,pch=19,cex=1) #0.5, pch="+",
+lines(time,y)
+lines(time, ci[1,], lty = 2)
+lines(time, ci[3,], lty = 2)
+points(time, ci[2,], pch="+")
+```
+
+
