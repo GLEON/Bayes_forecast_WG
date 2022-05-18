@@ -1,0 +1,284 @@
+---
+title: "GLOEO space _ May2022"
+author: "LaDeau"
+date: "5/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
+
+#set a directory to use as a local file repository for plots if desire to write to file
+#my_directory <- "C:/Users/ladeaus/Documents/GLEON/Brentrup" 
+my_directory <- "~/Documents/Gloeo Bayesian Modeling/R Output/Bayes_model_calibration_output/"
+
+```
+
+#Read in Data
+```{r}
+###get calibration data - 1 site
+#read in data matrix
+gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/data_site_model_format.csv")
+#gloeo is already on log scale, covars are already standardized
+
+
+#model below requires data with k obs: y, covar1, covar2, week_avg1, week_avg2, 
+#and constants mu.0, a_proc,r_proc, a_obs,r_obs, seasons_weeks, site_no
+y=gloeo$y
+covar1=gloeo$Temp
+covar2=gloeo$GDD
+week_avg1=gloeo$week_avg1
+week_avg2=gloeo$week_avg2
+mu.0=-10 ###-10 true value still on log scale but close to zero? -4.95 0+1/141.4 =0.007
+a_obs=0.01; r_obs=0.01
+a_proc=0.01; r_proc=0.01
+season_weeks=gloeo$season_weeks
+year_no = gloeo$year_no
+#year_no = c(1:8)
+```
+data <- list(y=y,season_weeks=season_weeks,site_no=1, covar1=covar1,covar2=covar2,week_avg1=week_avg1,week_avg2=week_avg2, a_obs=a_obs,r_obs=r_obs,a_proc=a_proc,r_proc=r_proc)
+
+## Random Walk run - converges fine
+
+```{r}
+##Random Walk run - converges fine
+data.rw <- list(y=y,n=length(season_weeks),x_ic=log(1000),tau_ic=100,a_obs=1,r_obs=1,a_add=1,r_add=1)
+
+RandomWalk = "
+model{
+  
+  #### Data Model
+  for(t in 1:n){
+    y[t] ~ dnorm(x[t],tau_obs)
+  }
+  
+  #### Process Model
+  for(t in 2:n){
+    x[t]~dnorm(x[t-1],tau_add)
+  }
+  
+  #### Priors
+  x[1] ~ dnorm(x_ic,tau_ic)
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_add ~ dgamma(a_add,r_add)
+}
+"
+
+nchain = 3
+init <- list()
+for(i in 1:nchain){
+  y.samp = sample(y,length(y),replace=TRUE)
+  init[[i]] <- list(tau_add=1/var(diff(y.samp),na.rm=T),tau_obs=5/var(y.samp,na.rm=T))}
+  
+  
+j.model_RW   <- jags.model (file = textConnection(RandomWalk),
+                             data = data.rw,
+                             inits = init,
+                             n.chains = 3)  
+
+
+
+jags.out_RW   <- coda.samples (model = j.model_RW,
+                            variable.names = c("tau_add","tau_obs"),
+                            n.iter = 1000)
+plot(jags.out_RW)
+```
+
+## Dynamic linear
+```{r}
+
+data <- list(y=y,WK=length(season_weeks), covar1=covar1, covar2=covar2, week_avg1=week_avg1, week_avg2=week_avg2, a_obs=a_obs, r_obs=r_obs, a_proc=a_proc,r_proc=r_proc,x_ic=-6,tau_ic=0.1)
+
+
+mod1 = "
+model{
+  
+  #### Data Model
+  for(t in 1:WK){
+    y[t] ~ dnorm(x[t],tau_obs)
+        covar1[t] ~ dnorm(week_avg1[t],0.1)
+        covar2[t] ~ dnorm(week_avg2[t],0.1)
+
+  }
+  
+  #### Process Model
+  for(t in 2:WK){
+    x[t]~dnorm(lam[t],tau_add)
+    lam[t]=beta1 + beta2*lam[t-1] + beta3*covar1[t] + beta4 * covar2[t] + beta5 * covar2[t]^2
+}
+  
+  #### Priors
+  x[1] ~ dnorm(x_ic,tau_ic)
+   lam[1] ~ dnorm(x_ic,tau_ic)
+
+  beta1~dnorm(0,0.01)
+  beta2~dnorm(0,0.01)
+  beta3~dnorm(0,0.01)
+  beta4~dnorm(0,0.01)
+  beta5~dnorm(0,0.01)
+
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_add ~ dgamma(a_proc,r_proc)
+}
+"
+
+j.model_DL   <- jags.model (file = textConnection(mod1),
+                             data = data,
+                             inits = init,
+                             n.chains = 3)  
+
+
+
+jags.out_DL   <- coda.samples (model = j.model_DL,
+                            variable.names = c("tau_add","tau_obs","beta3","beta4","beta5"),
+                            n.iter = 10000)
+plot(jags.out_DL)
+
+
+  
+```
+
+## Dynamic linear with Random Year Effect
+```{r}
+
+data <- list(y=y,
+             WK=length(season_weeks), 
+             year_no = length(year_no),
+             covar1=covar1, 
+             covar2=covar2, 
+             week_avg1=week_avg1, 
+             week_avg2=week_avg2, 
+             a_obs=a_obs, r_obs=r_obs,
+             a_proc=a_proc,r_proc=r_proc,
+             x_ic=-6,tau_ic=0.1)
+
+
+mod1 = "
+model{
+
+  #### Data Model
+  for(t in 1:WK){
+    y[t] ~ dnorm(x[t],tau_obs)
+        covar1[t] ~ dnorm(week_avg1[t],0.1)
+        covar2[t] ~ dnorm(week_avg2[t],0.1)
+
+  }
+  
+  #### Process Model
+  for(t in 2:WK){
+    x[t]~dnorm(lam[t],tau_add)
+    lam[t]=beta1 + beta2*lam[t-1] + beta3*covar1[t] + beta4 * covar2[t] + beta5 * covar2[t]^2 + yr[year_no[k]]
+}
+  
+  #### Priors
+
+for(k in 1:year_no){
+  yr[k] ~ dnorm(0, tau_yr) # k loop on yr
+  x[k,1] ~ dnorm(x_ic,tau_ic)
+  lam[k,1] ~ dnorm(x_ic,tau_ic)
+  }
+
+  beta1~dnorm(0,0.01)
+  beta2~dnorm(0,0.01)
+  beta3~dnorm(0,0.01)
+  beta4~dnorm(0,0.01)
+  beta5~dnorm(0,0.01)
+
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_add ~ dgamma(a_proc,r_proc)
+  tau_yr ~ dgamma(0.01,0.01)
+  
+}
+"
+
+j.model2   <- jags.model (file = textConnection(mod1),
+                             data = data,
+                             inits = init,
+                             n.chains = 3)  
+
+
+
+jags.out2   <- coda.samples (model = j.model2,
+                            variable.names = c("beta3","beta4","beta5","yr", "tau_add","tau_obs", "tau_yr"),
+                            n.iter = 10000)
+plot(jags.out2)
+
+
+  
+```
+
+## Dynamic linear with Random Year Effect
+### Test with full loop imbedded
+```{r}
+
+data <- list(y=y,
+             WK=length(season_weeks), 
+             year_no = length(year_no),
+             covar1=covar1, 
+             covar2=covar2, 
+             week_avg1=week_avg1, 
+             week_avg2=week_avg2, 
+             a_obs=a_obs, r_obs=r_obs,
+             a_proc=a_proc,r_proc=r_proc,
+             x_ic=-6,tau_ic=0.1)
+
+
+mod1 = "
+model{
+
+  #### Data Model
+  for(t in 1:WK){
+    y[t] ~ dnorm(x[t],tau_obs)
+        covar1[t] ~ dnorm(week_avg1[t],0.1)
+        covar2[t] ~ dnorm(week_avg2[t],0.1)
+    
+}
+  
+  #### Process Model
+  for(t in 2:WK){
+    for(k in 1:year_no){
+
+    x[t,k]~dnorm(lam[t,k],tau_add)
+    lam[t,k]=beta1 + beta2*lam[t-1,k] + beta3*covar1[t,k] + beta4 * covar2[t,k] + beta5 * covar2[t,k]^2 + yr[k]
+    }
+}
+  
+# Randome Effects and Initial Conditions, t = season week, yr = year random effect
+
+for(k in 1:year_no){
+  yr[k] ~ dnorm(0, tau_yr) # random site effect on x
+  x[1,k] ~ dnorm(x_ic,tau_ic)
+  lam[1,k] ~ dnorm(x_ic,tau_ic)
+  }
+
+ #### Priors
+  beta1~dnorm(0,0.01)
+  beta2~dnorm(0,0.01)
+  beta3~dnorm(0,0.01)
+  beta4~dnorm(0,0.01)
+  beta5~dnorm(0,0.01)
+
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_add ~ dgamma(a_proc,r_proc)
+  tau_yr ~ dgamma(0.01,0.01)
+  
+}
+"
+
+j.model2   <- jags.model (file = textConnection(mod1),
+                             data = data,
+                             inits = init,
+                             n.chains = 3)  
+
+
+
+jags.out2   <- coda.samples (model = j.model2,
+                            variable.names = c("beta3","beta4","beta5","yr", "tau_add","tau_obs", "tau_yr"),
+                            n.iter = 10000)
+plot(jags.out2)
+
+
+  
+```
+
