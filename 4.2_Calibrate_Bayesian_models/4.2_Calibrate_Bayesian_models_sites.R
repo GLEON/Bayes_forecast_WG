@@ -20,7 +20,7 @@ write_plots <- TRUE #FALSE
 #make vector of model names for for-loop
 #my_models <- c("RW","RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wind","wind_and_GDD","schmidt_and_GDD","schmidt_and_temp","temp_and_wind","RY")
 
-my_models <- c("wtrtemp_min_and_GDD")
+my_models <- c("wtrtemp_min_and_GDD", "wtrtemp_min_and_GDD_RY")
 length(my_models)
 
 
@@ -31,7 +31,7 @@ for (i in 1:length(my_models)){
 
 #1) Source helper functions ---------------------------------------------------------
   source('0_Function_library/model_calibration_plug_n_play_site.R')
-  source('0_Function_library/model_calibration_get_data_site.R')
+  source('0_Function_library/model_calibration_get_data_site_longformat.R')
   source('0_Function_library/model_calibration_plots.R')
 
 #2) Model options => pick model -----------------------------------------------------

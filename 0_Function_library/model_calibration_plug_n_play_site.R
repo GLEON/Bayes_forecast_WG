@@ -32,10 +32,11 @@ jags_plug_ins <- function(model_name){
   if(model_name %in% c("schmidt_and_wind","temp_and_wind","schmidt_and_temp")){
     model_type <- "Linear_2var"
   }
-  if(model_name %in% c("wtrtemp_min_and_GDD")) #, "schmidt_and_GDD","wind_and_GDD"
-    {
+  if(model_name %in% c("wtrtemp_min_and_GDD")){
     model_type <- "Quad_2var"
   }
+
+# Quad 2var models: "schmidt_and_GDD","wind_and_GDD"
 
 # #RW
 #   data.RW <- list(y=cal_data$y, year_no = cal_data$year_no,season_weeks=cal_data$season_weeks,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 0.001, r_obs = 0.001)
@@ -107,8 +108,8 @@ jags_plug_ins <- function(model_name){
 #   init.Linear_2var <- list(list(tau_proc=0.001, tau_obs = 0.1,  tau_C1_proc = 0.01,tau_C2_proc = 0.01, beta1=-0.5, beta2=-0.5, beta3=-0.5, beta4=-0.5), list(tau_proc=0.1,  tau_obs = 1,tau_C1_proc = 0.1,tau_C2_proc = 0.1, beta1=0, beta2=0, beta3=0, beta4=0), list(tau_proc=1, tau_obs = 5,tau_C1_proc = 1,tau_C2_proc = 1, beta1=0.5,beta2=0.5, beta3=0.5, beta4=0.5))
 #   params.Linear_2var <- c("tau_proc","beta1", "beta2", "beta3","beta4","tau_obs","tau_C1_proc", "tau_C2_proc")
 
-#Quad_2var - removed #year_no = cal_data$year_no,
-  data.Quad_2var <- list(y=cal_data$y,  season_weeks=cal_data$season_weeks,covar1=cal_data$covar1, covar2=cal_data$covar2, week_avg1=cal_data$week_avg1,week_avg2=cal_data$week_avg2, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0,beta.m5=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001,beta.v5=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+#Quad_2var - removed #year_no = cal_data$year_no, replaced with site number
+  data.Quad_2var <- list(y=cal_data$y, season_weeks=cal_data$season_weeks,covar1=cal_data$covar1, covar2=cal_data$covar2, week_avg1=cal_data$week_avg1,week_avg2=cal_data$week_avg2, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0,beta.m5=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001,beta.v5=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
   variable.names.Quad_2var <- c("tau_proc", "beta1","beta2", "beta3","beta4","beta5", "tau_obs","tau_C1_proc", "tau_C2_proc")
   variable.namesout.Quad_2var <- c("tau_proc", "beta1", "beta2","beta3","beta4","beta5",  "mu", "tau_obs", "tau_C1_proc", "tau_C2_proc")
 
