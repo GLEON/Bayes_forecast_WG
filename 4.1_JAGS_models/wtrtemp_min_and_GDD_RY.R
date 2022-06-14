@@ -4,7 +4,7 @@ model{
     #this fits the latent Gloeo to your observed Gloeo
     #run this on logged data
 
-  for(k in 1:length(year_no)){
+
 
     for(t in 1:max(season_weeks)){
 
@@ -20,15 +20,17 @@ model{
 
   for(t in 2:max(season_weeks)){
     mu[t]~dnorm(lambda[t],tau_proc)
-    lambda[t] <- beta1  + beta2*lambda[t-1] + beta3*covar1[t] + beta4*covar2[t] + beta5*covar2[t]^2 + yr[year_no[k]]
+    lambda[t] <- beta1  + beta2*mu[t-1] + beta3*covar1[t] + beta4*covar2[t] + beta5*covar2[t]^2 + yr[year_no[t]] # #changed beta2 to mu instead of lambda
 
   }
 
   #### Priors
+  for(k in 1:totYr){
+  yr[k] ~ dnorm(0, tau_yr)
+  }
+
   mu[1] ~ dnorm(x_ic,tau_ic)
   lambda[1] ~ dnorm(x_ic, tau_ic)
-  yr[k] ~ dnorm(0, tau_yr)
-
 
   beta1 ~ dnorm(beta.m1,beta.v1)
   beta2 ~ dnorm(beta.m2,beta.v2)
@@ -36,12 +38,12 @@ model{
   beta4 ~ dnorm(beta.m4,beta.v4)
   beta5 ~ dnorm(beta.m5,beta.v5)
 
-  tau_obs ~ dgamma(a_obs,r_obs)
   tau_C1_proc ~ dgamma(0.01,0.01)
   tau_C2_proc ~ dgamma(0.01,0.01)
 
+  tau_obs ~ dgamma(a_obs,r_obs)
   tau_proc ~ dgamma(a_proc,r_proc)
   tau_yr ~ dgamma(0.01,0.01)
 
-  }
+
 }
