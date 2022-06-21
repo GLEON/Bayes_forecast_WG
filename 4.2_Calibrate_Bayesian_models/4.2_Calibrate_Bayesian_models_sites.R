@@ -20,7 +20,12 @@ write_plots <- TRUE #FALSE
 #make vector of model names for for-loop
 #my_models <- c("RW","RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wind","wind_and_GDD","schmidt_and_GDD","schmidt_and_temp","temp_and_wind","RY")
 
-my_models <- c("wtrtemp_min_and_GDD", "wtrtemp_min_and_GDD_RY")
+# 1 site
+my_models <- c("RW_obs_1site","RW_bias_1site","AC_1site","wtrtemp_min_and_GDD", "wtrtemp_min_and_GDD_RY")
+
+# 3 sites
+my_models <- c("RW_obs_3sites","RW_bias_3sites","AC_3sites", "wtrtemp_min_and_GDD_3sites", "wtrtemp_min_and_GDD_3sites_RY")
+
 length(my_models)
 
 
@@ -31,7 +36,8 @@ for (i in 1:length(my_models)){
 
 #1) Source helper functions ---------------------------------------------------------
   source('0_Function_library/model_calibration_plug_n_play_site.R')
-  source('0_Function_library/model_calibration_get_data_site_longformat.R')
+  #source('0_Function_library/model_calibration_get_data_site_longformat.R') #check correct script sourced
+  source('0_Function_library/model_calibration_get_data_multisite_longformat.R') #check correct script sourced
   source('0_Function_library/model_calibration_plots.R')
 
 #2) Model options => pick model -----------------------------------------------------
@@ -62,7 +68,7 @@ jags.out <- run.jags(model = model,
                      data = jags_plug_ins$data.model,
                      adapt =  5000,
                      burnin =  10000,
-                     sample = 50000,
+                     sample = 50000, #50000
                      n.chains = 3,
                      inits=jags_plug_ins$init.model,
                      monitor = jags_plug_ins$variable.namesout.model)
@@ -106,3 +112,25 @@ write.jagsfile(jags.out, file=file.path("./5_Model_output/5.1_Calibration",paste
 }
 
 #Congratulations! You have run all the models. You may have a cookie.
+
+
+jags.out_DL_RY_3  <- coda.samples (model = j.model,
+                                        variable.names = c("beta1","beta2","beta3","beta4","beta5", "tau_proc","tau_obs","tau_yr", "yr"), #"tau_yr", "yr"
+                                        n.iter = 50000) #10000
+
+plot(jags.out_DL)
+summary(jags.out_DL)
+
+gelman.diag(jags.out_DL)
+GBR <- gelman.plot(jags.out_DL) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
+
+burnin = 10000                              ## determine convergence
+jags.burn2 <- window(jags.out_DL,start=burnin)  ## remove burn-in
+plot(jags.burn2)
+summary(jags.burn2)
+gelman.diag(jags.burn)
+
+
+# Calculate DIC
+DIC.multi <- dic.samples(j.model, n.iter=5000)
+DIC.multi

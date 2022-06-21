@@ -32,6 +32,12 @@ year_no = as.numeric(as.factor(gloeo_3sites$year))
 season_weeks = gloeo_3sites$season_weeks # full season weeks instead of 1:20
 site_no = c(1:3)
 
+###############################GLOEO-ONLY MODELS#####################################
+#for RW_3sites, RW_obs_3sites, and AC models 3 sites
+if(model_name %in% c("RW_obs_3sites","AC_3sites","RW_bias_3sites")){
+  return(list(season_weeks = season_weeks, year_no = year_no, site_no = site_no, y = y))
+}
+
 ###############################TWO COVARIATE QUADRATIC MODELS#####################################
 
 #for wtrtemp_min_and_GDD 3 sites
@@ -392,50 +398,7 @@ if(model_name %in% c("wtrtemp_min_and_GDD_3sites_RY")){
 
   return(list(season_weeks = season_weeks, year_no = year_no,  totYr = length(unique(year_no)), site_no = site_no, y = y, covar1 = Temp_3sites, covar2 = GDD_3sites, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
-}
+  }
 
-#for wind_and_GDD
-# if(model_name == "wind_and_GDD"){
-#
-#   #read in covariate 1 data
-#   Wind <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv"))
-#   #remove 2015-2016 data
-#   Wind <- Wind[-c(7:8),]
-#   #center covariate data
-#   Wind <- (Wind - mean(Wind, na.rm = TRUE))/sd(Wind, na.rm = TRUE)
-#
-#   #calculate weekly average of covariate from past years for gap filling
-#   week_avg1 = colMeans(Wind, na.rm = TRUE)
-#
-#   #read in covariate 2 data
-#   GDD <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site1.csv"))
-#   #remove 2015-2016 data
-#   GDD <- GDD[-c(7:8),]
-#   #standardize within year to account for different start dates in different years
-#   GDD <- apply(GDD,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
-#   #transpose
-#   GDD <- t(GDD)
-#   #standardize across years
-#   GDD <- (GDD - mean(GDD, na.rm = TRUE))/sd(GDD, na.rm = TRUE)
-#
-#   #read in data from Site 2 for data gap-filling
-#   GDD_prior <- as.matrix(read_csv("./00_Data_files/Bayesian_model_input_data/GDD_Site2.csv"))
-#   #remove 2015-2016 data
-#   GDD_prior <- GDD_prior[-c(7:8),]
-#   #standardize within year to account for different start dates in different years
-#   GDD_prior <- apply(GDD_prior,1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
-#   #transpose
-#   GDD_prior <- t(GDD_prior)
-#   #standardize across years
-#   GDD_prior <- (GDD_prior - mean(GDD_prior, na.rm = TRUE))/sd(GDD_prior, na.rm = TRUE)
-#
-#   #calculate weekly average of covariate 2 from past years for gap filling
-#   week_avg2 = colMeans(GDD_prior, na.rm = TRUE)
-#   #use weekly average from last sampled week (18) to serve as prior for weeks 19 & 20
-#   week_avg2[is.na(week_avg2)] <- week_avg2[19]
-#
-#   return(list(year_no = year_no, season_weeks = season_weeks, y = y, covar1 = Wind, covar2 = GDD, week_avg1 = week_avg1, week_avg2 = week_avg2))
-#
-# }
 
 }
