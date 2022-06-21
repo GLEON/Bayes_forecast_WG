@@ -44,15 +44,16 @@ season_weeks=gloeo$season_weeks
 
 Given the full joint posterior samples, we're next going to visualize the output by just looking at the **95% credible interval of the time-series of X's** and compare that to the observed Y's. To do so we'll convert the coda output into a matrix and then calculate the quantiles. Looking at colnames(out) will show you that the first two columns are `tau_add` and `tau_obs`, so we calculate the CI starting from the 3rd column. We also transform the samples back from the log domain to the linear domain.
 ```{r}
-time = date
-time = season_weeks
+
+time = season_weeks # for full time series
+time = date # for 2013
 time.rng = c(1,length(time))       ## adjust to zoom in and out
 time.rng = c(81,100)              ## zoom in on 2013
 #out <- as.matrix(jags.out)         ## convert from coda to matrix  
-mu.cols <- grep("^mu",colnames(out)) ## grab all columns that start with the letter x
+mu.cols <- grep("^mu",colnames(out)) ## grab all columns that start with the letter mu
 ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
 
-plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], xaxt = "n") #log='y', don't need on log scale
+plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
 ## adjust x-axis label to be monthly if zoomed
 if(diff(time.rng) < 100){ 
   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='week'), format = "%Y-%m-%d", labels = T)

@@ -63,11 +63,11 @@ jags_plug_ins <- function(model_name){
 
 #
 #RW_obs_1site
-  data.RW_obs <- list(y=cal_data$y, season_weeks=cal_data$season_weeks,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
-  variable.names.RW_obs <- c("tau_proc", "tau_obs")
-  variable.namesout.RW_obs <- c("tau_proc","tau_obs","mu")
-  init.RW_obs <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
-  params.RW_obs <- c("tau_proc","tau_obs")
+  data.RW_obs_1site <- list(y=cal_data$y, season_weeks=cal_data$season_weeks,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.RW_obs_1site <- c("tau_proc", "tau_obs")
+  variable.namesout.RW_obs_1site <- c("tau_proc","tau_obs","mu")
+  init.RW_obs_1site <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
+  params.RW_obs_1site <- c("tau_proc","tau_obs")
 
 # #RY
 #   data.RY <- list(y=cal_data$y, year_no = cal_data$year_no,season_weeks=cal_data$season_weeks,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
@@ -77,18 +77,18 @@ jags_plug_ins <- function(model_name){
 #   params.RY <- c("tau_proc","tau_obs","tau_yr")
 #
 #RW_bias_1site
-  data.RW_bias <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, beta.m1=0,  beta.v1=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
-  variable.names.RW_bias <- c("tau_proc", "beta1", "tau_obs")
-  variable.namesout.RW_bias <- c("tau_proc", "beta1",   "mu", "tau_obs")
-  init.RW_bias <- list(list(tau_proc=0.001, tau_obs = 0.1,  beta1=-0.5), list(tau_proc=0.1,  tau_obs = 1, beta1=0), list(tau_proc=1, tau_obs = 5, beta1=0.5))
-  params.RW_bias <- c("tau_proc","beta1",  "tau_obs")
+  data.RW_bias_1site <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, beta.m1=0,  beta.v1=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.RW_bias_1site <- c("tau_proc", "beta1", "tau_obs")
+  variable.namesout.RW_bias_1site <- c("tau_proc", "beta1",   "mu", "tau_obs")
+  init.RW_bias_1site <- list(list(tau_proc=0.001, tau_obs = 0.1,  beta1=-0.5), list(tau_proc=0.1,  tau_obs = 1, beta1=0), list(tau_proc=1, tau_obs = 5, beta1=0.5))
+  params.RW_bias_1site <- c("tau_proc","beta1",  "tau_obs")
 
 #AC_1site
-  data.AC <- list(y=cal_data$y, season_weeks=cal_data$season_weeks,  beta.m2=0, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
-  variable.names.AC <- c("tau_proc", "beta2", "tau_obs")
-  variable.namesout.AC <- c("tau_proc",  "beta2",  "mu", "tau_obs")
-  init.AC <- list(list(tau_proc=0.001, tau_obs = 0.1,   beta2=-0.5), list(tau_proc=0.1,  tau_obs = 1,  beta2=0), list(tau_proc=1, tau_obs = 5, beta2=0.5))
-  params.AC <- c("tau_proc", "beta2",  "tau_obs")
+  data.AC_1site <- list(y=cal_data$y, season_weeks=cal_data$season_weeks,  beta.m2=0, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.AC_1site <- c("tau_proc", "beta2", "tau_obs")
+  variable.namesout.AC_1site <- c("tau_proc",  "beta2",  "mu", "tau_obs")
+  init.AC_1site <- list(list(tau_proc=0.001, tau_obs = 0.1,   beta2=-0.5), list(tau_proc=0.1,  tau_obs = 1,  beta2=0), list(tau_proc=1, tau_obs = 5, beta2=0.5))
+  params.AC_1site <- c("tau_proc", "beta2",  "tau_obs")
 
 # #base_DLM
 #   data.base_DLM <- list(y=cal_data$y, year_no = cal_data$year_no, season_weeks=cal_data$season_weeks, beta.m1=0,  beta.m2=0,beta.v1=0.001, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
@@ -148,9 +148,9 @@ jags_plug_ins <- function(model_name){
 
   data.Quad_2var_RY <- list(y=cal_data$y,year_no = cal_data$year_no, totYr = cal_data$totYr, season_weeks = cal_data$season_weeks,covar1=cal_data$covar1, covar2=cal_data$covar2, week_avg1=cal_data$week_avg1,week_avg2=cal_data$week_avg2, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0,beta.m5=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001,beta.v5=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
 
-  variable.names.Quad_2var_RY <- c("tau_yr", "tau_proc", "beta1","beta2", "beta3","beta4","beta5", "tau_obs","tau_C1_proc", "tau_C2_proc")
+  variable.names.Quad_2var_RY <- c("tau_yr","yr", "tau_proc", "beta1","beta2", "beta3","beta4","beta5", "tau_obs","tau_C1_proc", "tau_C2_proc")
 
-  variable.namesout.Quad_2var_RY <- c("tau_yr", "tau_proc", "beta1", "beta2","beta3","beta4","beta5",  "mu", "tau_obs", "tau_C1_proc", "tau_C2_proc")
+  variable.namesout.Quad_2var_RY <- c("tau_yr","yr", "tau_proc", "beta1", "beta2","beta3","beta4","beta5",  "mu", "tau_obs", "tau_C1_proc", "tau_C2_proc")
 
   init.Quad_2var_RY <- list(list(tau_proc=0.001, tau_obs = 0.1,tau_C1_proc = 0.01,tau_C2_proc = 0.01, beta1=-0.5, beta2=-0.5, beta3=-0.5, beta4=-0.5, beta5=-0.5),
                 list(tau_proc=0.1,tau_obs = 1,tau_C1_proc = 0.1,tau_C2_proc = 0.1, beta1=0, beta2=0, beta3=0, beta4=0, beta5=0),
@@ -162,26 +162,26 @@ jags_plug_ins <- function(model_name){
 #### 3 site models
 
   #RW_obs_3sites
-  data.RW_obs <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, site_no = cal_data$site_no, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
-  variable.names.RW_obs <- c("tau_proc", "tau_obs")
-  variable.namesout.RW_obs <- c("tau_proc","tau_obs","mu")
-  init.RW_obs <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
-  params.RW_obs <- c("tau_proc","tau_obs")
+  data.RW_obs_3sites <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, site_no = cal_data$site_no, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.RW_obs_3sites <- c("tau_proc", "tau_obs")
+  variable.namesout.RW_obs_3sites <- c("tau_proc","tau_obs","mu")
+  init.RW_obs_3sites <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
+  params.RW_obs_3sites <- c("tau_proc","tau_obs")
 
 
   #RW_bias_3sites
-  data.RW_bias <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, site_no = cal_data$site_no, beta.m1=0,  beta.v1=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
-  variable.names.RW_bias <- c("tau_proc", "beta1", "tau_obs")
-  variable.namesout.RW_bias <- c("tau_proc", "beta1",   "mu", "tau_obs")
-  init.RW_bias <- list(list(tau_proc=0.001, tau_obs = 0.1,  beta1=-0.5), list(tau_proc=0.1,  tau_obs = 1, beta1=0), list(tau_proc=1, tau_obs = 5, beta1=0.5))
-  params.RW_bias <- c("tau_proc","beta1",  "tau_obs")
+  data.RW_bias_3sites <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, site_no = cal_data$site_no, beta.m1=0,  beta.v1=0.001, x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.RW_bias_3sites <- c("tau_proc", "beta1", "tau_obs")
+  variable.namesout.RW_bias_3sites <- c("tau_proc", "beta1",   "mu", "tau_obs")
+  init.RW_bias_3sites <- list(list(tau_proc=0.001, tau_obs = 0.1,  beta1=-0.5), list(tau_proc=0.1,  tau_obs = 1, beta1=0), list(tau_proc=1, tau_obs = 5, beta1=0.5))
+  params.RW_bias_3sites <- c("tau_proc","beta1",  "tau_obs")
 
   #AC_3sites
-  data.AC <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, site_no = cal_data$site_no, beta.m2=0, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
-  variable.names.AC <- c("tau_proc", "beta2", "tau_obs")
-  variable.namesout.AC <- c("tau_proc",  "beta2",  "mu", "tau_obs")
-  init.AC <- list(list(tau_proc=0.001, tau_obs = 0.1,   beta2=-0.5), list(tau_proc=0.1,  tau_obs = 1,  beta2=0), list(tau_proc=1, tau_obs = 5, beta2=0.5))
-  params.AC <- c("tau_proc", "beta2",  "tau_obs")
+  data.AC_3sites <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, site_no = cal_data$site_no, beta.m2=0, beta.v2=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.AC_3sites <- c("tau_proc", "beta2", "tau_obs")
+  variable.namesout.AC_3sites <- c("tau_proc",  "beta2",  "mu", "tau_obs")
+  init.AC_3sites <- list(list(tau_proc=0.001, tau_obs = 0.1,   beta2=-0.5), list(tau_proc=0.1,  tau_obs = 1,  beta2=0), list(tau_proc=1, tau_obs = 5, beta2=0.5))
+  params.AC_3sites <- c("tau_proc", "beta2",  "tau_obs")
 
   ### Quad_2var multi site
   data.Quad_2var_multisite <- list(y=cal_data$y, season_weeks=cal_data$season_weeks, site_no = cal_data$site_no, covar1=cal_data$covar1, covar2=cal_data$covar2, week_avg1=cal_data$week_avg1,week_avg2=cal_data$week_avg2, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0,beta.m5=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001,beta.v5=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
