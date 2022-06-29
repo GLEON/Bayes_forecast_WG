@@ -98,6 +98,11 @@ pre_gloeo3 <- bind_rows(pre_gloeo2, odd_obs) %>%
   mutate(ln_totalperL = log(totalperL + (1/141.4))) %>%  # add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
   select(date,year,dayofyr,site, totalperL, ln_totalperL) # rearrange columns to have date items together
 
+ggplot(pre_gloeo3, aes(y = ln_totalperL, x = date))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~site)
+
 # Format for models
 
 pre_gloeo4 <- pre_gloeo3 %>% 
@@ -241,8 +246,8 @@ DIC.RW
 ## Random Walk - Pre 2009 gloeo data for observation error 4 sites
 
 ```{r}
+y = as.matrix(pre_gloeo4[,2:5]) # include Fichter?
 
-y = pre_gloeo4[,2:5] # include Fichter?
 #year_no = as.numeric(as.factor(2007:2008))
 season_weeks = pre_gloeo4$season_week
 site_no = c(1:4)
@@ -280,11 +285,11 @@ for(j in 1:max(site_no)) {
 }
 "
 
-nchain = 3
-init <- list()
-for(i in 1:nchain){
-  y.samp = sample(y,length(y),replace=TRUE)
-  init[[i]] <- list(tau_add=1/var(diff(y.samp),na.rm=T),tau_obs=5/var(y.samp,na.rm=T))}
+# nchain = 3
+# init <- list()
+# for(i in 1:nchain){
+#   y.samp = sample(y,length(y),replace=TRUE)
+#   init[[i]] <- list(tau_obs=5/var(y.samp,na.rm=T))}
 
 init <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
 
@@ -309,18 +314,54 @@ gelman.diag(jags.out_RW_multi)
 GBR <- gelman.plot(jags.out_RW_multi) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
 
 
-burnin = 10000                              ## determine convergence
+burnin = 30000                              ## determine convergence
 jags.burn_RW_multi <- window(jags.out_RW_multi,start=burnin) 
 
-summary(jags.burn_RW_multi)
+summary(jags.burn_RW_multi) 
 plot(jags.burn_RW_multi)
 
+gelman.diag(jags.burn_RW_multi)
 
 # Calculate DIC
 DIC.RW <- dic.samples(j.model_RW_multi, n.iter=5000)
 DIC.RW
 ```
 
+28 June 2022 - used 2007 & 2008 data from all 4 sites, a/r=0.1, burnin 30000
+mean = 1.59, SD = 2.1349
+r = 0.349
+a = 0.555
+
+summary(jags.burn_RW_multi)
+
+Iterations = 30000:50000
+Thinning interval = 1 
+Number of chains = 3 
+Sample size per chain = 20001 
+
+1. Empirical mean and standard deviation for each variable,
+   plus standard error of the mean:
+
+          Mean     SD Naive SE Time-series SE
+tau_obs  1.590 2.1349 0.008716         0.1070
+tau_proc 0.573 0.1872 0.000764         0.0038
+
+2. Quantiles for each variable:
+
+           2.5%    25%    50%   75% 97.5%
+tau_obs  0.5946 0.8506 1.0801 1.481 6.785
+tau_proc 0.2794 0.4379 0.5498 0.682 1.006
+
+gelman.diag(jags.burn_RW_multi)
+Potential scale reduction factors:
+
+         Point est. Upper C.I.
+tau_obs           1          1
+tau_proc          1          1
+
+Multivariate psrf
+
+1
 
 ## Random Walk - Fichter 2009-2014 gloeo data for observation error as matrix
 
@@ -522,6 +563,12 @@ summary(jags.out_RW)
 
 data <- list(y=y,WK=length(season_weeks), covar1=covar1, covar2=covar2, week_avg1=week_avg1, week_avg2=week_avg2, a_obs=a_obs, r_obs=r_obs, a_proc=a_proc,r_proc=r_proc,x_ic=-6,tau_ic=0.1)
 
+nchain = 3
+init <- list()
+for(i in 1:nchain){
+  y.samp = sample(y,length(y),replace=TRUE)
+  init[[i]] <- list(tau_add=1/var(diff(y.samp),na.rm=T),tau_obs=5/var(y.samp,na.rm=T))}
+  
 
 mod1 = "
 model{
@@ -542,7 +589,7 @@ model{
   
   #### Priors
   x[1] ~ dnorm(x_ic,tau_ic)
-  lam[1] ~ dnorm(x_ic,tau_ic)
+ # lam[1] ~ dnorm(x_ic,tau_ic) - not needed but DIC lower?
 
   beta1~dnorm(0,0.01)
   beta2~dnorm(0,0.01)
@@ -576,7 +623,19 @@ cor(DL_var.mat)
 # Calculate DIC
 DIC.DL <- dic.samples(j.model_DL, n.iter=5000)
 DIC.DL
-  
+
+# no lam initial conditions, just x
+# > DIC.DL
+# Mean deviance:  1384 
+# penalty 898.3 
+# Penalized deviance: 2282 
+
+# with lam initial conditions
+# > DIC.DL
+# Mean deviance:  1370 
+# penalty 680.7 
+# Penalized deviance: 2051 
+
 ```
 
 ## Dynamic linear with Random Year Effect
@@ -924,17 +983,17 @@ nchain = 3
 init <- list()
 for(i in 1:nchain){
   y.samp = sample(y,length(y),replace=TRUE)
-  init[[i]] <- list(S_add=1/var(diff(y.samp), na.rm = T),tau_obs=5/var(y.samp,na.rm=T))}
+  init[[i]] <- list(tau_obs=5/var(y.samp,na.rm=T))}
 
-#S_add=8, 
 
-init <- list(list(tau_obs = 0.1, #S_add = 0.1,
-          beta1=-2, beta2=0, beta3=0),
-    list(tau_obs = 1, #S_add = 0.5,
-         beta1=-1.5, beta2=0.5, beta3=0.5),
-    list(tau_obs = 5, #S_add = 1,
-         beta1=-1,beta2=1, beta3=1))
+init <- list(list(tau_obs = 0.1,
+          beta1=-1, beta2=0.2, beta3=0.2, alpha1 = 0.1, alpha2 = 0.005),
+    list(tau_obs = 1,
+         beta1=-0.5, beta2=0.7, beta3=0.5, alpha1 = 1, alpha2 = 0.03),
+    list(tau_obs = 5,
+         beta1=0,beta2=1, beta3=1, alpha1 = 2, alpha2 = 0.5))
 
+# alpha2 - hardest to converge
 
 mod1 = "
 model{
@@ -952,9 +1011,10 @@ model{
     x[t]~dnorm(lam[t],S_add[t]) # replace tau_add with linear model
     lam[t]=beta1 + beta2*x[t-1] + beta3*covar1[t]
     #S_add[t] = alpha1 + alpha2*lam[t] 
-    S_add[t] = 1/pow(alpha1 + alpha2*lam[t], 2) # written as precision 1/sd squared, lam or x??
-}
-  
+    S_add[t] = 1/(alpha1 + alpha2*x[t-1])^2 # written as precision 1/sd squared, lam or x??,pow(alpha1 + alpha2*lam[t], 2)
+  }
+
+
   #### Priors # add prior for alphas
   x[1] ~ dnorm(x_ic,tau_ic)
   lam[1] ~ dnorm(x_ic,tau_ic)
@@ -966,8 +1026,8 @@ model{
   #beta4~dnorm(0,0.001)
   #beta5~dnorm(0,0.001)
 
-  alpha1~dlnorm(0,0.001) #log normal variance can't be negative
-  alpha2~dlnorm(0,0.001) #log normal variance can't be negative
+  alpha1~dlnorm(0,0.01) #log normal variance can't be negative, was @ 0.001 not converging well
+  alpha2~dlnorm(0,0.01) #log normal variance can't be negative
 
   tau_obs ~ dgamma(a_obs,r_obs)
   #tau_C1_proc ~ dgamma(0.01,0.01)
@@ -1002,6 +1062,7 @@ jags.burn_Hetero <- window(jags.out_Hetro,start=burnin)  ## remove burn-in
 plot(jags.burn_Hetero)
 
 summary(jags.burn_Hetero)
+gelman.diag(jags.burn_Hetero)
 
 
 DL_var.mat <- as.matrix(jags.out_Hetro)
@@ -1016,7 +1077,7 @@ DIC.hetero #lower than homo
   
 ```
 
-## Ho Model - single site (HC) 2 covariates
+## Ho Model - single site (HC) 2 covariates min water temp & GDD
 
 Add in linear model on standard deviation, allows for variance to be non-constant
  s[i] <- alpha1 + alpha2*x[i]  ## linear model on standard deviation of x
@@ -1025,22 +1086,35 @@ Add in linear model on standard deviation, allows for variance to be non-constan
  
 ```{r}
 
+# Use single Herrick Cove data
+
+a_obs = 0.01; r_obs = 0.01
+
 data <- list(y=y,
              WK=length(season_weeks), 
              covar1=covar1, 
-             covar2=covar2, 
+            covar2=covar2, 
              week_avg1=week_avg1, 
-             week_avg2=week_avg2, 
+            week_avg2=week_avg2, 
              a_obs=a_obs, r_obs=r_obs, 
             # a_proc=a_proc,r_proc=r_proc,
-             x_ic=-6,tau_ic=0.1)
+             x_ic=-5,tau_ic=100) #0.1
 
 nchain = 3
 init <- list()
 for(i in 1:nchain){
   y.samp = sample(y,length(y),replace=TRUE)
-  init[[i]] <- list(S_add=1/var(diff(y.samp),na.rm=T),tau_obs=5/var(y.samp,na.rm=T))}
+  init[[i]] <- list(tau_obs=5/var(y.samp,na.rm=T))} # no inits works better - why?
 
+
+init <- list(list(tau_obs = 0.1,
+          beta1=-1, beta2=0.2, beta3=0, beta4 =-0.5, beta5 =-0.5,alpha1 = 0.1, alpha2 = 0.005),
+    list(tau_obs = 1,
+         beta1=-0.5, beta2=0.7, beta3=0.5, beta4=0, beta5=0, alpha1 = 1, alpha2 = 0.03),
+    list(tau_obs = 5,
+         beta1=0,beta2=1, beta3=1, beta4=0.5, beta5 =0.5, alpha1 = 2, alpha2 = 0.5))
+
+# alpha2 - hardest to converge
 
 mod1 = "
 model{
@@ -1048,35 +1122,37 @@ model{
   #### Data Model
   for(t in 1:WK){
     y[t] ~ dnorm(x[t],tau_obs)
-        covar1[t] ~ dnorm(week_avg1[t],0.1)
-        covar2[t] ~ dnorm(week_avg2[t],0.1)
+        covar1[t] ~ dnorm(week_avg1[t],0.01)
+        covar2[t] ~ dnorm(week_avg2[t],0.01)
 
   }
   
   #### Process Model
   for(t in 2:WK){
     x[t]~dnorm(lam[t],S_add[t]) # replace tau_add with linear model
-    lam[t]=beta1 + beta2*lam[t-1] + beta3*covar1[t] + beta4 * covar2[t] + beta5 * covar2[t]^2
-    #S_add[t] = alpha1 + alpha2*lam[t] 
-    S_add[t] = 1/pow(alpha1 + alpha2*lam[t], 2) # written as precision 1/sd squared
-}
-  
+    lam[t]=beta1 + beta2*x[t-1] + beta3*covar1[t] + beta4*covar2[t] + beta5*covar2[t]^2
+    S_add[t] = 1/(alpha1 + alpha2*x[t-1])^2 # written as precision 1/sd squared, lam or x??,pow(alpha1 + alpha2*lam[t], 2)
+  }
+
+
   #### Priors # add prior for alphas
   x[1] ~ dnorm(x_ic,tau_ic)
   lam[1] ~ dnorm(x_ic,tau_ic)
-  #S_add[1] ~ dnorm(x_ic, tau_ic) # runs without
 
 
-  beta1~dnorm(0,0.01)
-  beta2~dnorm(0,0.01)
-  beta3~dnorm(0,0.01)
-  beta4~dnorm(0,0.01)
-  beta5~dnorm(0,0.01)
+  beta1~dnorm(0,0.001)
+  beta2~dnorm(0,0.001)
+  beta3~dnorm(0,0.001)
+  beta4~dnorm(0,0.001)
+  beta5~dnorm(0,0.001)
 
-  alpha1~dlnorm(0,0.001) #log normal variance can't be negative
-  alpha2~dlnorm(0,0.001) #log normal variance can't be negative
+  alpha1~dlnorm(0,0.01) #log normal variance can't be negative, was @ 0.001 not converging well
+  alpha2~dlnorm(0,0.01) #log normal variance can't be negative
 
   tau_obs ~ dgamma(a_obs,r_obs)
+  #tau_C1_proc ~ dgamma(0.01,0.01)
+  #tau_C2_proc ~ dgamma(0.01,0.01)
+
   #tau_add ~ dgamma(a_proc,r_proc)
 
 }
@@ -1090,16 +1166,27 @@ j.model_Hetero   <- jags.model (file = textConnection(mod1),
 
 
 jags.out_Hetro   <- coda.samples (model = j.model_Hetero,
-                            variable.names = c("tau_obs","beta3","beta4","beta5", "alpha1", "alpha2"), #"tau_add",
-                            n.iter = 10000)
+                            variable.names = c("tau_obs","beta1","beta2","beta3","beta4","beta5", "alpha1", "alpha2"), #"tau_add",
+                            n.iter = 50000)
 plot(jags.out_Hetro)
 
 summary(jags.out_Hetro)
 
+gelman.diag(jags.out_Hetro)
+
+GBR <- gelman.plot(jags.out_Hetro) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
+
+
+burnin = 20000                              ## determine convergence
+jags.burn_Hetero <- window(jags.out_Hetro,start=burnin)  ## remove burn-in
+plot(jags.burn_Hetero)
+
+summary(jags.burn_Hetero)
+gelman.diag(jags.burn_Hetero)
+
 DL_var.mat <- as.matrix(jags.out_Hetro)
 pairs(DL_var.mat)
 cor(DL_var.mat)
-  
 
 # Calculate DIC
 DIC.hetero <- dic.samples(j.model_Hetero, n.iter=5000)
