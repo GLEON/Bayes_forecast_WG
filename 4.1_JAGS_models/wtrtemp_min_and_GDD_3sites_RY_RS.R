@@ -18,7 +18,8 @@ model{
   #### Process Model
   for(t in 2:max(season_weeks)){
     mu[t,j]~dnorm(lambda[t,j],tau_proc)
-    lambda[t,j] <- beta1  + beta2*mu[t-1,j] + beta3*covar1[t,j] + beta4*covar2[t,j] + beta5*covar2[t,j]^2+ yr[year_no[t]] #changed beta2 to mu instead of lambda
+    lambda[t,j] <- beta1  + beta2*mu[t-1,j] + beta3*covar1[t,j] + beta4*covar2[t,j] + beta5*covar2[t,j]^2+ yr[year_no[t]] + site_no[j]
+    #changed beta2 to mu instead of lambda
 
   }
 
@@ -26,12 +27,17 @@ model{
   mu[1,j] ~ dnorm(x_ic,tau_ic)
   #lambda[1,j] ~ dnorm(x_ic, tau_ic)
 
+  # Site Effect
+  site_no[j] ~ dnorm(0,tau_site)
+
     } # end loop over sites
 
   #### Random Year Effect
   for(k in 1:totYr){
     yr[k] ~ dnorm(beta1, tau_yr) # k loop on yr, centered on beta1 instead of 0
   }
+
+
 
   #### Priors
   beta1 ~ dnorm(beta.m1,beta.v1)
@@ -45,6 +51,7 @@ model{
   tau_C2_proc ~ dgamma(0.01,0.01)
 
   tau_proc ~ dgamma(a_proc,r_proc)
-  tau_yr ~ dgamma(0.01,0.01)
+  tau_yr ~ dgamma(0.01,0.01) # a = 1? = mean = 10
+  tau_site ~ dgamma(0.01,0.01) # Dietze a = 1, r = 0.1
 
 }
