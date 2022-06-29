@@ -2,42 +2,41 @@
 
 R files containing Bayesian models in JAGS format to run in rjags
 
-Refer to Table 2 and Table S4 of the Lofton et al. 2021 manuscript for descriptions of model structure and covariates included in each model.
+Refer to Table XX for descriptions of model structure and covariates included in each model.
 
-AC = null model with autocorrelation term; corresponds to AC model in manuscript
+- All models using informed observation error prior from 2007 & 2008 data from all 4 sites to estimate a (shape) and r (rate)
+- All models using informed initial conditions prior from ME lakes x_ic = -5, tau_ic = 100
 
-base_DLM = null dynamic linear model; correspond to BaseLM model in manuscript
+*1 site models: currently using Herrick Cove data
 
-GDD = GDD model in manuscript
+Random Walk:
 
-precip = Precip model in manuscript
+- RW_obs_1site = random walk model with informed observation error prior
 
-RW = random walk model with uninformed observation error prior; not presented in manuscript
+- DLM_1site = null dynamic linear model with autocorrelation (slope) term and bias/offset (y-intercept) - best model from Lofton @ 1 week horizon and best of RW models @ 4 week horizon
 
-RW_bias = random walk null model with bias term; correspond to OffsetRW in manuscript
+2 Covariates: min water temp & GDD on sampling day
 
-RW_obs = random walk model with informed observation error prior; corresponds to RW model in manuscript
+- wtrtemp_min_and_GDD_1site = MinWaterTemp & GDD model
 
-RY = random walk model with random year effect; not presented in manuscript due to inability to estimate non-zero year effect
+- wtrtemp_min_and_GDD_1site_RY = MinWaterTemp & GDD model with Random Year Effect
 
-schmidt_and_GDD = SchmidtAndGDD model in manuscript
+Heteroskedastic 1 covariate: min water temp
 
-schmidt_and_temp = SchmidtAndTemp model in manuscript
 
-schmidt_and_wnd = SchmidtAndWind model in manuscript
+***3 site models: currently leaving out Fichter data
 
-schmidt_max_lag = SchmidtMaxLag model in manuscript
+Random Walk:
 
-schmidt_med_diff = SchmidtMedDiff model in manuscript
+RW_obs_3sites = random walk model with informed observation error prior
 
-temp_and_wind = TempAndWind model in manuscript
+DLM_3sites = null dynamic linear model with autocorrelation (slope) term and bias/offset (y-intercept) - best model from Lofton @ 1 week horizon and best of RW models @ 4 week horizon
 
-wind_and_GDD = WindAndGDD model in manuscript
+2 Covariates: min water temp & GDD
 
-wind_dir_2day_lag = WindDir model in manuscript
+wtrtemp_min_and_GDD_3sites = MinWaterTemp & GDD model
 
-wtrtemp_MA7 = WaterTempMA model in manuscript
+wtrtemp_min_and_GDD_3sites_RY = MinWaterTemp & GDD model with Random Year Effect
 
-wtrtemp_min = MinWaterTemp model in manuscript
+wtrtemp_min_and_GDD_3sites_RY_RS = MinWaterTemp & GDD model with Random Year Effect & Random Site Effect
 
-wtrtemp_min_lag = MinWaterTempLag model in manuscript
