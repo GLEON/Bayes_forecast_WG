@@ -34,7 +34,7 @@ site_no = c(1:3)
 
 ###############################GLOEO-ONLY MODELS#####################################
 #for RW_3sites, RW_obs_3sites, and AC models 3 sites
-if(model_name %in% c("RW_obs_3sites","AC_3sites","RW_bias_3sites")){
+if(model_name %in% c("RW_obs_3sites","DLM_3sites")){
   return(list(season_weeks = season_weeks, year_no = year_no, site_no = site_no, y = y))
 }
 

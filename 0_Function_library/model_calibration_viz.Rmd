@@ -16,45 +16,75 @@ devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
 
 ```
 
-#Read in Data
+#Read in Data Single site
 ```{r}
 ###get calibration data - 1 site
 #read in data matrix
 gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/data_site_model_format.csv")
 #gloeo is already on log scale, covars are already standardized
 
+season_weeks=gloeo$season_weeks
+y = gloeo$y
+
 sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
 date = sampling_dates$date
-#model below requires data with k obs: y, covar1, covar2, week_avg1, week_avg2, 
-#and constants mu.0, a_proc,r_proc, a_obs,r_obs, seasons_weeks, site_no
-y=gloeo$y
-covar1=gloeo$Temp
-covar2=gloeo$GDD
-week_avg1=gloeo$week_avg1
-week_avg2=gloeo$week_avg2
-mu.0=-10 ###-10 true value still on log scale but close to zero? -4.95 0+1/141.4 =0.007
-a_obs=0.01; r_obs=0.01
-a_proc=0.01; r_proc=0.01
+
 season_weeks=gloeo$season_weeks
 ```
 
+# Read in data multi site
+```{r}
+gloeo_multi <- read_csv("./00_Data_files/Bayesian_model_input_data/data_4site_model_format.csv")
+
+#convert gloeo 3 sites into matrix
+gloeo_multi_long <- gloeo_multi %>% 
+  select(1:5) %>% 
+  pivot_longer(3:5, names_to = "site", values_to = "gloeo_ln") %>% 
+  arrange(site, season_weeks, year)
+
+y <- as.matrix(gloeo_multi_long$gloeo_ln)
+season_weeks=1:480
+
+hc = gloeo_multi$hc_gloeo_ln
+nb = gloeo_multi$nb_gloeo_ln
+nsh = gloeo_multi$nsh_gloeo_ln
+
+```
+
+
+# Read in model calibration output
+```{r}
+mus_1site_RW <- read_csv("5_Model_Output/5.1_Calibration/RW_obs_1site_predicted_states.csv")
+mus_1site_DLM <- read_csv("5_Model_Output/5.1_Calibration/DLM_1site_predicted_states.csv")
+mus_1site <- read_csv("5_Model_Output/5.1_Calibration/wtrtemp_min_and_GDD_1site_predicted_states.csv")
+mus_1site_RY <- read_csv("5_Model_Output/5.1_Calibration/wtrtemp_min_and_GDD_1site_RY_predicted_states.csv")
+
+mus_3sites_RW <- read_csv("5_Model_Output/5.1_Calibration/RW_obs_3sites_predicted_states.csv")
+mus_3sites_DLM <- read_csv("5_Model_Output/5.1_Calibration/DLM_3sites_predicted_states.csv")
+mus_3sites <- read_csv("5_Model_Output/5.1_Calibration/wtrtemp_min_and_GDD_3sites_predicted_states.csv")
+mus_3sites_RY <- read_csv("5_Model_Output/5.1_Calibration/wtrtemp_min_and_GDD_3sites_RY_predicted_states.csv")
+
+mu_mat <- as.matrix(mus_3sites_RY)
+
+```
+
 # Code to visualize actual vs. predicted model output
-1. First model = wtrtemp_min_and_GDD
+1. First model = wtrtemp_min_and_GDD_1site
+2. 2nd model = wtrtemp_min_and_GDD_1site_RY
 
 
 Given the full joint posterior samples, we're next going to visualize the output by just looking at the **95% credible interval of the time-series of X's** and compare that to the observed Y's. To do so we'll convert the coda output into a matrix and then calculate the quantiles. Looking at colnames(out) will show you that the first two columns are `tau_add` and `tau_obs`, so we calculate the CI starting from the 3rd column. We also transform the samples back from the log domain to the linear domain.
 ```{r}
-
 time = season_weeks # for full time series
 time = date # for 2013
 time.rng = c(1,length(time))       ## adjust to zoom in and out
-time.rng = c(81,100)              ## zoom in on 2013
+time.rng = c(321,480)              ## zoom in on 2013: 81-100, 2015-2016: 121-160, 141-160 - 2016
 #out <- as.matrix(jags.out)         ## convert from coda to matrix  
-mu.cols <- grep("^mu",colnames(out)) ## grab all columns that start with the letter mu
-ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
+mu.cols <- grep("^mu",colnames(mu_mat)) # out ## grab all columns that start with the letter mu
 
-plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
-## adjust x-axis label to be monthly if zoomed
+ci <- apply(mu_mat[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
+
+plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], main = "3sites + RY Coffin") #, xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
 if(diff(time.rng) < 100){ 
   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='week'), format = "%Y-%m-%d", labels = T)
 }
@@ -64,6 +94,38 @@ lines(time,y)
 lines(time, ci[1,], lty = 2)
 lines(time, ci[3,], lty = 2)
 points(time, ci[2,], pch="+")
+```
+
+# Export plots
+```{r}
+quartz.save(file = "3site_RY_Coffin.png", type = "png")
+
+```
+
+# Calculate median predicted vs. observed
+mean difference between median predicted and observed values (bias)
+median predicted-observed 
+```{r}
+diff <- ci[2,] - y 
+mean(diff, na.rm = T)
+max(diff, na.rm = T)
+
+hc_pred <- ci[2,1:160]
+nb_pred <- ci[2,161:320]
+nsh_pred <- ci[2,321:480]
+
+diff <- hc_pred - hc
+mean(diff, na.rm = T)
+max(diff, na.rm = T)
+
+diff <- nb_pred - nb
+mean(diff, na.rm = T)
+max(diff, na.rm = T)
+
+diff <- nsh_pred - nsh
+mean(diff, na.rm = T)
+max(diff, na.rm = T)
+
 ```
 
 
