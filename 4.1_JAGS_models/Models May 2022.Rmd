@@ -98,10 +98,17 @@ pre_gloeo3 <- bind_rows(pre_gloeo2, odd_obs) %>%
   mutate(ln_totalperL = log(totalperL + (1/141.4))) %>%  # add ln of gloeo, Total per L is Volume of 2, ~1 m net tows = 141.4 L
   select(date,year,dayofyr,site, totalperL, ln_totalperL) # rearrange columns to have date items together
 
-ggplot(pre_gloeo3, aes(y = ln_totalperL, x = date))+
+
+ggplot(pre_gloeo3, aes(y = totalperL, x = dayofyr))+
   geom_point()+
   geom_line()+
-  facet_wrap(~site)
+  facet_wrap(site~year)
+
+# LN gloeo
+ggplot(pre_gloeo3, aes(y = ln_totalperL, x = dayofyr))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(site~year)
 
 # Format for models
 
@@ -955,6 +962,68 @@ multi_RY_fit2 <- lm(gloeo$nsh_gloeo_ln ~ gloeo$NSH.tempC_min_stand + gloeo$GDD_n
 summary(multi_RY_fit2)
 ```
 
+## DLM Multiple Sites + RY + RS
+```{r}
+model{
+
+  # Loop over all sites
+    for(j in 1:max(site_no)){
+
+      #### Data Model
+      #this fits the latent Gloeo to your observed Gloeo
+      #run this on logged data
+      for(t in 1:max(season_weeks)){
+        y[t,j] ~ dnorm(mu[t,j],tau_obs)
+
+    #gap-filling model for covariates
+    covar1[t,j]~dnorm(week_avg1[t],tau_C1_proc)
+    covar2[t,j]~dnorm(week_avg2[t],tau_C2_proc)
+
+  }
+
+  #### Process Model
+  for(t in 2:max(season_weeks)){
+    mu[t,j]~dnorm(lambda[t,j],tau_proc)
+    lambda[t,j] <- beta1  + beta2*mu[t-1,j] + beta3*covar1[t,j] + beta4*covar2[t,j] + beta5*covar2[t,j]^2+ yr[year_no[t]] + site_no[j]
+    #changed beta2 to mu instead of lambda
+
+  }
+
+  #### Initial Conditions
+  mu[1,j] ~ dnorm(x_ic,tau_ic)
+  #lambda[1,j] ~ dnorm(x_ic, tau_ic)
+
+  # Site Effect
+  site_no[j] ~ dnorm(0,tau_site)
+
+    } # end loop over sites
+
+  #### Random Year Effect
+  for(k in 1:totYr){
+    yr[k] ~ dnorm(beta1, tau_yr) # k loop on yr, centered on beta1 instead of 0
+  }
+
+
+
+  #### Priors
+  beta1 ~ dnorm(beta.m1,beta.v1)
+  beta2 ~ dnorm(beta.m2,beta.v2)
+  beta3 ~ dnorm(beta.m3,beta.v3)
+  beta4 ~ dnorm(beta.m4,beta.v4)
+  beta5 ~ dnorm(beta.m5,beta.v5)
+
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_C1_proc ~ dgamma(0.01,0.01)
+  tau_C2_proc ~ dgamma(0.01,0.01)
+
+  tau_proc ~ dgamma(a_proc,r_proc)
+  tau_yr ~ dgamma(0.01,0.01) # a = 1? = mean = 10
+  tau_site ~ dgamma(0.01,0.01) # Dietze a = 1, r = 0.1
+
+}
+```
+
+
 
 ## Ho Model - single site (HC) 1 covariate min water temp
 
@@ -1192,5 +1261,68 @@ cor(DL_var.mat)
 DIC.hetero <- dic.samples(j.model_Hetero, n.iter=5000)
 DIC.hetero #lower than homo
   
+```
+
+
+# Random site effect with multiple driver homo model
+```{r}
+model{
+
+  # Loop over all sites
+    for(j in 1:max(site_no)){
+
+      #### Data Model
+      #this fits the latent Gloeo to your observed Gloeo
+      #run this on logged data
+      for(t in 1:max(season_weeks)){
+        y[t,j] ~ dnorm(mu[t,j],tau_obs)
+
+    #gap-filling model for covariates
+    covar1[t,j]~dnorm(week_avg1[t],tau_C1_proc)
+    covar2[t,j]~dnorm(week_avg2[t],tau_C2_proc)
+
+  }
+
+  #### Process Model
+  for(t in 2:max(season_weeks)){
+    mu[t,j]~dnorm(lambda[t,j],tau_proc)
+    lambda[t,j] <- beta1  + beta2*mu[t-1,j] + beta3*covar1[t,j] + beta4*covar2[t,j] + beta5*covar2[t,j]^2+ yr[year_no[t]] + site_no[j]
+    #changed beta2 to mu instead of lambda
+
+  }
+
+  #### Initial Conditions
+  mu[1,j] ~ dnorm(x_ic,tau_ic)
+  #lambda[1,j] ~ dnorm(x_ic, tau_ic)
+
+  # Site Effect
+  site_no[j] ~ dnorm(0,tau_site)
+
+    } # end loop over sites
+
+  #### Random Year Effect
+  for(k in 1:totYr){
+    yr[k] ~ dnorm(beta1, tau_yr) # k loop on yr, centered on beta1 instead of 0
+  }
+
+
+
+  #### Priors
+  beta1 ~ dnorm(beta.m1,beta.v1)
+  beta2 ~ dnorm(beta.m2,beta.v2)
+  beta3 ~ dnorm(beta.m3,beta.v3)
+  beta4 ~ dnorm(beta.m4,beta.v4)
+  beta5 ~ dnorm(beta.m5,beta.v5)
+
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_C1_proc ~ dgamma(0.01,0.01)
+  tau_C2_proc ~ dgamma(0.01,0.01)
+
+  tau_proc ~ dgamma(a_proc,r_proc)
+  tau_yr ~ dgamma(0.01,0.01) # a = 1? = mean = 10
+  tau_site ~ dgamma(0.01,0.01) # Dietze a = 1, r = 0.1
+
+}
+
 ```
 

@@ -17,11 +17,11 @@ jags_plug_ins <- function(model_name){
   if(model_name == "RW_obs_1site"){model_type = "RW_obs_1site"}
   if(model_name == "DLM_1site"){model_type = "DLM_1site"}
 
-  if(model_name %in% c("wtrtemp_min_and_GDD")){
+  if(model_name %in% c("wtrtemp_min_and_GDD_1site")){
     model_type <- "Quad_2var"
   }
 
-  if(model_name %in% c("wtrtemp_min_and_GDD_RY")){
+  if(model_name %in% c("wtrtemp_min_and_GDD_1site_RY")){
     model_type <- "Quad_2var_RY"
   }
 

@@ -375,6 +375,35 @@ ggplot(data = GDD_join, aes(x = gdd, y = gdd, color = sensor_type)) +
   facet_wrap(~year)
 ```
 
+# Pre 2009 water temp data for prior
+```{r}
+wtr_pre <- wtr %>% 
+  filter(year %in% 2007:2008) %>% 
+  filter(site != "HerrickCoveSouth")
+  
+wtr_hc <- wtr %>% 
+  filter(year==2008) %>% 
+  filter(site=="HerrickCoveSouth")
+
+unique(wtr_pre$site)
+names(wtr_pre)
+
+# Bad HC data pre 	2008-06-18 11:00:00
+# Jump @ 2008-06-19 11:00:00, 12, 13
+
+wtr_hc2 <- wtr_hc %>% 
+  mutate(temp_degC2 = ifelse(datetime < "2008-06-18 06:00:00", NA, temp_degC)) %>% 
+  mutate(temp_degC3 = ifelse(datetime > "2008-06-19 05:00:00" & datetime < "2008-06-19 09:00:00", NA, temp_degC2))
+
+
+
+ggplot(wtr_hc2, aes(y = temp_degC3, x = dayofyr, color = site))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~year)
+```
+
+
 # Load PRISM data all sites
 ```{r}
 files <- dir("00_Data_files/PRISM_precip_data_all_sites", pattern = "\\.csv$", full.names = TRUE)
