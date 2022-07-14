@@ -1,0 +1,563 @@
+---
+title: "Dietze Ch. 11 Uncertainty Analysis-Copy"
+author: "J. Brentrup"
+date: "6/28/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries
+```{r}
+library(ecoforecastR)
+pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
+
+```
+
+## Load Data
+
+```{r, echo=FALSE}
+###get calibration data - 1 site
+#read in data matrix
+gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/data_site_model_format.csv")
+#gloeo is already on log scale, covars are already standardized
+
+y=gloeo$y
+covar1=gloeo$Temp
+covar2=gloeo$GDD
+week_avg1=gloeo$week_avg1
+week_avg2=gloeo$week_avg2
+a_obs=0.01; r_obs=0.01
+a_proc=0.01; r_proc=0.01
+season_weeks=gloeo$season_weeks
+year_no = gloeo$year_no
+#year_no = c(1:8)
+```
+
+## Mike Model
+Based on these observations, the data was fit to a logistic growth state space model that assumes K has a random site effect, $\alpha_s$, and varies as a function of $log(precip)$. Both the process error, $Q = Var[\epsilon]$, and the observation error, R, are assumed to follow lognormal distributions.
+
+```{r}
+logisticRE <- "
+model{
+
+  ## priors
+  r_global ~ dnorm(0,0.1)     ## across-site mean growth rate
+  K_global ~ dlnorm(6,0.01)   ## across-site mean carrying capacity
+  beta ~ dnorm(0,0.000001)    ## slope of K response to precip
+  tau_site ~ dgamma(0.1,0.1)  ## site random effect precision
+  R ~ dgamma(0.01,0.00000001) ## Observation error precision
+  Q ~ dgamma(0.01,0.00000001) ## Process errror precision 
+
+  ## random effects and initial conditions, s = site
+  for(s in 1:NS){
+    alpha_site[s] ~ dnorm(0,tau_site)  ## random site effect on K
+    lN[s,1] ~ dnorm(6,0.001)           ## prior on IC, log scale
+    N[s,1] <- exp(lN[s,1])             ## IC, linear scale
+  }
+
+  ## process model, t = time, s = site
+  for(t in 2:NT){
+    for(s in 1:NS){
+
+      ## K is a linear model with a site random effect and fixed effect on log(precip)
+      K[s,t]  <- max(1,K_global+alpha_site[s]+beta*log(precip[t]/800))  
+
+      ## standard logistic growth process model, logged     
+      mu[s,t] <- log(max(1,N[s,t-1] + r_global*N[s,t-1]*(1-N[s,t-1]/K[s,t])))
+
+      ## process error
+      lN[s,t] ~ dnorm(mu[s,t],Q)
+      N[s,t] <- exp(lN[s,t])
+    }
+  }
+  ## observation model
+  for(t in 1:NT){
+    for(s in 1:NS){
+      No[s,t] ~ dlnorm(lN[s,t],R)
+    }
+  }
+}
+"
+```
+
+The variable names Q (process error) and R (observation error) may seem odd but this is done for consistency with material we will cover in Chapter 13 and the data assimilation literature. 
+
+## HC 1 site Model
+
+```{r}
+##Random Walk run - converges fine
+
+ data.RW_obs_1site <- list(y=y, n=length(season_weeks), x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 15.37, r_obs = 7.84)
+  variable.names.RW_obs_1site <- c("tau_proc", "tau_obs")
+  variable.namesout.RW_obs_1site <- c("tau_proc","tau_obs","mu")
+  init.RW_obs_1site <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
+  params.RW_obs_1site <- c("tau_proc","tau_obs")
+
+
+RandomWalk = "
+model{
+  
+  #### Data Model
+  for(t in 1:n){
+    y[t] ~ dnorm(x[t],tau_obs)
+  }
+  
+  #### Process Model
+  for(t in 2:n){
+    x[t]~dnorm(x[t-1],tau_add)
+  }
+  
+  #### Priors
+  x[1] ~ dnorm(x_ic,tau_ic)
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_add ~ dgamma(a_add,r_add)
+}
+"
+
+
+# nchain = 3
+# init <- list()
+# for(i in 1:nchain){
+#   y.samp = sample(y,length(y),replace=TRUE)
+#   init[[i]] <- list(tau_add=1/var(diff(y.samp),na.rm=T),tau_obs=5/var(y.samp,na.rm=T))}
+#   
+  
+j.model_RW   <- jags.model (file = textConnection(RandomWalk),
+                             data =  data.RW_obs_1site,
+                             inits = init.RW_obs_1site,
+                             n.chains = 3)  
+
+
+
+jags.out_RW   <- coda.samples (model = j.model_RW,
+                            variable.names = c("tau_add","tau_obs"),
+                            n.iter = 50000) #burnin 100000
+plot(jags.out_RW)
+```
+
+### Posterior Diagnostics
+
+As noted earlier, we're going to take the fitting of this model to the data as a given, and work with the posterior distributions, but if you are unsure about how this is done please go back and look at Exercises 5 and 6 and the Chapter 6 activities. Here are the basic diagnostics showing the posterior estimates of the parameters and states.
+
+```{r, fig.asp=0.8}
+## parameters
+plot(out$params)
+summary(out$params)
+
+## states  
+ci <- apply(as.matrix(out$predict),2,quantile,c(0.025,0.5,0.975))
+time = 1:NT
+plot(0,0,type = "n",xlim=c(0,NT),ylim = range(ci),xlab="time",ylab="N")
+for(s in 1:NS){
+  sel = seq(s,ncol(ci),by=NS)
+  ecoforecastR::ciEnvelope(time,ci[1,sel],ci[3,sel],col=col.alpha(s,0.6))
+  lines(time,ci[2,sel],col=s)
+  points(time,No[s,],col=s,pch=19)
+  points(time,No[s,])
+}
+```
+
+## JB Posterior
+
+#Read in Data Single site
+```{r}
+###get calibration data - 1 site
+#read in data matrix
+gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/data_site_model_format.csv")
+#gloeo is already on log scale, covars are already standardized
+
+season_weeks=gloeo$season_weeks
+season_weeks=1:120
+
+y = gloeo$y
+
+y = y[1:120] # shorten to drop 2015 & 2016
+
+sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
+date = sampling_dates$date
+
+```
+
+```{r}
+time = season_weeks # for full time series
+time = date # for 2013
+time.rng = c(1,length(time))       ## adjust to zoom in and out
+time.rng = c(321,480)              ## zoom in on 2013: 81-100, 2015-2016: 121-160, 141-160 - 2016
+#out <- as.matrix(jags.out)         ## convert from coda to matrix  
+mu.cols <- grep("^mu",colnames(out)) # out ## grab all columns that start with the letter mu
+
+ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
+
+plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], main = "3sites + RY Coffin") #, xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
+if(diff(time.rng) < 100){ 
+  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='week'), format = "%Y-%m-%d", labels = T)
+}
+ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+points(time,y,pch=19,cex=1) #0.5, pch="+",
+lines(time,y)
+lines(time, ci[1,], lty = 2)
+lines(time, ci[3,], lty = 2)
+points(time, ci[2,], pch="+")
+```
+
+## Forward Simulation
+
+```{r, echo=FALSE}
+### settings
+s <- 6             ## Focal site for forward simulation
+Nmc = 7500         ## set number of Monte Carlo draws 1000
+ylim = range(ci,na.rm=TRUE)  ## set Y range on plot
+N.cols <- c("black","red","green","blue","orange") ## set colors
+trans <- 0.8       ## set transparancy
+time = 1:160    ## total time
+time1 = 1:120       ## calibration period
+time2 = 121:160   ## forecast period
+```
+
+Before we get started with prediction, let's focus in on a single site to make the task a bit simpler. Because we'll want to display this site for all the different model runs we do let's create a simple function to encapsulate making the plot rather than cluttering our code with constant cut-and-paste redundancy.
+
+```{r}
+plot.run <- function(){
+ # sel = seq(s,ncol(ci),by=NS) # add a sequence to avoid overplotting
+  plot(time,time,type='n',ylim=ylim,ylab="LN Gloeo")
+  ecoforecastR::ciEnvelope(time1,ci[1,],ci[3,],col=col.alpha("lightBlue",0.6))
+  lines(time1,ci[2,],col="blue")
+  points(time1,ci[2,])
+}
+```
+
+```{r,echo=FALSE}
+ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) 
+plot.run()
+```
+
+Our next goal in making a forecast is to run the model forward under it's 'default' values, which we'll take as the mean of the various inputs. To help us out let's make another function that encapsulates our model and generalizes it for the different cases we'll need. This code is directly analogous to the process model in the earlier JAGS code, and we don't need to replicate the data or parameter models.
+
+```{r}
+##` @param IC    Initial Conditions
+##` @param ppt   Precipitation forecast
+##` @param r     Intrinsic growth rate
+##` @param Kg    Across-site ('global') mean carrying capacity
+##` @param beta  Slope of precipitation effect on K
+##` @param alpha Site random effect
+##` @param Q     Process error (default = 0 for deterministic runs)
+##` @param n     Size of Monte Carlo ensemble
+forecastN <- function(IC,ppt,r,Kg,beta,alpha,Q=0,n=Nmc){
+  N <- matrix(NA,n,time2)  ## storage
+ gloeo_prev <- IC          ## initialize
+  for(t in 121:time2){ # start for last 2 years
+    #covar model
+      #  covar1 <- covar_hindcast$covar1[t] # hindcasted covariates
+      #  covar2 <- covar_hindcast$covar2[t]
+    covar1 <- gloeo$Temp[t]
+    covar2 <- gloeo$GDD[t]
+    #process model
+   gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar1 + params$beta4*covar2 + params$beta5*covar2^2 
+    proc.model[t] = rnorm(Nmc,gloeo_temp,params$sd_proc) 
+    out[t] = rnorm(Nmc,proc.model[t],params$sd_obs)      ## predict next step with data model
+    gloeo_prev <- out[t]                                 ## update IC
+  }
+  return(N)
+}
+
+
+  #set up output matrices
+  proc.model <- matrix(NA, Nmc, 4)
+  out <- matrix(NA, Nmc, 4)
+```
+
+### Deterministic prediction
+
+To make a deterministic prediction, we'd then want to calculate the means of all of our different inputs and pass these means to our model. Since there run is deterministic, we only need to run it once (n=1)
+
+```{r}
+## calculate mean of all inputs
+ppt.mean <- matrix(apply(ppt_ensemble,2,mean),1,NT) ## driver
+## parameters
+params <- as.matrix(out$params)
+param.mean <- apply(params,2,mean)
+
+posteriors = out
+
+Nmc = 7500
+prow = sample.int(nrow(out),Nmc,replace=TRUE)
+num_draws = prow
+
+
+params <- list(sd_obs = 0, sd_proc = 0, beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
+                     beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
+                     beta4 = mean(posteriors[,grep("beta4",colnames(posteriors))],na.rm = TRUE),beta5 = mean(posteriors[,grep("beta5",colnames(posteriors))],na.rm = TRUE),sd_C1 = 0, sd_C2 = 0)
+
+
+## initial conditions
+IC <- as.matrix(mus)
+
+IC = rnorm(Nmc,-5,sqrt(1/100)) # Mary restarted new year
+
+N.det <- forecastN(IC=mean(IC[,"mu[120]"]), # last time point
+                  
+                   Q=0,  ## process error off
+                   n=1)
+
+## Plot run
+plot.run()
+lines(time2,N.det,col="purple",lwd=3)
+```
+
+# Monte Carlo Error Propagation
+
+For each source of uncertainty we'll be exploring the Monte Carlo approach to error propagation. Let's start with the initial condition uncertainty. For this set of runs we'll want to continue to hold all the parameters and drivers at their means, and keep the process error off, but we'll vary the initial conditions. Specifically, we'll run the model `r Nmc` times, and each time we run the model we'll start from a different initial condition. For this analysis the distribution of initial conditions that we want to sample from is just the posterior distribution of the population size at our focal site in the last year of the calibration period, `N[6,30]`. Because we know that posterior distributions often have covariances among parameters, we're going to sample the _row numbers_ in the MCMC output rather than sample the posterior state directly. We'll save these row numbers and use the same rows when we later sample the model parameters, process error, and random effects as well. While we had the benefit of the posterior state estimate here, in other contexts the initial condition uncertainty might be derived directly from field sampled data, or (for unmeasured sites) may require another statistical model to make a _spatial_ prediction of the state of the system to new locations. If we're particularly data limited we may have to rely on Bayesian priors to inform the initial conditions (e.g. through expert elicitation).
+
+### Initial Condition uncertainty
+```{r}
+## sample parameter rows from previous analysis
+prow = sample.int(nrow(params),Nmc,replace=TRUE)
+
+N.I <- forecastN(IC=IC[prow,"N[6,30]"],  ## sample IC
+                   ppt=ppt.mean,
+                   r=param.mean["r_global"],
+                   Kg=param.mean["K_global"],
+                   beta=param.mean["beta"],
+                   alpha=param.mean["alpha_site[6]"],
+                   Q=0,
+                   n=Nmc)
+
+## Plot run
+plot.run()
+N.I.ci = apply(N.I,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+```
+
+**Question 1:** Describe the pattern to the initial condition uncertainty and compare that to your expectations (e.g. Table 1).
+
+### Parameter uncertainty
+
+Next, let's add parameter uncertainty to our forecast. To do this we'll want to sample the **joint** parameter posterior distribution using the row numbers as before. In this forecast we're still running `r Nmc` model runs, but now each run get's its own unique parameters _and_ its own unique initial conditions. We expect the total uncertainty to increase, so we can layer the run with both uncertainties on top of the run with just initial conditions to get a feel for how much more uncertainty is added when we incorporate parameter uncertainty.
+
+One thing that is important to note about the parameter uncertainty propagation is that it relies on having meaningful estimates of parameter uncertainty. That's not to say that forecasts can't be done with priors (e.g. through literature synthesis or expert elicitation), but forecasting what you expect to happen in a real system is definitely different than slapping an arbitrary uniform prior on default parameters (e.g. +/- 20%).
+
+```{r}
+N.IP <- forecastN(IC=IC[prow,"N[6,30]"],  ## sample IC
+                   ppt=ppt.mean,
+                   r=params[prow,"r_global"],  ## sample parameters
+                   Kg=params[prow,"K_global"],
+                   beta=params[prow,"beta"],
+                   alpha=params[prow,"alpha_site[6]"],
+                   Q=0,
+                   n=Nmc)
+
+## Plot run
+plot.run()
+N.IP.ci = apply(N.IP,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+```
+
+**Question 2:** 
+A) Describe the pattern and relative magnitude of the parameter uncertainty and compare this to your expectations. 
+B) Using the existing model and Monte Carlo approach, describe how you might partition the contribution of each parameter (r, Kg, alpha, beta) to the forecast uncertainty.
+
+### Driver uncertainty
+
+Within our forecast precipitation is the primary extrinsic driver, and thus to make a forecast of our population we need to be able to make a forecast of this driver as well. Here we're going to rely on a `NE` member ensemble of precipitation forecasts, and as you can see the uncertainty in this forecasts grows with time.
+
+```{r,echo=FALSE}
+plot(time2,ppt_ensemble[1,],type='n',ylim=range(ppt_ensemble),xlab="time",ylab="precipitation (mm)")
+for(i in 1:NE){
+  lines(time2,ppt_ensemble[i,],lwd=0.5,col="grey")
+}
+```
+
+This example of having a smaller number of driver ensembles is not uncommon, and we can handle this easily by resampling _with replacement_ the ensemble members (again, represented as row numbers) the same number of times as our overall ensembles. Thus, while every run may have a unique initial condition and parameter combination, many runs share the same drivers.
+
+When driving ecological forecasts with other forecast outputs (weather, land use, economics, etc), it is important to remember that we can only resample **predictions** or we can sample ensemble members **within a projection**, but we CANNOT resample **across projections**. For example, if I have a given climate scenario (e.g. RCP4.5), I can resample over what different climate models predict, but I cannot resample or average across the different scenarios (e.g. RCP4.5 and 8.5), because those scenarios themselves do not represent random draws from the distribution of possible futures.
+
+```{r}
+## sample driver rows
+drow = sample.int(nrow(ppt_ensemble),Nmc,replace=TRUE)
+
+N.IPD <- forecastN(IC=IC[prow,"N[6,30]"],  ## sample IC
+                   ppt=ppt_ensemble[drow,],   ## Sample drivers
+                   r=params[prow,"r_global"],  ## sample parameters
+                   Kg=params[prow,"K_global"],
+                   beta=params[prow,"beta"],
+                   alpha=params[prow,"alpha_site[6]"],
+                   Q=0,
+                   n=Nmc)
+
+## Plot run
+plot.run()
+N.IPD.ci = apply(N.IPD,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans)) # driver
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans)) # parameter
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans)) # IC
+lines(time2,N.I.ci[2,],lwd=0.5)
+```
+
+**Question 3:** As before, describe the pattern of how driver uncertainty contributes to the forecast and compare that to our first principles expectations.
+
+### Process uncertainty
+
+Adding process error to the model looks similar to both older _stochastic_ modeling approaches and to the _residual_ error in statistical models. However, it is subtly distinct in a few important ways. First, unlike theoretical stochastic models, process error is estimated explicitly by fitting models to data. Second, unlike residual error, when we estimate process error we partition it from the observation error. Thus the process error represents things in the process that the model is unable to capture (which will always occur because all models are approximations). The distinction between process and observation error is important because observation error only affects the current observation, but process error propagates into the future.
+
+```{r}
+## process error samples
+Qmc <- 1/sqrt(params[prow,"Q"])  ## convert from precision to standard deviation
+
+N.IPDE <- forecastN(IC=IC[prow,"N[6,30]"],  ## sample IC
+                   ppt=ppt_ensemble[drow,],   ## Sample drivers
+                   r=params[prow,"r_global"],  ## sample parameters
+                   Kg=params[prow,"K_global"],
+                   beta=params[prow,"beta"],
+                   alpha=params[prow,"alpha_site[6]"],
+                   Q=Qmc,
+                   n=Nmc)
+
+## Plot run
+plot.run()
+N.IPDE.ci = apply(N.IPDE,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
+ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+```
+
+**Question 4:** Why might the relative contribution of the process error decline with time? Does this match expectations?
+
+### Random Effect uncertainty
+
+The last figure above represent our best forecast if we're making an **in-sample** prediction (i.e. forecasting one of the sites that we have previously studied). However, if we are making an **out-of-sample** prediction to a new site then there is an additional source of uncertainty that needs to be considered -- the unexplained site-to-site variability being captured by the random effect. When we're making an in-sample prediction we use the posterior $\alpha$ associated with that specific site, but for a new site we need to move up a level in the hierarchical model and sample new alpha values using the across-site precision, $\tau_{site}$. While the out-of-sample forecast is going to have greater uncertainty (which makes intuitive sense and is a desirable feature), there's no guarantee that the in-sample prediction is within the predictive interval of the out-of-sample prediction because the focal site might have been above- or below-average relative to the across-site mean.
+
+```{r}
+## Random effect samples
+tau.mc <- 1/sqrt(params[prow,"tau_site"]) ## convert from precision to std deviation
+aNew.mc <- rnorm(Nmc,0,tau.mc)            ## draw out-of-sample predictions of alpha at a new site
+
+N.IPDEA <- forecastN(IC=IC[prow,"N[6,30]"],    ## sample IC
+                   ppt=ppt_ensemble[drow,],    ## Sample drivers
+                   r=params[prow,"r_global"],  ## sample parameters
+                   Kg=params[prow,"K_global"],
+                   beta=params[prow,"beta"],
+                   alpha=aNew.mc,              ## sample random effect
+                   Q=Qmc,                      ## process error
+                   n=Nmc)
+
+## Plot run
+plot.run()
+N.IPDEA.ci = apply(N.IPDEA,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IPDEA.ci[1,],N.IPDEA.ci[3,],col=col.alpha(N.cols[5],trans))
+ecoforecastR::ciEnvelope(time2,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
+ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+```
+
+**Question 5:** The last step added random effects, but this uncertainty could be further partitioned into two parts: the ecological site-to-site variability in the population processes, and the parameter uncertainty about the site-to-site variance. To partition these out repeat this analysis setting `tau.mc` to its posterior mean. How does this change your results? How much of the random effect uncertainty is due to ecological variability versus uncertainty about `tau.mc`?
+
+```{r}
+## Random effect samples with ecological variability vs. tau.mc
+tau.mc <- 1/sqrt(params[prow,"tau_site"]) ## convert from precision to std deviation
+tau.mc <- param.mean["tau_site"]
+aNew.mc <- rnorm(Nmc,0,tau.mc)            ## draw out-of-sample predictions of alpha at a new site
+
+N.IPDEA <- forecastN(IC=IC[prow,"N[6,30]"],    ## sample IC
+                   ppt=ppt_ensemble[drow,],    ## Sample drivers
+                   r=params[prow,"r_global"],  ## sample parameters
+                   Kg=params[prow,"K_global"],
+                   beta=params[prow,"beta"],
+                   alpha=aNew.mc,              ## sample random effect
+                   Q=Qmc,                      ## process error
+                   n=Nmc)
+
+## Plot run
+plot.run()
+N.IPDEA.ci = apply(N.IPDEA,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IPDEA.ci[1,],N.IPDEA.ci[3,],col=col.alpha(N.cols[5],trans))
+ecoforecastR::ciEnvelope(time2,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
+ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+```
+
+
+# Uncertainty Analysis
+
+Our final analysis is focused on quantifying the relative contributions of each of the 5 uncertainty terms to the overall predictive variance, and how that partitioning changes with time. To do this we will calculate the variances, because unlike predictive intervals or standard errors variances combine additively.
+
+```{r}
+### calculation of variances
+varI     <- apply(N.I,2,var)
+varIP    <- apply(N.IP,2,var)
+varIPD   <- apply(N.IPD,2,var)
+varIPDE  <- apply(N.IPDE,2,var)
+varIPDEA <- apply(N.IPDEA,2,var)
+varMat   <- rbind(varI,varIP,varIPD,varIPDE,varIPDEA)
+
+## out-of-sample stacked area plot
+V.pred.rel <- apply(varMat,2,function(x) {x/max(x)})
+plot(time2,V.pred.rel[1,],ylim=c(0,1),type='n',main="Relative Variance: Out-of-Sample",ylab="Proportion of Variance",xlab="time")
+ciEnvelope(time2,rep(0,ncol(V.pred.rel)),V.pred.rel[1,],col=N.cols[1])
+ciEnvelope(time2,V.pred.rel[1,],V.pred.rel[2,],col=N.cols[2])
+ciEnvelope(time2,V.pred.rel[2,],V.pred.rel[3,],col=N.cols[3])
+ciEnvelope(time2,V.pred.rel[3,],V.pred.rel[4,],col=N.cols[4])
+ciEnvelope(time2,V.pred.rel[4,],V.pred.rel[5,],col=N.cols[5])
+legend("topleft",legend=c("RandomEffect","Process","Driver","Parameter","InitCond"),col=rev(N.cols),lty=1,lwd=5)
+
+## in-sample stacked area plot
+V.pred.rel.in <- apply(varMat[-5,],2,function(x) {x/max(x)})
+plot(time2,V.pred.rel.in[1,],ylim=c(0,1),type='n',main="Relative Variance: In-Sample",ylab="Proportion of Variance",xlab="time")
+ciEnvelope(time2,rep(0,ncol(V.pred.rel.in)),V.pred.rel.in[1,],col=N.cols[1])
+ciEnvelope(time2,V.pred.rel.in[1,],V.pred.rel.in[2,],col=N.cols[2])
+ciEnvelope(time2,V.pred.rel.in[2,],V.pred.rel.in[3,],col=N.cols[3])
+ciEnvelope(time2,V.pred.rel.in[3,],V.pred.rel.in[4,],col=N.cols[4])
+legend("topleft",legend=c("Process","Driver","Parameter","InitCond"),col=rev(N.cols[-5]),lty=1,lwd=5)
+```
+
+
+**Question 6:**  Based on results, where would you focus your research efforts next if your aim was to improve out-of-sample predictions? What about improving in-sample predictions? What is the current balance between process and parameter error and what does that tell us about the potential value of increasing model complexity?
+
+## Next steps:
+
+The Monte Carlo approach to uncertainty propagation is very flexible and general, however for computationally demanding models it can also be limiting because of the large ensemble sizes required to approximate the full predictive distribution. As discussed in Chapter 11, there are alternative approaches that can be applied in these cases, but at the cost of additional assumptions and/or analytical complexity. We'd encourage you to explore how these other methods could be implemented for the above analysis:
+
+**1) Ensemble uncertainty propagation:** 
+The ensemble approach is very similar to the Monte Carlo approach but replaces the Monte Carlo approximation of the full predictive distribution with the approximation that the ensemble corresponds to a known probability distribution (e.g. Gaussian). Because it usually takes a much smaller sample size to get a stable estimate of a distribution's parameters (e.g. Gaussian mean and standard deviation), the size of the ensemble can be smaller provided the distributional assumption gives a good approximation. To implement the above analysis as an ensemble:
+
+* Change the lines that calculate predictive intervals using quantiles (e.g. `apply(N.*,2,quantile,c(0.025,0.5,0.975)))`) to instead calculate the mean and standard deviation
+* Then calculate the predictive interval using these statistics.
+* Compare the Gaussian approximation to the full Monte Carlo ensemble
+* Reduce the sample size, `Nmc`, by 10-50x and assess how the Gaussian approximation compares to the original and updated Monte Carlo estimates.
+
+**2) Analytical uncertainty propagation:**
+For even more computationally demanding problems, or problems where an analytical solution is desirable, it is also possibly to approximate the uncertainty propagation analytically:
+
+* As a first-order approximation, assume that the single deterministic model run approximates the mean. It is important to realize that this violates Jensen's Inequality (mean of the function does not equal the function of the mean) but improving this approximation requires solving for the second deriatives (book eqn 11.2)
+* Approximate the forecast variance through time by applying Eqn 2 above to the logistic growth model. This will require taking the partial derivatives of the model with respect to each of the terms in the equation
+    + state = Y = N
+    + drivers = X = precip
+    + parameters = $\theta$ = $[r, Kg, \beta]$
+    + random effects = $\alpha$
+* Next you need to analytically calculate the variance of the initial conditions, drivers, parameters, random effects, and process error = $Var[\epsilon]$ = Q
+* Finally, because the forecast variance has to be solved iteratively (same as the mean), you need to create an alternative version of the `forecastN` function that calculates both N and VarN for each time step
+* Partitioning variances just requires keep track of each of the terms ($derivative^2 Var$)
+* Once you get the basic version working, you'll want to improve the approximation by including the covariance terms among parameters (book eqn 11.5)
+
+**3) Interactions between uncertainties:**
+The approach used above is based on sequentially adding different sources of uncertainty to the full model. This raises two questions: (1) How sensitive are the results to the order the variables are introduced and (2) to what extent do variables interact with each other.  Use the analytical rules for combining variances (Chapter 11 appendices) to address these questions, and estimate the interaction terms between the uncertainties, for the "in sample" site-level run. Do this either numerically (Monte Carlo or Ensemble approach) or Analytically. If approaching numerically, I'd give the hint that Var(A+B) = Var(A) + Var(B) + Cov(A,B). For example, if A = IC and B = parameters, then Var(A) comes from runs with just IC, Var(B) comes from runs with just parameter error, Var(A+B) comes from runs with both, and the covariance Cov(A,B), which provides a measure of the interaction between A and B, is found by difference. Also recall from chapter 2 (Box 2.1) that covariances can be decomposed into correlations, which are often easier to interpret.
+
+## Applying this to your own forecast
+
+To apply this to your own model and data you'll need to:
+
+1. Implementing a function like `forecastN` that lets you forward simulate your model.
+2. Load up the output from your state space model calibration (Exercise 06) so that you have access to your parameter and initial condition uncertainties (the latter being the last latent state in your model fit).
+3. Load up any other driver/covariate data (or scenarios) that you need to be able to run your model into the future. Hopefully these inputs already have uncertainties reported, or ensemble members you can sample from, similar to the ppt_ensemble above. For meteorology, ensemble products are available on both the weather (e.g. NOAA GEFS) and climate (e.g. CMIP) time scales, but you can always get the ball rolling with an analysis that just resamples historical data (e.g. your calibration data).
+4. Run through the analyses above, passing in the inputs, parameters, and initial conditions that are relevant to your own model!

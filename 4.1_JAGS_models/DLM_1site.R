@@ -19,9 +19,10 @@ model{
 
 
   #### Priors
+  tau_obs ~ dgamma(a_obs,r_obs)
   tau_proc ~ dgamma(a_proc,r_proc)
+
   beta1 ~ dnorm(beta.m1,beta.v1)
   beta2 ~ dnorm(beta.m2,beta.v2)
-  tau_obs ~ dgamma(a_obs,r_obs)
 
 }

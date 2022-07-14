@@ -22,15 +22,28 @@ gloeo_all_v2 <- gloeo_all %>%
   select(year,season_weeks, hc_gloeo_ln, nb_gloeo_ln, nsh_gloeo_ln, sotf_gloeo_ln)
 
 # Remove 1 site
-gloeo_3sites <-  gloeo_all_v2 %>%
-  select(-sotf_gloeo_ln) # removed SOTF Fichter
+# gloeo_3sites <-  gloeo_all_v2 %>%
+#   select(-sotf_gloeo_ln) # removed SOTF Fichter
+
+# Keep HC and set Fichter to NA for 2015 & 2016
+gloeo_2sites <-  gloeo_all_v2 %>%
+  select(year, season_weeks, hc_gloeo_ln, sotf_gloeo_ln) %>%
+  mutate(sotf_gloeo_ln_pred = ifelse(year %in% 2015:2016, NA, sotf_gloeo_ln)) %>%  # set 2015 & 2016 to NA to forecast
+  select(-sotf_gloeo_ln)
+
 
 #set calibration years and weeks of season and sites
+# 3 site model
+#y = as.matrix(gloeo_3sites[,3:5])
+# year_no = as.numeric(as.factor(gloeo_3sites$year))
+# season_weeks = gloeo_3sites$season_weeks # full season weeks instead of 1:20
+# site_no = c(1:3)
 
-y = as.matrix(gloeo_3sites[,3:5])
-year_no = as.numeric(as.factor(gloeo_3sites$year))
-season_weeks = gloeo_3sites$season_weeks # full season weeks instead of 1:20
-site_no = c(1:3)
+# 2 site model
+y = as.matrix(gloeo_2sites[,3:4])
+year_no = as.numeric(as.factor(gloeo_2sites$year))
+season_weeks = gloeo_2sites$season_weeks # full season weeks instead of 1:20
+site_no = c(1:2)
 
 ###############################GLOEO-ONLY MODELS#####################################
 #for RW_3sites, RW_obs_3sites, and AC models 3 sites
@@ -238,8 +251,11 @@ if(model_name %in% c("wtrtemp_min_and_GDD_3sites_RY")){
 
   Temp$SOTF.tempC_min_stand <- (Temp$SOTF.tempC_min - mean(Temp$SOTF.tempC_min, na.rm = TRUE))/sd(Temp$SOTF.tempC_min, na.rm = TRUE)
 
-  # 3 sites
-  Temp_3sites <- as.matrix(Temp[,7:9])
+  # # 3 sites
+  # Temp_3sites <- as.matrix(Temp[,7:9])
+
+  # 2 sites
+  Temp_2sites <- as.matrix(Temp[,c(7,10)])
 
   # use average of 3 sites as prior for gap filling
   Temp_avg <- rowMeans(Temp[,7:9], na.rm = T)
@@ -357,7 +373,10 @@ if(model_name %in% c("wtrtemp_min_and_GDD_3sites_RY")){
   # Combine 3 sites gdd data in same order as gloeo
   GDD_all <- bind_rows("GDD_hc" = GDD_hc, "GDD_nb" = GDD_nb, "GDD_nsh" = GDD_nsh, "GDD_sotf" = GDD_sotf)
 
-  GDD_3sites <-  as.matrix(GDD_all[,1:3]) # drop Fichter
+#  GDD_3sites <-  as.matrix(GDD_all[,1:3]) # drop Fichter
+
+  GDD_2sites <-  as.matrix(GDD_all[,c(1,4)]) # keep Fichter & HC
+
 
   ### take avg of 3 sites for data gap-filling ###
   GDD_avg <- rowMeans(GDD_all[,1:3], na.rm = T)
@@ -396,7 +415,9 @@ if(model_name %in% c("wtrtemp_min_and_GDD_3sites_RY")){
 
   week_avg2 <- week_avg2_v2$value
 
-  return(list(season_weeks = season_weeks, year_no = year_no,  totYr = length(unique(year_no)), site_no = site_no, y = y, covar1 = Temp_3sites, covar2 = GDD_3sites, week_avg1 = week_avg1, week_avg2 = week_avg2))
+  # return(list(season_weeks = season_weeks, year_no = year_no,  totYr = length(unique(year_no)), site_no = site_no, y = y, covar1 = Temp_3sites, covar2 = GDD_3sites, week_avg1 = week_avg1, week_avg2 = week_avg2))
+
+  return(list(season_weeks = season_weeks, year_no = year_no,  totYr = length(unique(year_no)), site_no = site_no, y = y, covar1 = Temp_2sites, covar2 = GDD_2sites, week_avg1 = week_avg1, week_avg2 = week_avg2))
 
   }
 
