@@ -15,13 +15,13 @@ pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #set a directory to use as a local file repository for plots if desire to write to file
 my_directory <- "~/Documents/Gloeo Bayesian Modeling/R Output/Bayes_model_calibration_output/" #"C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output"
-write_plots <- FALSE
+write_plots <- TRUE
 
 #make vector of model names for for-loop
 #my_models <- c("RW","RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wind","wind_and_GDD","schmidt_and_GDD","schmidt_and_temp","temp_and_wind","RY")
 
 # 1 site
-my_models <- c("wtrtemp_min_and_GDD_1site_RY") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY")
+my_models <- c("wtrtemp_min_and_GDD_1site") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY")
 
 # 3 sites
 my_models <- c("wtrtemp_min_and_GDD_3sites_RY") #"RW_obs_3sites","DLM_3sites", "wtrtemp_min_and_GDD_3sites", "wtrtemp_min_and_GDD_3sites_RY")
@@ -36,8 +36,8 @@ for (i in 1:length(my_models)){
 
 #1) Source helper functions ---------------------------------------------------------
   source('0_Function_library/model_calibration_plug_n_play_site.R')
-  #source('0_Function_library/model_calibration_get_data_site_longformat.R') #check correct script sourced
-  source('0_Function_library/model_calibration_get_data_multisite_longformat.R') #check correct script sourced
+  source('0_Function_library/model_calibration_get_data_site_longformat.R') #check correct script sourced
+  #source('0_Function_library/model_calibration_get_data_multisite_longformat.R') #check correct script sourced
   source('0_Function_library/model_calibration_plots.R')
 
 #2) Model options => pick model -----------------------------------------------------
@@ -81,10 +81,10 @@ jags.out.mcmc <- as.mcmc.list(jags.out)
 
 #save predicted states
 Nmc = 10000
-out <- as.matrix(jags.out.mcmc)
+out <- as.matrix(jags.out.mcmc) # Window to thin, burn-in,
 srow <- sample.int(nrow(out),Nmc,replace=TRUE)
 mus <- out[srow,grep("mu",colnames(out))]
-#write.csv(mus,file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_predicted_states.csv')),row.names = FALSE)
+write.csv(mus,file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_predicted_states.csv')),row.names = FALSE)
 
 
 #plot parameters
@@ -97,17 +97,17 @@ sum <- summary(jags.out, vars = jags_plug_ins$variable.names.model)
 crosscorr <- crosscorr(jags.out.mcmc[,c(jags_plug_ins$params.model)])
 
 #save results
-#sink(file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_param_summary.txt')))
+sink(file = file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_param_summary.txt')))
 print("Parameter summary")
 print(sum)
 print("Parameter cross-correlations")
 print(crosscorr)
-#sink()
+sink()
 
 
 #7) Save runjags output
-#write.jagsfile(jags.out, file=file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_calibration.txt')),
-          #     remove.tags = TRUE, write.data = TRUE, write.inits = TRUE)
+write.jagsfile(jags.out, file=file.path("./5_Model_output/5.1_Calibration",paste0(model_name,'_calibration.txt')),
+             remove.tags = TRUE, write.data = TRUE, write.inits = TRUE)
 
 }
 
@@ -117,12 +117,12 @@ jags.out_DL_3  <- coda.samples(model = j.model,
                                    variable.names = c("tau_proc","tau_obs","beta1","beta2","beta3","beta4","beta5"), #"beta1","beta2","beta3","beta4","beta5"),
                                    n.iter = 50000) #10000
 
-jags.out_DL_3_RY  <- coda.samples (model = j.model,
+jags.out_DL_1_RY  <- coda.samples (model = j.model,
                                         variable.names = c("beta1","beta2","beta3","beta4","beta5", "tau_proc","tau_obs","tau_yr", "yr"),
                                         n.iter = 50000) #10000
 
-plot(jags.out_DL_3_RY)
-summary(jags.out_DL_3_RY)
+plot(jags.out_DL_1_RY)
+summary(jags.out_DL_1_RY)
 
 gelman.diag(jags.out_DL)
 GBR <- gelman.plot(jags.out_DL) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
@@ -135,5 +135,11 @@ gelman.diag(jags.burn)
 
 
 # Calculate DIC
+DIC.DLM <- dic.samples(j.model, n.iter=50000)
+DIC.DLM
+
+DIC.DL_1 <- dic.samples(j.model, n.iter=50000)
+DIC.DL_1
+
 DIC.DL_3_RY <- dic.samples(j.model, n.iter=50000)
 DIC.DL_3_RY

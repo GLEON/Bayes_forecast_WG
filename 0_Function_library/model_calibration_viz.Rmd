@@ -12,8 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Load libraries
 ```{r}
 library(rjags)
-devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
-
+#devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
+library(ecoforecastR)
 ```
 
 #Read in Data Single site
@@ -23,7 +23,9 @@ devtools::install_github("EcoForecast/ecoforecastR",force=TRUE)
 gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/data_site_model_format.csv")
 #gloeo is already on log scale, covars are already standardized
 
-season_weeks=gloeo$season_weeks
+season_weeks=1:160
+gloeo_2015 = gloeo[1:140,4]
+
 y = gloeo$y
 
 sampling_dates <- read_csv("./00_Data_files/sampling_dates.csv")
@@ -49,11 +51,25 @@ hc = gloeo_multi$hc_gloeo_ln
 nb = gloeo_multi$nb_gloeo_ln
 nsh = gloeo_multi$nsh_gloeo_ln
 
+#convert gloeo 2 sites into matrix
+gloeo_multi_long <- gloeo_multi %>% 
+  select(1:3,6) %>% 
+  pivot_longer(3:4, names_to = "site", values_to = "gloeo_ln") %>% 
+  arrange(site, season_weeks, year)
+
+y <- as.matrix(gloeo_multi_long$gloeo_ln)
+season_weeks=1:320
+
+hc = gloeo_multi$hc_gloeo_ln
+nb = gloeo_multi$nb_gloeo_ln
+nsh = gloeo_multi$nsh_gloeo_ln
+
 ```
 
 
 # Read in model calibration output
 ```{r}
+#2016 mus - full time
 mus_1site_RW <- read_csv("5_Model_Output/5.1_Calibration/RW_obs_1site_predicted_states.csv")
 mus_1site_DLM <- read_csv("5_Model_Output/5.1_Calibration/DLM_1site_predicted_states.csv")
 mus_1site <- read_csv("5_Model_Output/5.1_Calibration/wtrtemp_min_and_GDD_1site_predicted_states.csv")
@@ -63,6 +79,16 @@ mus_3sites_RW <- read_csv("5_Model_Output/5.1_Calibration/RW_obs_3sites_predicte
 mus_3sites_DLM <- read_csv("5_Model_Output/5.1_Calibration/DLM_3sites_predicted_states.csv")
 mus_3sites <- read_csv("5_Model_Output/5.1_Calibration/wtrtemp_min_and_GDD_3sites_predicted_states.csv")
 mus_3sites_RY <- read_csv("5_Model_Output/5.1_Calibration/wtrtemp_min_and_GDD_3sites_RY_predicted_states.csv")
+
+# 2014 mus
+mus_1site_RY_2014 <- read_csv("5_Model_Output/5.1_Calibration/11July2022_1siteRY_ModelRun2014/wtrtemp_min_and_GDD_1site_RY_predicted_states.csv")
+
+# 2015 mus
+mus_1site_RY_2015 <- read_csv("5_Model_Output/5.1_Calibration/11July2022_1siteRY_ModelRun2015/wtrtemp_min_and_GDD_1site_RY_predicted_states.csv")
+
+# 2016 mus
+mus_1site_RY_2016 <- read_csv("5_Model_Output/5.1_Calibration/12July2022_1siteRY_ModelRun2016/wtrtemp_min_and_GDD_1site_RY_predicted_states.csv")
+
 
 mu_mat <- as.matrix(mus_3sites_RY)
 
@@ -78,27 +104,38 @@ Given the full joint posterior samples, we're next going to visualize the output
 time = season_weeks # for full time series
 time = date # for 2013
 time.rng = c(1,length(time))       ## adjust to zoom in and out
-time.rng = c(321,480)              ## zoom in on 2013: 81-100, 2015-2016: 121-160, 141-160 - 2016
+time.rng = c(200,320)              ## zoom in on 2013: 81-100, 2015-2016: 121-160, 141-160 - 2016
 #out <- as.matrix(jags.out)         ## convert from coda to matrix  
 mu.cols <- grep("^mu",colnames(mu_mat)) # out ## grab all columns that start with the letter mu
 
 ci <- apply(mu_mat[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
 
-plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], main = "3sites + RY Coffin") #, xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
-if(diff(time.rng) < 100){ 
-  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='week'), format = "%Y-%m-%d", labels = T)
-}
-ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.75))
+plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], main = "Herrick Cove + RY Hindcast Fichter 2015 & 2016") #, xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
+# if(diff(time.rng) < 100){
+#   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='week'), format = "%Y-%m-%d", labels = T)
+# }
+ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha("lightBlue",0.6)) #0.6
+
 points(time,y,pch=19,cex=1) #0.5, pch="+",
 lines(time,y)
 lines(time, ci[1,], lty = 2)
 lines(time, ci[3,], lty = 2)
-points(time, ci[2,], pch="+")
+points(1:280, ci[2,1:280], pch="+", cex = 1.5, col = "blue")
+points(281:320, ci[2,281:320])
+lines(281:320, ci[2,281:320], col = "blue")
+
+
 ```
 
 # Export plots
 ```{r}
-quartz.save(file = "3site_RY_Coffin.png", type = "png")
+quartz.save(file = "1site_RY_HC_pred2016.png", type = "png")
+
+quartz.save(file = "2site_RY_HC_pred2016.png", type = "png")
+quartz.save(file = "2site_RY_HC_pred2016-short.png", type = "png")
+
+
+quartz.save(file = "1site_RY_HC_pred2016_2015-16.png", type = "png")
 
 ```
 
@@ -107,6 +144,11 @@ mean difference between median predicted and observed values (bias)
 median predicted-observed 
 ```{r}
 diff <- ci[2,] - y 
+mean(diff, na.rm = T)
+max(diff, na.rm = T)
+
+#2015
+diff <- ci[2,121:140] - y[121:140]
 mean(diff, na.rm = T)
 max(diff, na.rm = T)
 
