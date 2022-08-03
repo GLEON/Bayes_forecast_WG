@@ -15,14 +15,14 @@ get_calibration_data <- function(model_name){
 # Read in Gloeo data - all sites
 gloeo_all <- read_csv("./00_Data_files/Bayesian_model_input_data/Gloeo_AllSites.csv")
 
-# gloeo_short <- gloeo_all %>%
-# #  filter(year < 2016) %>%
-#   mutate(hc_gloeo_ln_pred = ifelse(year==2016, NA, hc_gloeo_ln)) # set 2016 to NA to forecast
+gloeo_short <- gloeo_all %>%
+  filter(year < 2015) #%>%
+  #mutate(hc_gloeo_ln_pred = ifelse(year==2016, NA, hc_gloeo_ln)) # set 2016 to NA to forecast
 
 # set site, year, season_weeks
-y = gloeo_all$hc_gloeo_ln
-year_no = as.numeric(as.factor(gloeo_all$year))
-season_weeks = c(1:160) # full season weeks instead of 1:20
+y = gloeo_short$hc_gloeo_ln
+year_no = as.numeric(as.factor(gloeo_short$year))
+season_weeks = c(1:120) # full season weeks instead of 1:20
 
 
 ###############################GLOEO-ONLY MODELS#####################################
@@ -139,8 +139,8 @@ if(model_name %in% c("wtrtemp_min_and_GDD_1site_RY")){
 
   #read in covariate 1 (min water temp)  data
   Temp <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv") %>%
-    select(year, season_week, HCS.tempC_min) # %>%  # SELECT SITE
-    #filter(year < 2016)
+    select(year, season_week, HCS.tempC_min)  %>%  # SELECT SITE
+    filter(year < 2015)
 
   # Test filling NA holes with avg min water temp data
  # sum(is.na(Temp$HCS.tempC_min)) # 17 missing values out of 160 ~10%
@@ -158,9 +158,11 @@ if(model_name %in% c("wtrtemp_min_and_GDD_1site_RY")){
 
   Temp <- Temp$HCS.tempC_min_stand
 
-  #read in data from pre-2009 for data gap-filling
+  #read in data from Newbury for data gap-filling - pre-2009 data bad
   Temp_prior <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv") %>%
-    select(year, season_week, NB.tempC_min)
+    select(year, season_week, NB.tempC_min) %>%
+    filter(year < 2015)
+
 
   #center water temp data
   Temp_prior$tempC_min_stand <- (Temp_prior$NB.tempC_min - mean(Temp_prior$NB.tempC_min, na.rm = TRUE))/sd(Temp_prior$NB.tempC_min, na.rm = TRUE)
@@ -177,14 +179,14 @@ if(model_name %in% c("wtrtemp_min_and_GDD_1site_RY")){
   week_avg[is.na(week_avg)] <- week_avg[19]
 
   # repeat 8 times to match long format data, 6 for short
-  week_avg_v2 <- as_tibble(rep(week_avg, 8))
+  week_avg_v2 <- as_tibble(rep(week_avg, 6))
 
   week_avg1 <- week_avg_v2$value
 
   #read in covariate 2 (GDD) data
   GDD <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv") %>%
-    select(year, season_week, hc_gdd_sum) # %>% #SELECT SITE
- #   filter(year < 2016)
+    select(year, season_week, hc_gdd_sum)  %>% #SELECT SITE
+    filter(year < 2015)
 
   # Test filling NA holes with GDD data before or after hole
   #sum(is.na(GDD$hc_gdd_sum)) # 16 missing values out of 160 ~10%
@@ -222,7 +224,8 @@ if(model_name %in% c("wtrtemp_min_and_GDD_1site_RY")){
   #read in data from pre-2009 for data gap-filling - BAD
   # use data from other site - test Newbury
   GDD_prior <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv") %>%
-    select(year, season_week, nb_gdd_sum) #SELECT SITE
+    select(year, season_week, nb_gdd_sum) %>% #SELECT SITE
+    filter(year < 2015)
 
   #standardize within year to account for different start dates in different years
   # convert to wide first
@@ -249,7 +252,7 @@ if(model_name %in% c("wtrtemp_min_and_GDD_1site_RY")){
   week_avg2[is.na(week_avg2)] <- week_avg2[19]
 
   # repeat 8 times to match long format data, 6 for short gloeo
-  week_avg2_v2 <- as_tibble(rep(week_avg2, 8))
+  week_avg2_v2 <- as_tibble(rep(week_avg2, 6))
 
   week_avg2 <- week_avg2_v2$value
 

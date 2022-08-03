@@ -93,6 +93,39 @@ mintemp_all_sites <- bind_cols(mintemp_hc, mintemp_nb[,3],  mintemp_sotf[,3],  m
 
 write.csv(mintemp_all_sites, "./00_Data_files/Bayesian_model_input_data/wtrmin_AllSites.csv", row.names = FALSE)
 
+# Use data from all sites for min water temp prior
+wtrtempmin_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv")
+
+wtr_weeklymean <- rowMeans(wtrtempmin_allsites[,-c(1:2,5)], na.rm = T) # drop year, season week & Fichter data
+
+# Fill NA - Bring back season week
+wtr_weeklymean_v2 <- cbind(wtrtempmin_allsites$year, wtrtempmin_allsites$season_week, wtr_weeklymean)
+
+colnames(wtr_weeklymean_v2)[1:2] <- c("year", "season_week")
+
+sum(is.na(wtr_weeklymean_v2)) # 16 missing values mostly season weeks 19 & 20 but also 1 &2
+
+missing <- which(is.na(wtr_weeklymean_v2[,3]))
+
+for(i in 1:length(wtr_weeklymean_v2[,3])) {
+  if(is.na(wtr_weeklymean_v2[i,3]) & wtr_weeklymean_v2[i,2] %in% c(19:20)) {
+    wtr_weeklymean_v2[i,3] <- wtr_weeklymean_v2[i-1,3]
+
+  } else if (is.na(wtr_weeklymean_v2[i,3]) & wtr_weeklymean_v2[i,2] %in% c(2))
+    wtr_weeklymean_v2[i,3] <- wtr_weeklymean_v2[i+1,3]
+
+
+  else{
+
+    if(is.na(wtr_weeklymean_v2[i,3]) & wtr_weeklymean_v2[i,2] %in% c(1)) {
+      wtr_weeklymean_v2[i,3] <- wtr_weeklymean_v2[i+1,3]
+    }
+  }
+}
+
+write.csv(wtr_weeklymean_v2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_allsites_prior.csv", row.names = F)
+
+
 # GDD for All sites
 
 #GDD for HC
@@ -130,7 +163,40 @@ gdd_nsh <- wtr_nsh %>%
 # Bind together all sites - only keep gdd columns so only 1 year and season week column
 gdd_all_sites <- bind_cols(gdd_hc, gdd_nb[,3],  gdd_sotf[,3],  gdd_nsh[,3])
 
-write.csv(gdd_all_sites, "./00_Data_files/Bayesian_model_input_data/gdd_AllSites.csv", row.names = FALSE)
+write.csv(gdd_all_sites, "./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv", row.names = FALSE)
+
+# Calculate weekly avg for all sites except Fichter to use as prior
+gdd_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv")
+
+gdd_weeklymean <- rowMeans(gdd_allsites[,-c(1:2,5)], na.rm = T) # drop year, season week & Fichter data
+
+# Fill NA - Bring back season week
+gdd_weeklymean_v2 <- cbind(gdd_allsites$year, gdd_allsites$season_week, gdd_weeklymean)
+
+colnames(gdd_weeklymean_v2)[1:2] <- c("year", "season_week")
+
+sum(is.na(gdd_weeklymean_v2)) # 16 missing values mostly season weeks 19 & 20 but also 1 &2
+
+missing <- which(is.na(gdd_weeklymean_v2[,3]))
+
+for(i in 1:length(gdd_weeklymean_v2[,3])) {
+  if(is.na(gdd_weeklymean_v2[i,3]) & gdd_weeklymean_v2[i,2] %in% c(19:20)) {
+    gdd_weeklymean_v2[i,3] <- gdd_weeklymean_v2[i-1,3]
+
+  } else if (is.na(gdd_weeklymean_v2[i,3]) & gdd_weeklymean_v2[i,2] %in% c(2))
+    gdd_weeklymean_v2[i,3] <- gdd_weeklymean_v2[i+1,3]
+
+
+  else{
+
+    if(is.na(gdd_weeklymean_v2[i,3]) & gdd_weeklymean_v2[i,2] %in% c(1)) {
+      gdd_weeklymean_v2[i,3] <- gdd_weeklymean_v2[i+1,3]
+    }
+  }
+}
+
+write.csv(gdd_weeklymean_v2, "./00_Data_files/Bayesian_model_input_data/gdd_allsites_prior.csv", row.names = F)
+
 
 
 # ############format wind data
