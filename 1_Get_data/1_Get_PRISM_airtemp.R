@@ -256,6 +256,7 @@ airtemp_16_gdd2 <- full_join(airtemp_16_gdd, sampling_dates, by = c("dayofyr", "
 
 # Combine all air temp gdd data ####
 airtemp_gdd_all <- bind_rows(airtemp_09_gdd2, airtemp_10_gdd2, airtemp_11_gdd2, airtemp_12_gdd2, airtemp_13_gdd2, airtemp_14_gdd2, airtemp_15_gdd2, airtemp_16_gdd2) %>%
-  select(date, year, gdd_hc_sum, gdd_nb_sum, gdd_nsh_sum, gdd_sotf_sum)
+  mutate(season_week = rep(c(1:20),times = 8)) %>%
+  select(date, year,season_week, gdd_hc_sum, gdd_nb_sum, gdd_nsh_sum, gdd_sotf_sum)
 
 write_csv(airtemp_gdd_all, "./00_Data_files/Bayesian_model_input_data/PRISM_airtemp_GDD_2009-2016.csv")
