@@ -25,6 +25,10 @@ jags_plug_ins <- function(model_name){
     model_type <- "Quad_2var_RY"
   }
 
+  if(model_name %in% c("wtrtemp_min_and_airtempGDD_1site_RY")){
+    model_type <- "Quad_2var_RY_airtemp"
+  }
+
   if(model_name == "RW_obs_3sites"){model_type = "RW_obs_3sites"}
   if(model_name == "DLM_3sites"){model_type = "DLM_3sites"}
 
@@ -79,6 +83,19 @@ jags_plug_ins <- function(model_name){
 
   params.Quad_2var_RY <- c("tau_yr", "tau_proc","beta1", "beta2", "beta3","beta4","beta5","tau_obs","tau_C1_proc", "tau_C2_proc")
 
+### Quad_2var_RY_airtemp - Quad 2 variable with Random Year effect & air temp
+
+  data.Quad_2var_RY_airtemp <- list(y=cal_data$y, season_weeks = cal_data$season_weeks, year_no = cal_data$year_no, totYr = cal_data$totYr, covar1=cal_data$covar1, covar2=cal_data$covar2, week_avg1=cal_data$week_avg1, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0,beta.m5=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001,beta.v5=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 0.555, r_obs = 0.349)
+
+  variable.names.Quad_2var_RY_airtemp <- c("tau_yr","yr", "tau_proc", "beta1","beta2", "beta3","beta4","beta5", "tau_obs","tau_C1_proc")
+
+  variable.namesout.Quad_2var_RY_airtemp <- c("tau_yr","yr", "tau_proc", "beta1", "beta2","beta3","beta4","beta5",  "mu", "tau_obs", "tau_C1_proc")
+
+  init.Quad_2var_RY_airtemp <- list(list(tau_proc=0.001, tau_obs = 0.1,tau_C1_proc = 0.01, beta1=-0.5, beta2=-0.5, beta3=-0.5, beta4=-0.5, beta5=-0.5),
+                            list(tau_proc=0.1,tau_obs = 1,tau_C1_proc = 0.1, beta1=0, beta2=0, beta3=0, beta4=0, beta5=0),
+                            list(tau_proc=1, tau_obs = 5,tau_C1_proc = 1, beta1=0.5,beta2=0.5, beta3=0.5, beta4=0.5, beta5=0.5))
+
+  params.Quad_2var_RY_airtemp <- c("tau_yr", "tau_proc","beta1", "beta2", "beta3","beta4","beta5","tau_obs","tau_C1_proc")
 
 #### 3 site models
 

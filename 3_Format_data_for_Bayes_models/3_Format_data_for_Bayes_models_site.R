@@ -198,35 +198,3 @@ for(i in 1:length(gdd_weeklymean_v2[,3])) {
 write.csv(gdd_weeklymean_v2, "./00_Data_files/Bayesian_model_input_data/gdd_allsites_prior.csv", row.names = F)
 
 
-
-# ############format wind data
-# wnd <- read_csv("./00_Data_files/Covariate_analysis_data/wind_data_all.csv")
-#
-# #avg. wind direction with a 2 day lag
-# wnd1 <- wnd %>%
-#   select(date, AveWindDir_cove_mean_2daylag) %>%
-#   mutate(season_week = rep(c(1:20),times = 8),
-#          year = year(date)) %>%
-#   select(-date) %>%
-#   spread(key = season_week, value = AveWindDir_cove_mean_2daylag) %>%
-#   select(-year)
-#
-# colnames(wnd1) <- paste("wk", colnames(wnd1), sep = "_")
-#
-# write.csv(wnd1, "./00_Data_files/Bayesian_model_input_data/wnd_dir_mean_2daylag.csv", row.names = FALSE)
-#
-# ##############format precip data
-# ppt <- read_csv("./00_Data_files/Covariate_analysis_data/PRISM_precipitation_2009-2016.csv")
-#
-# # precipitation data
-# ppt1 <- ppt %>%
-#   select(date, precip_mm) %>%
-#   mutate(season_week = rep(c(1:20),times = 8),
-#          year = year(date)) %>%
-#   select(-date) %>%
-#   spread(key = season_week, value = precip_mm) %>%
-#   select(-year)
-#
-# colnames(ppt1) <- paste("wk", colnames(ppt1), sep = "_")
-#
-# write.csv(ppt1, "./00_Data_files/Bayesian_model_input_data/precip_mm.csv", row.names = FALSE)
