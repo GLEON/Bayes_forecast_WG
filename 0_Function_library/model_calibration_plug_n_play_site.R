@@ -25,7 +25,7 @@ jags_plug_ins <- function(model_name){
     model_type <- "Quad_2var_RY"
   }
 
-  if(model_name %in% c("wtrtemp_min_and_airtempGDD_1site_RY")){
+  if(model_name %in% c("wtrtemp_min_and_airtempGDD_1site_RY_HC", "wtrtemp_min_and_airtempGDD_1site_RY_NB", "wtrtemp_min_and_airtempGDD_1site_RY_NSH")){
     model_type <- "Quad_2var_RY_airtemp"
   }
 
@@ -155,8 +155,4 @@ jags_plug_ins <- function(model_name){
 
   return(list(data.model = data, variable.names.model = variable.names, variable.namesout.model = variable.namesout, init.model = init, params.model = params))
 }
-
-
-
-
 
