@@ -24,8 +24,8 @@ pacman::p_load(tidyverse, lubridate)
 ## Site format of gloeo data
 gloeo_hc <- read_csv("./00_Data_files/Covariate_analysis_data/HC_Gechinulata_long.csv")
 gloeo_nb <- read_csv("./00_Data_files/Covariate_analysis_data/NB_Gechinulata_long.csv")
-gloeo_sotf <- read_csv("./00_Data_files/Covariate_analysis_data/SOTF_Gechinulata_long.csv")
 gloeo_nsh <- read_csv("./00_Data_files/Covariate_analysis_data/NSH_Gechinulata_long.csv")
+gloeo_sotf <- read_csv("./00_Data_files/Covariate_analysis_data/SOTF_Gechinulata_long.csv")
 
 # Keep year, season week, gloeo from each site own column
 
@@ -48,15 +48,15 @@ gloeo_nsh2 <- gloeo_nsh %>%
   rename(nsh_gloeo_ln = ln_totalperL)
 
 # Bind together all sites - only keep gloeo columns so only 1 year and season week column
-gloeo_all_sites <- bind_cols(gloeo_hc2, gloeo_nb2[,3],  gloeo_sotf2[,3],  gloeo_nsh2[,3])
+gloeo_all_sites <- bind_cols(gloeo_hc2, gloeo_nb2[,3], gloeo_nsh2[,3], gloeo_sotf2[,3])
 
 write.csv(gloeo_all_sites, "./00_Data_files/Bayesian_model_input_data/Gloeo_AllSites.csv", row.names = FALSE)
 
 ############format water temp data
 wtr_hc <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_HC.csv")
 wtr_nb <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_NB.csv")
-wtr_sotf <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
 wtr_nsh <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_NSH.csv")
+wtr_sotf <- read_csv("./00_Data_files/Covariate_analysis_data/onset_watertemp_all_SOTF.csv")
 
 # min water temp for All sites
 
@@ -89,17 +89,17 @@ mintemp_nsh <- wtr_nsh %>%
   select(year, season_week, NSH.tempC_min)
 
 # Bind together all sites - only keep wtrtemp min columns so only 1 year and season week column
-mintemp_all_sites <- bind_cols(mintemp_hc, mintemp_nb[,3],  mintemp_sotf[,3],  mintemp_nsh[,3])
+mintemp_all_sites <- bind_cols(mintemp_hc, mintemp_nb[,3],  mintemp_nsh[,3],  mintemp_sotf[,3])
 
-write.csv(mintemp_all_sites, "./00_Data_files/Bayesian_model_input_data/wtrmin_AllSites.csv", row.names = FALSE)
+write.csv(mintemp_all_sites, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv", row.names = FALSE)
 
 # Use data from all sites for min water temp prior
-wtrtempmin_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv")
+#wtrtempmin_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv")
 
-wtr_weeklymean <- rowMeans(wtrtempmin_allsites[,-c(1:2,5)], na.rm = T) # drop year, season week & Fichter data
+wtr_weeklymean <- rowMeans(mintemp_all_sites[,-c(1:2,6)], na.rm = T) # drop year, season week & Fichter data
 
 # Fill NA - Bring back season week
-wtr_weeklymean_v2 <- cbind(wtrtempmin_allsites$year, wtrtempmin_allsites$season_week, wtr_weeklymean)
+wtr_weeklymean_v2 <- cbind(mintemp_all_sites$year, mintemp_all_sites$season_week, wtr_weeklymean)
 
 colnames(wtr_weeklymean_v2)[1:2] <- c("year", "season_week")
 
@@ -161,17 +161,17 @@ gdd_nsh <- wtr_nsh %>%
   select(year, season_week, nsh_gdd_sum)
 
 # Bind together all sites - only keep gdd columns so only 1 year and season week column
-gdd_all_sites <- bind_cols(gdd_hc, gdd_nb[,3],  gdd_sotf[,3],  gdd_nsh[,3])
+gdd_all_sites <- bind_cols(gdd_hc, gdd_nb[,3], gdd_nsh[,3], gdd_sotf[,3])
 
 write.csv(gdd_all_sites, "./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv", row.names = FALSE)
 
 # Calculate weekly avg for all sites except Fichter to use as prior
-gdd_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv")
+#gdd_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv")
 
-gdd_weeklymean <- rowMeans(gdd_allsites[,-c(1:2,5)], na.rm = T) # drop year, season week & Fichter data
+gdd_weeklymean <- rowMeans(gdd_all_sites[,-c(1:2,6)], na.rm = T) # drop year, season week & Fichter data
 
 # Fill NA - Bring back season week
-gdd_weeklymean_v2 <- cbind(gdd_allsites$year, gdd_allsites$season_week, gdd_weeklymean)
+gdd_weeklymean_v2 <- cbind(gdd_all_sites$year, gdd_all_sites$season_week, gdd_weeklymean)
 
 colnames(gdd_weeklymean_v2)[1:2] <- c("year", "season_week")
 

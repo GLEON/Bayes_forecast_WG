@@ -811,6 +811,97 @@ DIC.DL_RY <- dic.samples(j.model_DL_RY, n.iter=5000)
 DIC.DL_RY
 ```
 
+## Dyanmic Linear with RY & Air Temp GDD
+```{r}
+
+data <- list(y=y,
+             WK=length(season_weeks), 
+             year_no = year_no,
+             totYr = length(unique(year_no)),
+             covar1=covar1, 
+             covar2=covar2, 
+             week_avg1=week_avg1, 
+             week_avg2=week_avg2, 
+             a_proc = 0.001,
+             r_proc = 0.001, 
+             a_obs = 0.555, # informed observation error priors
+             r_obs = 0.349,
+             x_ic=-5,tau_ic=100)
+
+
+ init <- list(list(tau_proc=0.001, tau_obs = 0.1,tau_C1_proc = 0.01,tau_C2_proc = 0.01, beta1=-0.5, beta2=-0.5, beta3=-0.5, beta4=-0.5, beta5=-0.5),
+                list(tau_proc=0.1,tau_obs = 1,tau_C1_proc = 0.1,tau_C2_proc = 0.1, beta1=0, beta2=0, beta3=0, beta4=0, beta5=0),
+                list(tau_proc=1, tau_obs = 5,tau_C1_proc = 1,tau_C2_proc = 1, beta1=0.5,beta2=0.5, beta3=0.5, beta4=0.5, beta5=0.5))
+ 
+mod1 = "
+model{
+
+  #### Data Model
+  for(t in 1:WK){
+    y[t] ~ dnorm(x[t],tau_obs)
+        covar1[t] ~ dnorm(week_avg1[t],tau_C1_proc)
+        covar2[t] ~ dnorm(week_avg2[t],tau_C2_proc)
+
+  }
+  
+  #### Process Model 
+  for(t in 2:WK){
+    x[t]~dnorm(lambda[t],tau_proc)
+    lambda[t] <- beta1 + beta2*x[t-1] + beta3*covar1[t] + beta4*covar2[t] + beta5*covar2[t]^2 + yr[year_no[t]]
+  
+}
+  
+  #### Priors
+
+for(k in 1:totYr){
+  yr[k] ~ dnorm(0, tau_yr) # k loop on yr, centered on 0
+  }
+
+#### Initial Conditions
+  x[1] ~ dnorm(x_ic,tau_ic)
+  #lam[1] ~ dnorm(x_ic,tau_ic)
+
+  beta1~dnorm(0,0.001)
+  beta2~dnorm(0,0.001)
+  beta3~dnorm(0,0.001)
+  beta4~dnorm(0,0.001)
+  beta5~dnorm(0,0.001)
+
+ tau_C1_proc ~ dgamma(0.01,0.01)
+ tau_C2_proc ~ dgamma(0.01,0.01)
+
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_proc ~ dgamma(a_proc,r_proc)
+  tau_yr ~ dgamma(0.01,0.01)
+  
+}
+"
+
+j.model_DL_RY   <- jags.model (file = textConnection(mod1),
+                             data = data,
+                             inits = init,
+                             n.chains = 3)  
+
+
+
+jags.out_DL_RY   <- coda.samples (model = j.model_DL_RY,
+                            variable.names = c("beta1","beta2","beta3","beta4","beta5", "tau_proc","tau_obs", "tau_yr", "yr"),
+                            n.iter = 10000)
+plot(jags.out_DL_RY)
+
+summary(jags.out_DL_RY)
+
+var.mat <- as.matrix(jags.out_DL_RY)
+pairs(var.mat)
+cor(var.mat)
+
+# Calculate DIC
+DIC.DL_RY <- dic.samples(j.model_DL_RY, n.iter=5000)
+DIC.DL_RY
+```
+
+```
+
 ## Dynamic linear with Random Year Effect - test just min water temp or GDD
 - just GDD better than just min Water temp - GDD better than both together too based on DIC
 - keep RY effects in there for both drivers
