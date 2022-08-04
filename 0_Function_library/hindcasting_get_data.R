@@ -305,6 +305,9 @@ if(model_name %in% c("GDD")){
 
 }
 
+###############################WRANGLE DATA FOR 2 COVAR MODELS#####################################
+
+
 #subset covar data depending on year and season_week
 if(model_name == "schmidt_and_wind"){
   if(year == 2015){
