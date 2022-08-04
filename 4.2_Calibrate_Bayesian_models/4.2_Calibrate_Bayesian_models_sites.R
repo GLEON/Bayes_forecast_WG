@@ -21,7 +21,7 @@ write_plots <- TRUE
 #my_models <- c("RW","RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wind","wind_and_GDD","schmidt_and_GDD","schmidt_and_temp","temp_and_wind","RY")
 
 # 1 site
-my_models <- c("wtrtemp_min_and_GDD_1site") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY")
+my_models <- c("wtrtemp_min_and_airtempGDD_1site_RY_NSH") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY", "wtrtemp_min_and_airtempGDD_1site_RY_HC", "wtrtemp_min_and_airtempGDD_1site_RY_NB", "wtrtemp_min_and_airtempGDD_1site_RY_NSH"
 
 # 3 sites
 my_models <- c("wtrtemp_min_and_GDD_3sites_RY") #"RW_obs_3sites","DLM_3sites", "wtrtemp_min_and_GDD_3sites", "wtrtemp_min_and_GDD_3sites_RY")
@@ -117,21 +117,28 @@ jags.out_DL_3  <- coda.samples(model = j.model,
                                    variable.names = c("tau_proc","tau_obs","beta1","beta2","beta3","beta4","beta5"), #"beta1","beta2","beta3","beta4","beta5"),
                                    n.iter = 50000) #10000
 
-jags.out_DL_1_RY  <- coda.samples (model = j.model,
+jags.out_DL_1_RY_NSH <- coda.samples (model = j.model,
                                         variable.names = c("beta1","beta2","beta3","beta4","beta5", "tau_proc","tau_obs","tau_yr", "yr"),
                                         n.iter = 50000) #10000
 
-plot(jags.out_DL_1_RY)
-summary(jags.out_DL_1_RY)
+plot(jags.out_DL_1_RY_NB)
+plot(jags.out_DL_1_RY_NSH)
 
-gelman.diag(jags.out_DL)
-GBR <- gelman.plot(jags.out_DL) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
+summary(jags.out_DL_1_RY_NB)
+summary(jags.out_DL_1_RY_NSH)
+
+gelman.diag(jags.out_DL_1_RY_NB)
+gelman.diag(jags.out_DL_1_RY_NSH)
+
+GBR <- gelman.plot(jags.out_DL_1_RY) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
+GBR_NB <- gelman.plot(jags.out_DL_1_RY_NB) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
+GBR_NSH <- gelman.plot(jags.out_DL_1_RY_NSH) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
 
 burnin = 10000                              ## determine convergence
-jags.burn2 <- window(jags.out_DL,start=burnin)  ## remove burn-in
+jags.burn2 <- window(jags.out_DL_1_RY,start=burnin)  ## remove burn-in
 plot(jags.burn2)
 summary(jags.burn2)
-gelman.diag(jags.burn)
+gelman.diag(jags.burn2)
 
 
 # Calculate DIC
