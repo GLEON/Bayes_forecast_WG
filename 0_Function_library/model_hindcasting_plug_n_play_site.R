@@ -86,7 +86,7 @@ jags_plug_ins <- function(model_name){
 
 ### Quad_2var_RY_airtemp - Quad 2 variable with Random Year effect & GDD with air temp for each site
 
-  data.Quad_2var_RY_airtemp <- list(y=hindcast_data$y, season_weeks = hindcast_data$season_weeks, year_no = hindcast_data$year_no, totYr = hindcast_data$totYr, covar1=hindcast_data$covar1, covar2=hindcast_data$covar2, week_avg1=hindcast_data$week_avg1,week_avg2=hindcast_data$week_avg2, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0,beta.m5=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001,beta.v5=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 0.555, r_obs = 0.349)
+  data.Quad_2var_RY_airtemp <- list(y=hindcast_data$y, season_weeks = hindcast_data$season_weeks, year_no = hindcast_data$year_no, totYr = hindcast_data$totYr, covar1=hindcast_data$covar1, covar2=hindcast_data$covar2, week_avg1=hindcast_data$week_avg1, beta.m1=0,  beta.m2=0,beta.m3=0,beta.m4=0,beta.m5=0, beta.v1=0.001, beta.v2=0.001,beta.v3=0.001,beta.v4=0.001,beta.v5=0.001,x_ic=-5,tau_ic = 100,a_proc = 0.001,r_proc = 0.001, a_obs = 0.555, r_obs = 0.349)
 
   variable.names.Quad_2var_RY_airtemp <- c("tau_yr","yr", "tau_proc", "beta1","beta2", "beta3","beta4","beta5", "tau_obs","tau_C1_proc")
 

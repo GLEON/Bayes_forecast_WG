@@ -52,7 +52,7 @@ if(model_name %in% c("RW_obs_1site","DLM_1site")){
     #center covariate data
     Temp_all$HCS.tempC_min_stand <- (Temp_all$HCS.tempC_min - mean(Temp_all$HCS.tempC_min, na.rm = TRUE))/sd(Temp_all$HCS.tempC_min, na.rm = TRUE)
 
-    Temp <- Temp$HCS.tempC_min_stand
+    Temp <- Temp_all$HCS.tempC_min_stand
 
     # Create covar hindcast to get at driver uncertainty
     covar1_hindcast <- Temp_all$HCS.tempC_min[1:120] # go up to end of 2014
@@ -107,7 +107,7 @@ if(model_name %in% c("RW_obs_1site","DLM_1site")){
       pivot_longer(cols = 1:20, names_to = "season_week", values_to = "gdd_sum", names_transform = list(season_week = as.integer)) %>%
       #  mutate(year = rep(2009:2014,times = 1, each = 20)) %>%
       #  mutate(season_weeks = c(1:120)) %>%
-      select(hc_gdd_sum)
+      select(gdd_sum)
 
     GDD <- GDD_long$gdd_sum
 
@@ -171,7 +171,7 @@ if(model_name %in% c("RW_obs_1site","DLM_1site")){
     #center covariate data
     Temp_all$NB.tempC_min_stand <- (Temp_all$NB.tempC_min - mean(Temp_all$NB.tempC_min, na.rm = TRUE))/sd(Temp_all$NB.tempC_min, na.rm = TRUE)
 
-    Temp <- Temp$NB.tempC_min_stand
+    Temp <- Temp_all$NB.tempC_min_stand
 
     # Create covar hindcast to get at driver uncertainty
     covar1_hindcast <- Temp_all$NB.tempC_min[1:120] # go up to end of 2014
@@ -290,7 +290,7 @@ if(model_name %in% c("RW_obs_1site","DLM_1site")){
     #center covariate data
     Temp_all$NSH.tempC_min_stand <- (Temp_all$NSH.tempC_min - mean(Temp_all$NSH.tempC_min, na.rm = TRUE))/sd(Temp_all$NSH.tempC_min, na.rm = TRUE)
 
-    Temp <- Temp$NSH.tempC_min_stand
+    Temp <- Temp_all$NSH.tempC_min_stand
 
     # Create covar hindcast to get at driver uncertainty
     covar1_hindcast <- Temp_all$NSH.tempC_min[1:120] # go up to end of 2014

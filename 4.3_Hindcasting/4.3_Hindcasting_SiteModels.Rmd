@@ -16,20 +16,9 @@ pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 ```
 
-## Load data for full time series and covariates (uses Fichter but can update)
+## Load all site gloeo data for full time series
 ```{r}
-gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/data_site_model_format.csv")
-
-# fill in missing holes 
-missing <- which(is.na(gloeo$Temp))
-x <- median(gloeo$Temp, na.rm = T)
-z <- median(gloeo$GDD, na.rm = T)
-
-gloeo$Temp2 <- gloeo$Temp %>% 
-  replace_na(x)
-
-gloeo$GDD2 <- gloeo$GDD %>% 
-  replace_na(z)
+gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/Gloeo_AllSites.csv")
   
 ```
 
@@ -41,125 +30,16 @@ gloeo$GDD2 <- gloeo$GDD %>%
 
 # Source Functions
   source('0_Function_library/hindcasting_get_data_site.R') #check correct script sourced
-  source('0_Function_library/model_calibration_plug_n_play_site.R')
-
-# Get model
-my_models <- c("wtrtemp_min_and_GDD_1site_RY") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY")
-
-model_name = my_models
-model=paste0("4.1_JAGS_models/",model_name, '.R') #Do not edit
-
-# Read in data for model
-hindcast_data <- get_hindcast_data(model_name = model_name,
-                                   year = 2015)
-
-# JAGS Plug-Ins => initial conditions, priors, data, etc.
-jags_plug_ins <- jags_plug_ins(model_name = model_name)
-
-# Run model (no edits, unless you want to change # of iterations)
-j.model   <- jags.model (file = model,
-                         data = jags_plug_ins$data.model,
-                         inits = jags_plug_ins$init.model,
-                         n.chains = 3)
-# jags
-jags.out <- run.jags(model = model,
-                     data = jags_plug_ins$data.model,
-                     adapt =  5000, # not the same as thinning - Mary: Thinned to 7,500 samples for hindcasting and model assessment
-                     burnin =  10000,
-                     sample = 50000, #50000
-                     n.chains = 3,
-                     inits=jags_plug_ins$init.model,
-                     monitor = jags_plug_ins$variable.namesout.model)
-
-#convert to an MCMC list to calculate cross-correlation later
-jags.out.mcmc <- as.mcmc.list(jags.out)
-
-
-#6) Save output for calibration assessment
-
-#save predicted states
-Nmc = 10000
-out <- as.matrix(jags.out.mcmc) # Window to thin, burn-in,
-srow <- sample.int(nrow(out),Nmc,replace=TRUE)
-mus <- out[srow,grep("mu",colnames(out))]
-betas <- out[srow, grep("beta",colnames(out))]
-taus <- out[srow, grep("tau",colnames(out))]
-params_init <- cbind(betas, taus)
-```
-
-
-### wtrtemp_min_and_GDD_1site_RY Model
-```{r}
-mod1 = "model{
-
-    #### Data Model
-    #this fits the latent Gloeo to your observed Gloeo
-    #run this on logged data
-    for(t in 1:max(season_weeks)){
-
-    y[t] ~ dnorm(mu[t],tau_obs)
-
-    #gap-filling model for covariates
-    covar1[t]~dnorm(week_avg1[t],tau_C1_proc)
-    covar2[t]~dnorm(week_avg2[t],tau_C2_proc)
-
-  }
-
-  #### Process Model
-  for(t in 2:max(season_weeks)){
-    mu[t]~dnorm(lambda[t],tau_proc)
-    lambda[t] <- beta1  + beta2*mu[t-1] + beta3*covar1[t] + beta4*covar2[t] + beta5*covar2[t]^2 + yr[year_no[t]]
-
-  }
-
-  #### Initial Conditions
-  mu[1] ~ dnorm(x_ic,tau_ic)
-  #lambda[1] ~ dnorm(x_ic, tau_ic) # might not need now?
-
-  ### Random Year Effect
-  for(k in 1:totYr){
-    yr[k] ~ dnorm(0, tau_yr) # Centered on 0 or beta1
-  }
-
-  #### Priors
-  beta1 ~ dnorm(beta.m1,beta.v1)
-  beta2 ~ dnorm(beta.m2,beta.v2)
-  beta3 ~ dnorm(beta.m3,beta.v3)
-  beta4 ~ dnorm(beta.m4,beta.v4)
-  beta5 ~ dnorm(beta.m5,beta.v5)
-
-  tau_C1_proc ~ dgamma(0.01,0.01)
-  tau_C2_proc ~ dgamma(0.01,0.01)
-
-  tau_obs ~ dgamma(a_obs,r_obs)
-  tau_proc ~ dgamma(a_proc,r_proc)
-  tau_yr ~ dgamma(0.01,0.01)
-
-
-}"
-```
-
-### Test coda jags function
-```{r}
-# Single site HC - stop @ 2014
-
-# Source Functions
-  source('0_Function_library/hindcasting_get_data_site.R') #check correct script sourced
   source('0_Function_library/model_hindcasting_plug_n_play_site.R')
 
 # Get model
-my_models <- c("wtrtemp_min_and_GDD_1site_RY") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY")
+my_models <- c("wtrtemp_min_and_airtempGDD_1site_RY_HC") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY", "wtrtemp_min_and_airtempGDD_1site_RY_HC"
 
 model_name = my_models
 model=paste0("4.1_JAGS_models/",model_name, '.R') #Do not edit
 
 # Read in data for model
-hindcast_data <- get_hindcast_data(model_name = model_name,
-                                   year = 2015)
-source('0_Function_library/model_calibration_get_data_site_longformat.R') #check correct script sourced
-  source('0_Function_library/model_calibration_plug_n_play_site.R')
-
-cal_data <- get_calibration_data(model_name)
+hindcast_data <- get_hindcast_data(model_name = model_name)
 
 # JAGS Plug-Ins => initial conditions, priors, data, etc.
 jags_plug_ins <- jags_plug_ins(model_name = model_name)
@@ -170,19 +50,6 @@ j.model   <- jags.model (file = model,
                          inits = jags_plug_ins$init.model,
                          n.chains = 3)
 # jags
-jags.out <- coda.samples(model = j.model,
-                         variable.names = c("tau_proc", "beta1", "beta2","beta3","beta4","beta5", "mu", "tau_obs", "tau_C1_proc", "tau_C2_proc","covar1","covar2"),
-                         n.iter = 50000)
-
-plot(jags.out)
-
-#,"covar1","covar2"
-
-burnin = 10000
-jags.burn <- window(jags.out,start=burnin)  ## remove burn-in and thin to 7500 (currently 7143 with thin = 7), I think can thin later, leave out here
-#jags.thin = window(jags.burn,thin=10)
-
-
 jags.out <- run.jags(model = model,
                      data = jags_plug_ins$data.model,
                      adapt =  5000, # not the same as thinning - Mary: Thinned to 7,500 samples for hindcasting and model assessment
@@ -206,83 +73,8 @@ mus <- out[srow,grep("mu",colnames(out))]
 betas <- out[srow, grep("beta",colnames(out))]
 taus <- out[srow, grep("tau",colnames(out))]
 params_init <- cbind(betas, taus)
-
-```
-
-### Fill in missing data for covariates
-- calculate weekly mean of min water temp @ all sites EXCEPT fichter
-- cross-site variance for weekly differences
-```{r}
-
-# Read in covariate data
-wtrtempmin_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv")
-
-wtr_weeklymean <- rowMeans(wtrtempmin_allsites[,-c(1:2,5)], na.rm = T) # drop year, season week & Fichter data
-
-# Fill NA - Bring back season week
-wtr_weeklymean_v2 <- cbind(wtrtempmin_allsites$year, wtrtempmin_allsites$season_week, wtr_weeklymean)
-
-colnames(wtr_weeklymean_v2)[1:2] <- c("year", "season_week")
-
-sum(is.na(wtr_weeklymean_v2)) # 16 missing values mostly season weeks 19 & 20 but also 1 &2
-
-missing <- which(is.na(wtr_weeklymean_v2[,3]))
-
-# works but throws error so watch if knitting
-for(i in 1:length(wtr_weeklymean_v2)) {
-  if(is.na(wtr_weeklymean_v2[i,3]) & wtr_weeklymean_v2[i,2] %in% c(19:20)) {
-    wtr_weeklymean_v2[i,3] <- wtr_weeklymean_v2[i-1,3]
-    
-  } else if (is.na(wtr_weeklymean_v2[i,3]) & wtr_weeklymean_v2[i,2] %in% c(2))
-    wtr_weeklymean_v2[i,3] <- wtr_weeklymean_v2[i+1,3]
-  
-  
-  else{
-    
-    if(is.na(wtr_weeklymean_v2[i,3]) & wtr_weeklymean_v2[i,2] %in% c(1)) {
-    wtr_weeklymean_v2[i,3] <- wtr_weeklymean_v2[i+1,3]
-  }
- }
-}
-
-write.csv(wtr_weeklymean_v2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_allsites_prior.csv", row.names = F)
-
-# Look at site variance
-var(wtrtempmin_allsites[,c(3:4,6)], na.rm = T) #drop Fichter
-
-# Calculate weekly avg for all sites except Fichter to use as prior
-gdd_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/GDD_AllSites.csv")
-
-gdd_weeklymean <- rowMeans(gdd_allsites[,-c(1:2,5)], na.rm = T) # drop year, season week & Fichter data
-
-# Fill NA - Bring back season week
-gdd_weeklymean_v2 <- cbind(gdd_allsites$year, gdd_allsites$season_week, gdd_weeklymean)
-
-colnames(gdd_weeklymean_v2)[1:2] <- c("year", "season_week")
-
-sum(is.na(gdd_weeklymean_v2)) # 16 missing values mostly season weeks 19 & 20 but also 1 &2
-
-missing <- which(is.na(gdd_weeklymean_v2[,3]))
-
-for(i in 1:length(gdd_weeklymean_v2[,3])) {
-  if(is.na(gdd_weeklymean_v2[i,3]) & gdd_weeklymean_v2[i,2] %in% c(19:20)) {
-    gdd_weeklymean_v2[i,3] <- gdd_weeklymean_v2[i-1,3]
-    
-  } else if (is.na(gdd_weeklymean_v2[i,3]) & gdd_weeklymean_v2[i,2] %in% c(2))
-    gdd_weeklymean_v2[i,3] <- gdd_weeklymean_v2[i+1,3]
-  
-  
-  else{
-    
-    if(is.na(gdd_weeklymean_v2[i,3]) & gdd_weeklymean_v2[i,2] %in% c(1)) {
-    gdd_weeklymean_v2[i,3] <- gdd_weeklymean_v2[i+1,3]
-  }
- }
-}
-
-write.csv(gdd_weeklymean_v2, "./00_Data_files/Bayesian_model_input_data/gdd_allsites_prior.csv", row.names = F)
-
-
+covar1_ensemble <- out[srow, grep("covar1",colnames(out))]
+covar2_ensemble <- out[srow, grep("covar2",colnames(out))]
 ```
 
 
@@ -291,11 +83,10 @@ write.csv(gdd_weeklymean_v2, "./00_Data_files/Bayesian_model_input_data/gdd_alls
 As noted earlier, we're going to take the fitting of this model to the data as a given, and work with the posterior distributions, but if you are unsure about how this is done please go back and look at Exercises 5 and 6 and the Chapter 6 activities. Here are the basic diagnostics showing the posterior estimates of the parameters and states.
 
 
-## JB Posterior
-
+## Check Model Run
 ```{r}
-y = cal_data$y
-time = cal_data$season_weeks # for full time series
+y = hindcast_data$y
+time = hindcast_data$season_weeks # for full time series
 #time = date # for 2013
 time.rng = c(1,length(time))       ## adjust to zoom in and out
 #time.rng = c(321,480)              ## zoom in on 2013: 81-100, 2015-2016: 121-160, 141-160 - 2016
@@ -304,17 +95,60 @@ mu.cols <- grep("^mu",colnames(out)) # out ## grab all columns that start with t
 
 ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
 
-plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], main = "1site + RY Herrick Cove") #, xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
+plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng], main = "Herrick Cove") #, xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
 if(diff(time.rng) < 100){ 
   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='week'), format = "%Y-%m-%d", labels = T)
 }
-ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha(5,0.75))
-#points(time,y,pch=19,cex=1) #0.5, pch="+",
-#lines(time,y)
+ecoforecastR::ciEnvelope(time,ci[1,],ci[3,],col=ecoforecastR::col.alpha(5,0.5))
+lines(time,y)
+points(time,y,pch=19,cex=1.25, col = 3) #0.5, pch="+",
+points(time, y, cex = 1)
 lines(time, ci[2,], lty = 2)
 #lines(time, ci[3,], lty = 2)
-points(time, ci[2,], col = 5, pch=19, cex = 1)
-points(time, ci[2,], cex = 1)
+points(time, ci[2,], col = 6, pch=19, cex = 1)
+#points(time, ci[2,], cex = 1) # black outline
+
+legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 1.25, bty = "n")
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015.png'))), type = "png")
+
+# Add in 2015 data HC
+lines(time2, gloeo$hc_gloeo_ln[121:140])
+points(time2, gloeo$hc_gloeo_ln[121:140], pch=19,cex=1.25, col = 3)
+
+# Add in 2015 data NB
+lines(time2, gloeo$nb_gloeo_ln[121:140])
+points(time2, gloeo$nb_gloeo_ln[121:140], pch=19,cex=1.25, col = 3)
+
+# Add in 2015 data NSH
+lines(time2, gloeo$nsh_gloeo_ln[121:140])
+points(time2, gloeo$nsh_gloeo_ln[121:140], pch=19,cex=1.25, col = 3)
+
+
+# Add data in for 2015
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015_data2015.png'))), type = "png")
+
+
+
+```
+
+# Check model run with Fichter
+```{r}
+
+ylim = range(ci,na.rm=TRUE) 
+#ylim = c(-7.008481, 4) ## set Y range on plot - too short for NSH
+
+plot(time,time,type='n',ylim=ylim,ylab="LN Gloeo", xlab = "Week", main = "Fichter with NSH Model")
+  ecoforecastR::ciEnvelope(time2,ci[1,121:140],ci[3,121:140],col=col.alpha(5,0.5))
+  lines(time,gloeo$sotf_gloeo_ln[1:140])
+  points(time,gloeo$sotf_gloeo_ln[1:140],pch=19,cex=1.25, col = 3)
+  points(time,gloeo$sotf_gloeo_ln[1:140],cex = 1)
+  lines(time2, ci[2,121:140], lty = 2)
+  points(time2, ci[2,121:140], col = 6, pch=19, cex = 1)
+
+legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 1.25, bty = "n")
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('SOTF_',model_name,'_Obs_vs_pred2015_data2015.png'))), type = "png")
 
 ```
 
@@ -322,7 +156,6 @@ points(time, ci[2,], cex = 1)
 
 ```{r, echo=FALSE}
 ### settings
-s <- 6             ## Focal site for forward simulation
 Nmc = 7500         ## set number of Monte Carlo draws 1000
 ylim = range(ci,na.rm=TRUE)  ## set Y range on plot
 N.cols <- c("black","red","green","blue","orange") ## set colors
@@ -334,22 +167,111 @@ time2 = 121:140   ## forecast period
 
 Before we get started with prediction, let's focus in on a single site to make the task a bit simpler. Because we'll want to display this site for all the different model runs we do let's create a simple function to encapsulate making the plot rather than cluttering our code with constant cut-and-paste redundancy.
 
+# Model site plot function
 ```{r}
 plot.run <- function(){
  # sel = seq(s,ncol(ci),by=NS) # add a sequence to avoid overplotting
-  plot(time,time,type='n',ylim=ylim,ylab="LN Gloeo")
-  ecoforecastR::ciEnvelope(time1,ci[1,],ci[3,],col=col.alpha(5,0.6))
-  lines(time1,ci[2,],col="blue")
-  points(time1,ci[2,])
+  plot(time,time,type='n',ylim=ylim,ylab="LN Gloeo", xlab = "Week")
+  ecoforecastR::ciEnvelope(time1,ci[1,1:120],ci[3,1:120],col=col.alpha(5,0.5))
+  lines(time1,ci[2,1:120], lty = 2)
+  points(time1,ci[2,1:120],pch=19,cex=1.25, col = 6)
+ # points(time1,ci[2,1:120],cex = 1)
 }
-```
 
-```{r,echo=FALSE}
-#ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) 
 plot.run()
 ```
 
-### Forward simulation Forecast Function
+# Fichter plot fuction
+```{r}
+
+#  Check ylim
+ylim = c(-7.008481, 4) ## set Y range on plot - too short for NSH
+
+plot.run <- function(){
+ # sel = seq(s,ncol(ci),by=NS) # add a sequence to avoid overplotting
+  plot(time,time,type='n',ylim=ylim,ylab="LN Gloeo", xlab = "Week")
+  #ecoforecastR::ciEnvelope(time1,ci[1,1:120],ci[3,1:120],col=col.alpha(5,0.5))
+  lines(time1,gloeo$sotf_gloeo_ln[1:120])
+  points(time1,gloeo$sotf_gloeo_ln[1:120],pch=19,cex=1.25, col = 3)
+  points(time1,gloeo$sotf_gloeo_ln[1:120],cex = 1)
+}
+
+plot.run()
+```
+
+### Fill in missing data for known covariates
+- calculate weekly mean of min water temp @ all sites EXCEPT fichter
+- cross-site variance for weekly differences
+```{r}
+
+missing1 <- which(is.na(hindcast_data$covar1))
+
+missing2 <- which(is.na(hindcast_data$covar2)) # no missing data for covar2
+
+# Fill missing holes with data from week_avg1 at same time
+for (m in 1:length(missing1)){
+        hindcast_data$covar1[missing1[m]] <- hindcast_data$week_avg1[missing1[m]]
+        }
+
+
+```
+
+### Read in Fichter covariate data
+```{r}
+# Read in covariate 1 (min water temp)  data
+    Temp_all <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv") %>%
+      select(year, season_week, SOTF.tempC_min)  %>%  # SELECT SITE HCS.tempC_min
+      filter(year < 2016) # use known driver data
+
+    #center covariate data
+    Temp_all$SOTF.tempC_min_stand <- (Temp_all$SOTF.tempC_min - mean(Temp_all$SOTF.tempC_min, na.rm = TRUE))/sd(Temp_all$SOTF.tempC_min, na.rm = TRUE)
+
+    Temp <- Temp_all$SOTF.tempC_min_stand
+    
+    
+# Read in covariate 2 air temp GDD data
+    GDD_all <- read_csv("./00_Data_files/Bayesian_model_input_data/PRISM_airtemp_GDD_2009-2016.csv") %>%
+      select(year, season_week, gdd_sotf_sum)  %>% #SELECT SITE
+      filter(year < 2016) #use known driver data for 2015
+
+    #standardize within year to account for different start dates in different years
+    # convert to wide first
+    GDD_wide <- GDD_all %>%
+      pivot_wider(1:3, names_from = season_week, values_from = gdd_sotf_sum)
+
+    GDD_stand <- apply(GDD_wide[,-1],1,function(x) {(x-mean(x,na.rm = TRUE))/sd(x, na.rm = TRUE)})
+
+    #standardize across years
+    GDD_stand_yr <- (GDD_stand - mean(GDD_stand, na.rm = TRUE))/sd(GDD_stand, na.rm = TRUE)
+
+    #transpose - to make full wide and then convert back to full long
+    GDD_trans <- t(GDD_stand_yr)
+
+    GDD_long <- as.data.frame(GDD_trans) %>%
+      pivot_longer(cols = 1:20, names_to = "season_week", values_to = "gdd_sum", names_transform = list(season_week = as.integer)) %>%
+      #  mutate(year = rep(2009:2014,times = 1, each = 20)) %>%
+      #  mutate(season_weeks = c(1:120)) %>%
+      select(gdd_sum)
+
+    GDD <- GDD_long$gdd_sum
+```
+
+### Fill in missing data for Fichter known covariates
+
+```{r}
+
+missing1 <- which(is.na(Temp))
+
+# Fill missing holes with data from week_avg1 at same time
+for (m in 1:length(missing1)){
+        Temp[missing1[m]] <- hindcast_data$week_avg1[missing1[m]]
+        }
+
+
+```
+
+
+### Forward simulation Forecast Function with same site known covariate data
 ```{r}
 
 ## initial conditions
@@ -368,8 +290,43 @@ forecastN <- function(IC,params,n=Nmc){
     #covar model
       #  covar1 <- covar_hindcast$covar1[t] # hindcasted covariates
       #  covar2 <- covar_hindcast$covar2[t]
-    covar1 <- gloeo$Temp2[t]
-    covar2 <- gloeo$GDD2[t]
+    covar1 <- hindcast_data$covar1[t] #known covars with missing data filled in
+    covar2 <- hindcast_data$covar2[t]
+    #process model
+   gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar1 + params$beta4*covar2 + params$beta5*covar2^2 
+    
+   proc.model[,t] = rnorm(n,gloeo_temp,params$sd_proc) 
+    
+   #data model
+    out[,t] = rnorm(n,proc.model[,t],params$sd_obs)      ## predict next step with data model
+    gloeo_prev <- out[,t]                                 ## update IC
+  }
+  return(out)
+  }
+
+```
+
+### FICHTER Forward simulation Forecast Function with Fichter known covariate driver data
+```{r}
+
+## initial conditions
+IC <- as.matrix(mus)
+
+forecastN_SOTF <- function(IC,params,n=Nmc){
+
+  forecast_time <- 20 # 20 season weeks = 1 year gloeo data
+
+  proc.model <- matrix(NA, n, forecast_time) # storage
+  out <- matrix(NA, n, forecast_time) # storage
+
+  gloeo_prev <- IC          ## initialize
+
+  for(t in 1:length(time2)){ # start for last 2 years
+    #covar model
+      #  covar1 <- covar_hindcast$covar1[t] # hindcasted covariates
+      #  covar2 <- covar_hindcast$covar2[t]
+    covar1 <- Temp[t] #known covars with missing data filled in
+    covar2 <- GDD[t]
     #process model
    gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar1 + params$beta4*covar2 + params$beta5*covar2^2 
     
@@ -399,27 +356,6 @@ params.det <- list(sd_obs = 0, sd_proc = 0, beta1 = mean(posteriors[,grep("beta1
                      beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
                      beta4 = mean(posteriors[,grep("beta4",colnames(posteriors))],na.rm = TRUE),beta5 = mean(posteriors[,grep("beta5",colnames(posteriors))],na.rm = TRUE),sd_C1 = 0, sd_C2 = 0)
 
-  ## storage
-  #set up output matrices
-
-# Testing for loop
-  for(t in 1:length(time2)){ # start for last 2 years
-    #covar model
-      #  covar1 <- covar_hindcast$covar1[t] # hindcasted covariates
-      #  covar2 <- covar_hindcast$covar2[t]
-    covar1 <- gloeo$Temp2[t]
-    covar2 <- gloeo$GDD2[t]
-    #process model
-   gloeo_temp = params$beta1 + params$beta2*gloeo_prev + params$beta3*covar1 + params$beta4*covar2 + params$beta5*covar2^2 
-    
-   proc.model[t] = rnorm(n,gloeo_temp,params$sd_proc) 
-    
-    
-   #data model
-    out[t] = rnorm(n,proc.model[t],params$sd_obs)      ## predict next step with data model
-    gloeo_prev <- out[t]                                 ## update IC
-  }
- 
 N.det <- forecastN(IC = mean(IC[,"mu[120]"]),  ## mean of IC
                  params = params.det,
                  n=1)
@@ -428,50 +364,32 @@ N.det <- forecastN(IC = mean(IC[,"mu[120]"]),  ## mean of IC
 plot.run()
 lines(time2,N.det,col="purple",lwd=3)
 
-write.csv(N.det,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_','HC','.csv'))),row.names = FALSE)
+write.csv(N.det,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction','.csv'))),row.names = FALSE)
 
 ```
 
-
-### Mary model Deterministic prediction
-
+### Deterministic prediction - SOTF
 ```{r}
-
 posteriors = out
-Nmc = 7500
-prow = sample.int(nrow(out),Nmc,replace=TRUE)
-num_draws = prow
+n = 1 # just run once
 
-
+# Deterministic = parameters set to mean
 params.det <- list(sd_obs = 0, sd_proc = 0, beta1 = mean(posteriors[,grep("beta1",colnames(posteriors))],na.rm = TRUE),
                      beta2 = mean(posteriors[,grep("beta2",colnames(posteriors))],na.rm = TRUE), beta3 = mean(posteriors[,grep("beta3",colnames(posteriors))],na.rm = TRUE),
                      beta4 = mean(posteriors[,grep("beta4",colnames(posteriors))],na.rm = TRUE),beta5 = mean(posteriors[,grep("beta5",colnames(posteriors))],na.rm = TRUE),sd_C1 = 0, sd_C2 = 0)
 
-#pull a whole row, thin 1000, run 1:1000 
-
-#run deterministic hindcast
-covar.hindcast.det <- NA
-season_weeks <- 1:140
-
-for(t in 1:length(season_weeks)){
-det.prediction <- run_hindcast(model_name = model_name,
-                                     params = params.det,
-                                     Nmc = 1,
-                                     IC = mean(IC[,"mu[120]"]), #last time point before hindcast # IC = mean(IC), 
-                                     season_weeks = season_weeks[t]) #, covar_hindcast = covar.hindcast.det
-}
-      
-## initial conditions
-IC <- as.matrix(mus)
-
-IC = rnorm(Nmc,-5,sqrt(1/100)) # Mary restarted new year
-
-write.csv(det.prediction,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_',yrs[j],'_',wks[k],'.csv'))),row.names = FALSE)
-
+N.det <- forecastN_SOTF(IC = mean(IC[,"mu[120]"]),  ## mean of IC
+                 params = params.det,
+                 n=1)
+  
 ## Plot run
 plot.run()
-lines(time2,det.prediction,col="purple",lwd=3)
+lines(time2,N.det,col="purple",lwd=3)
+
+write.csv(N.det,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_','SOTF','.csv'))),row.names = FALSE)
+
 ```
+
 
 # Monte Carlo Error Propagation
 
@@ -483,12 +401,7 @@ For each source of uncertainty we'll be exploring the Monte Carlo approach to er
 #prow = sample.int(nrow(params),Nmc,replace=TRUE)
 
 Nmc = 7500
-
 prow = sample.int(nrow(params_init),Nmc,replace=TRUE) #sample parameter rows
-
-forecast_time <- 20
-
-
 
 N.I <- forecastN(IC = IC[prow,"mu[120]"],  ## sample IC
                  params = params.det,
@@ -500,24 +413,40 @@ N.I.ci = apply(N.I,2,quantile,c(0.025,0.5,0.975))
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.I,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_','HC','.csv'))),row.names = FALSE)
+write.csv(N.I,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC','.csv'))),row.names = FALSE)
 
 ```
 
-**Question 1:** Describe the pattern to the initial condition uncertainty and compare that to your expectations (e.g. Table 1).
+### Initial Condition uncertainty - SOTF
+```{r}
+## sample parameter rows from previous analysis
+#prow = sample.int(nrow(params),Nmc,replace=TRUE)
+
+Nmc = 7500
+prow = sample.int(nrow(params_init),Nmc,replace=TRUE) #sample parameter rows
+
+N.I <- forecastN_SOTF(IC = IC[prow,"mu[120]"],  ## sample IC
+                 params = params.det,
+                 n=Nmc)
+
+## Plot run
+plot.run()
+N.I.ci = apply(N.I,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+
+write.csv(N.I,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_','SOTF','.csv'))),row.names = FALSE)
+
+```
 
 ### Parameter uncertainty
-
-Next, let's add parameter uncertainty to our forecast. To do this we'll want to sample the **joint** parameter posterior distribution using the row numbers as before. In this forecast we're still running `r Nmc` model runs, but now each run get's its own unique parameters _and_ its own unique initial conditions. We expect the total uncertainty to increase, so we can layer the run with both uncertainties on top of the run with just initial conditions to get a feel for how much more uncertainty is added when we incorporate parameter uncertainty.
-
-One thing that is important to note about the parameter uncertainty propagation is that it relies on having meaningful estimates of parameter uncertainty. That's not to say that forecasts can't be done with priors (e.g. through literature synthesis or expert elicitation), but forecasting what you expect to happen in a real system is definitely different than slapping an arbitrary uniform prior on default parameters (e.g. +/- 20%).
 
 ```{r}
 prow = sample.int(nrow(params_init),Nmc,replace=TRUE) #sample parameter rows
 
 params.ip <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[prow,"beta1"],
                      beta2 = posteriors[prow,"beta2"], beta3 = posteriors[prow,"beta3"], beta4 = posteriors[prow,"beta4"],
-                     beta5 = posteriors[prow,"beta5"],sd_C1 = 0, sd_C2 = 0)
+                     beta5 = posteriors[prow,"beta5"],sd_C1 = 0) #dropped from model, sd_C2 = 0)
  
 N.IP <- forecastN(IC = IC[prow,"mu[120]"],
                   params = params.ip,
@@ -531,13 +460,34 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.IP,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa_','HC','.csv'))),row.names = FALSE)
+write.csv(N.IP,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa','.csv'))),row.names = FALSE)
 
 ```
 
-**Question 2:** 
-A) Describe the pattern and relative magnitude of the parameter uncertainty and compare this to your expectations. 
-B) Using the existing model and Monte Carlo approach, describe how you might partition the contribution of each parameter (r, Kg, alpha, beta) to the forecast uncertainty.
+### Parameter uncertainty - SOTF
+
+```{r}
+prow = sample.int(nrow(params_init),Nmc,replace=TRUE) #sample parameter rows
+
+params.ip <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[prow,"beta1"],
+                     beta2 = posteriors[prow,"beta2"], beta3 = posteriors[prow,"beta3"], beta4 = posteriors[prow,"beta4"],
+                     beta5 = posteriors[prow,"beta5"],sd_C1 = 0) #dropped from model, sd_C2 = 0)
+ 
+N.IP <- forecastN_SOTF(IC = IC[prow,"mu[120]"],
+                  params = params.ip,
+                  n = Nmc)
+
+
+## Plot run
+plot.run()
+N.IP.ci = apply(N.IP,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+
+write.csv(N.IP,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa_','SOTF','.csv'))),row.names = FALSE)
+
+```
 
 ### Driver uncertainty
 
@@ -561,7 +511,7 @@ When driving ecological forecasts with other forecast outputs (weather, land use
 params.ipd <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[prow,"beta1"],
               beta2 = posteriors[prow,"beta2"], beta3 = posteriors[prow,"beta3"], beta4 = posteriors[prow,"beta4"], 
               beta5 = posteriors[prow,"beta5"],
-              sd_C1 = 1/sqrt(posteriors[prow,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[prow,"tau_C2_proc"]))
+              sd_C1 = 1/sqrt(posteriors[prow,"tau_C1_proc"])) #, sd_C2 = 1/sqrt(posteriors[prow,"tau_C2_proc"])) dropped from model
 
 
 N.IPD <- forecastN(IC = IC[prow,"mu[120]"],
@@ -580,8 +530,6 @@ write.csv(N.IPD,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(
 
 ```
 
-**Question 3:** As before, describe the pattern of how driver uncertainty contributes to the forecast and compare that to our first principles expectations.
-
 ### Process uncertainty
 
 Adding process error to the model looks similar to both older _stochastic_ modeling approaches and to the _residual_ error in statistical models. However, it is subtly distinct in a few important ways. First, unlike theoretical stochastic models, process error is estimated explicitly by fitting models to data. Second, unlike residual error, when we estimate process error we partition it from the observation error. Thus the process error represents things in the process that the model is unable to capture (which will always occur because all models are approximations). The distinction between process and observation error is important because observation error only affects the current observation, but process error propagates into the future.
@@ -591,7 +539,7 @@ Adding process error to the model looks similar to both older _stochastic_ model
 params.ipde <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[prow,"tau_proc"]), ## convert from precision to standard deviation
                beta1 = posteriors[prow,"beta1"],beta2 = posteriors[prow,"beta2"], beta3 = posteriors[prow,"beta3"], 
                beta4 = posteriors[prow,"beta4"], beta5 = posteriors[prow,"beta5"],
-               sd_C1 = 1/sqrt(posteriors[prow,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[prow,"tau_C2_proc"]))
+               sd_C1 = 1/sqrt(posteriors[prow,"tau_C1_proc"])) #, sd_C2 = 1/sqrt(posteriors[prow,"tau_C2_proc"]))
 
 
 N.IPDE <- forecastN(IC = IC[prow,"mu[120]"],
@@ -602,12 +550,47 @@ N.IPDE <- forecastN(IC = IC[prow,"mu[120]"],
 plot.run()
 N.IPDE.ci = apply(N.IPDE,2,quantile,c(0.025,0.5,0.975))
 ecoforecastR::ciEnvelope(time2,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
-ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+#ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
 ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P_','HC','.csv'))),row.names = FALSE)
+legend("topleft",legend=c("Process","Driver","Parameter","InitCond"),col=rev(N.cols[-5]),lty=1,lwd=5)
+
+write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P','.csv'))),row.names = FALSE)
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_TS_pred2015.png'))), type = "png")
+
+
+
+```
+
+### Process uncertainty - SOTF
+
+```{r}
+## process error samples
+params.ipde <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[prow,"tau_proc"]), ## convert from precision to standard deviation
+               beta1 = posteriors[prow,"beta1"],beta2 = posteriors[prow,"beta2"], beta3 = posteriors[prow,"beta3"], 
+               beta4 = posteriors[prow,"beta4"], beta5 = posteriors[prow,"beta5"],
+               sd_C1 = 1/sqrt(posteriors[prow,"tau_C1_proc"])) #, sd_C2 = 1/sqrt(posteriors[prow,"tau_C2_proc"]))
+
+
+N.IPDE <- forecastN_SOTF(IC = IC[prow,"mu[120]"],
+                  params = params.ipde,
+                  n = Nmc)
+
+## Plot run
+plot.run()
+N.IPDE.ci = apply(N.IPDE,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
+#ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+
+write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P_','SOTF', '.csv'))),row.names = FALSE)
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_SOTF', '_TS_pred2015.png'))), type = "png")
 
 ```
 
@@ -616,7 +599,7 @@ write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0
 params.ipdeo <- list(sd_obs = 1/sqrt(posteriors[prow,"tau_obs"]), sd_proc = 1/sqrt(posteriors[prow,"tau_proc"]), 
                      beta1 = posteriors[prow,"beta1"],beta2 = posteriors[prow,"beta2"], beta3 = posteriors[prow,"beta3"], 
                      beta4 = posteriors[prow,"beta4"], beta5 = posteriors[prow,"beta5"],
-                     sd_C1 = 1/sqrt(posteriors[prow,"tau_C1_proc"]), sd_C2 = 1/sqrt(posteriors[prow,"tau_C2_proc"]))
+                     sd_C1 = 1/sqrt(posteriors[prow,"tau_C1_proc"])) #, sd_C2 = 1/sqrt(posteriors[prow,"tau_C2_proc"]))
 
 
 N.IPDEO <- forecastN(IC = IC[prow,"mu[120]"],
@@ -633,11 +616,11 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.IPDEO,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P.O_','HC','.csv'))),row.names = FALSE)
+write.csv(N.IPDEO,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P.O','.csv'))),row.names = FALSE)
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_pred2015.png'))), type = "png")
 ```
 
-
-**Question 4:** Why might the relative contribution of the process error decline with time? Does this match expectations?
 
 ### Random Effect uncertainty
 
@@ -705,21 +688,22 @@ Our final analysis is focused on quantifying the relative contributions of each 
 ### calculation of variances
 varI     <- apply(N.I,2,var)
 varIP    <- apply(N.IP,2,var)
-varIPD   <- apply(N.IPD,2,var)
+#varIPD   <- apply(N.IPD,2,var)
 varIPDE  <- apply(N.IPDE,2,var)
 #varIPDEA <- apply(N.IPDEA,2,var) #dropped
 #varMat   <- rbind(varI,varIP,varIPD,varIPDE,varIPDEA)
-varMat   <- rbind(varI,varIP,varIPD,varIPDE)
+#varMat   <- rbind(varI,varIP,varIPD,varIPDE)
+varMat   <- rbind(varI,varIP,varIPDE)
 
-## out-of-sample stacked area plot
-V.pred.rel <- apply(varMat,2,function(x) {x/max(x)})
-plot(time2,V.pred.rel[1,],ylim=c(0,1),type='n',main="Relative Variance: Out-of-Sample",ylab="Proportion of Variance",xlab="time")
-ciEnvelope(time2,rep(0,ncol(V.pred.rel)),V.pred.rel[1,],col=N.cols[1])
-ciEnvelope(time2,V.pred.rel[1,],V.pred.rel[2,],col=N.cols[2])
-ciEnvelope(time2,V.pred.rel[2,],V.pred.rel[3,],col=N.cols[3])
-ciEnvelope(time2,V.pred.rel[3,],V.pred.rel[4,],col=N.cols[4])
-ciEnvelope(time2,V.pred.rel[4,],V.pred.rel[5,],col=N.cols[5])
-legend("topleft",legend=c("RandomEffect","Process","Driver","Parameter","InitCond"),col=rev(N.cols),lty=1,lwd=5)
+# ## out-of-sample stacked area plot
+# V.pred.rel <- apply(varMat,2,function(x) {x/max(x)})
+# plot(time2,V.pred.rel[1,],ylim=c(0,1),type='n',main="Relative Variance: Out-of-Sample",ylab="Proportion of Variance",xlab="time")
+# ciEnvelope(time2,rep(0,ncol(V.pred.rel)),V.pred.rel[1,],col=N.cols[1])
+# ciEnvelope(time2,V.pred.rel[1,],V.pred.rel[2,],col=N.cols[2])
+# ciEnvelope(time2,V.pred.rel[2,],V.pred.rel[3,],col=N.cols[3])
+# ciEnvelope(time2,V.pred.rel[3,],V.pred.rel[4,],col=N.cols[4])
+# ciEnvelope(time2,V.pred.rel[4,],V.pred.rel[5,],col=N.cols[5])
+# legend("topleft",legend=c("RandomEffect","Process","Driver","Parameter","InitCond"),col=rev(N.cols),lty=1,lwd=5)
 
 ## in-sample stacked area plot
 #V.pred.rel.in <- apply(varMat[-5,],2,function(x) {x/max(x)})
@@ -728,12 +712,16 @@ V.pred.rel.in <- apply(varMat,2,function(x) {x/max(x)})
 plot(time2,V.pred.rel.in[1,],ylim=c(0,1),type='n',main="Relative Variance: In-Sample",ylab="Proportion of Variance",xlab="time")
 ciEnvelope(time2,rep(0,ncol(V.pred.rel.in)),V.pred.rel.in[1,],col=N.cols[1])
 ciEnvelope(time2,V.pred.rel.in[1,],V.pred.rel.in[2,],col=N.cols[2])
-ciEnvelope(time2,V.pred.rel.in[2,],V.pred.rel.in[3,],col=N.cols[3])
-ciEnvelope(time2,V.pred.rel.in[3,],V.pred.rel.in[4,],col=N.cols[4])
+ciEnvelope(time2,V.pred.rel.in[2,],V.pred.rel.in[3,],col=N.cols[4]) # skip driver
+#ciEnvelope(time2,V.pred.rel.in[3,],V.pred.rel.in[4,],col=N.cols[4]) 
 legend("topleft",legend=c("Process","Driver","Parameter","InitCond"),col=rev(N.cols[-5]),lty=1,lwd=5)
+
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name, '_Prop_pred2015.png'))), type = "png")
+
+# Fichter
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name, '_SOTF','_Prop_pred2015.png'))), type = "png")
+
+
 ```
-
-
-**Question 6:**  Based on results, where would you focus your research efforts next if your aim was to improve out-of-sample predictions? What about improving in-sample predictions? What is the current balance between process and parameter error and what does that tell us about the potential value of increasing model complexity?
-
 
