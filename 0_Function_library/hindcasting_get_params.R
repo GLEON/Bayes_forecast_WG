@@ -141,13 +141,13 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
     if(model_type == "Linear_2var"){
       params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
-                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
+                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C2 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
     }
 
     if(model_type == "Quad_2var"){
       params <- list(sd_obs = 0, sd_proc = 0, beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"], beta5 = posteriors[num_draws,"beta5"],
-                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
+                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C2 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
     }
 
   }
@@ -190,13 +190,13 @@ get_params <- function(model_name, forecast_type, posteriors, num_draws, year, c
     if(model_type == "Linear_2var"){
       params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"],
-                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
+                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C2 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
     }
 
     if(model_type == "Quad_2var"){
       params <- list(sd_obs = 0, sd_proc = 1/sqrt(posteriors[num_draws,"tau_proc"]), beta1 = posteriors[num_draws,"beta1"],
                      beta2 = posteriors[num_draws,"beta2"], beta3 = posteriors[num_draws,"beta3"], beta4 = posteriors[num_draws,"beta4"], beta5 = posteriors[num_draws,"beta5"],
-                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
+                     sd_C1 = 1/sqrt(posteriors[num_draws,"tau_C1_proc"]), sd_C2 = 1/sqrt(posteriors[num_draws,"tau_C2_proc"]))
     }
 
   }
