@@ -123,6 +123,9 @@ for(i in 1:length(wtr_weeklymean_v2[,3])) {
   }
 }
 
+# Missing one value
+wtr_weeklymean_v2[121,3] <- 15.51333
+
 write.csv(wtr_weeklymean_v2, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_allsites_prior.csv", row.names = F)
 
 
