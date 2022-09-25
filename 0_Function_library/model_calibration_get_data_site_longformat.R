@@ -27,7 +27,7 @@ season_weeks = c(1:120) # full season weeks instead of 1:20
 #for RW_obs_1site, and DLM_1site
 if(model_name %in% c("RW_obs_1site","DLM_1site")){
   # Set gloeo site data
-  y = gloeo_short$hc_gloeo_ln
+  y = gloeo_short$nsh_gloeo_ln
 
   return(list(season_weeks = season_weeks, y = y))
 }

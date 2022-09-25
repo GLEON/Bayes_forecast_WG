@@ -8,7 +8,7 @@ rmse = function(m, o){
   sqrt(mean((m - o)^2, na.rm = TRUE))
 }
 
-#3. coverage (% of values falling within 95% predictive interval)
+#4. coverage (% of values falling within 95% predictive interval)
 #pred_dist = distributions of predictions where each predictive distribution
 #for each time point is a column
 #obs = vector of observed values corresponding to predictive distributions
@@ -28,7 +28,7 @@ coverage = function(pred_dist, obs){
 
   }
 
-#4. peak timing metric (when did model predict the peak vs. when it occurred)
+#5. peak timing metric (when did model predict the peak vs. when it occurred)
 #reported as difference in weeks, where -1 means model predicted 1 week early
 #and 1 means model predicted 1 week late
 #pred = vector of predicted values, obs = vector of observed values
@@ -39,7 +39,7 @@ peak_timing = function(pred, obs){
   return(peak_timing)
 }
 
-#5. Mean quantile of observations in distribution of predictions
+#6. Mean quantile of observations in distribution of predictions
 #pred_dist = distributions of predictions where each predictive distribution
 #for each time point is a column
 #obs = vector of observed values corresponding to predictive distributions
@@ -57,7 +57,7 @@ mean_quantile = function(pred_dist, obs){
 
 }
 
-#6. Quantile of 2015 max. density in predictive interval
+#7. Quantile of 2015 max. density in predictive interval
 #pred_dist = distributions of predictions where each predictive distribution
 #for each time point is a column
 #obs = vector of observed values corresponding to predictive distributions
@@ -68,7 +68,7 @@ max_quantile = function(pred_dist, obs){
   return(obs_quantile)
 }
 
-#8. **Mean diff. in predicted-observed in total per L
+#9. **Mean diff. in predicted-observed in total per L
 #pred_dist = distributions of predictions where each predictive distribution
 #for each time point is a column
 #obs = vector of observed values corresponding to predictive distributions
@@ -84,7 +84,7 @@ bias = function(pred_dist, obs){
   return(bias)
 }
 
-#9. **Bias in predictions during highest density point in 2015
+#10. **Bias in predictions during highest density point in 2015
 #pred_dist = distributions of predictions where each predictive distribution
 #for each time point is a column
 #obs = vector of observed values corresponding to predictive distributions
@@ -94,7 +94,7 @@ max_bias = function(pred_dist, obs){
   return(obs_diff)
 }
 
-#10. **Mean range of 95% predictive interval in total per L
+#11. **Mean range of 95% predictive interval in total per L
 #pred_dist = distributions of predictions where each predictive distribution
 #for each time point is a column
 mean_range = function(pred_dist){
