@@ -14,14 +14,16 @@
 pacman::p_load(tidyverse, readxl, rjags, runjags, moments, coda)
 
 #set a directory to use as a local file repository for plots if desire to write to file
-my_directory <- "~/Documents/Gloeo Bayesian Modeling/R Output/Bayes_model_calibration_output/" #"C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output"
-write_plots <- FALSE #TRUE
+my_directory <- "~/Documents/Gloeo Bayesian Modeling/R Output/Bayes_model_calibration_output_v2/" #"C:/Users/Mary Lofton/Dropbox/Ch5/Bayes_model_calibration_output"
+write_plots <- TRUE #TRUE
 
 #make vector of model names for for-loop
 #my_models <- c("RW","RW_obs","RW_bias","AC","base_DLM","wtrtemp_min","wtrtemp_min_lag","wtrtemp_MA7","schmidt_med_diff","wnd_dir_2day_lag","GDD","schmidt_max_lag","precip","schmidt_and_wind","wind_and_GDD","schmidt_and_GDD","schmidt_and_temp","temp_and_wind","RY")
 
 # 1 site
-my_models <- c("DLM_1site") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY", "wtrtemp_min_and_airtempGDD_1site_RY_HC", "wtrtemp_min_and_airtempGDD_1site_RY_NB", "wtrtemp_min_and_airtempGDD_1site_RY_NSH"
+my_models <- c("wtrtemp_min_and_airtempGDD_1site_RY_HC") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY", "wtrtemp_min_and_airtempGDD_1site_RY_HC", "wtrtemp_min_and_airtempGDD_1site_RY_NB", "wtrtemp_min_and_airtempGDD_1site_RY_NSH"
+
+#"wtrtemp_min_and_airtempGDD_1site_HC", "wtrtemp_min_and_airtempGDD_1site_NB", "wtrtemp_min_and_airtempGDD_1site_NSH"
 
 # 3 sites
 my_models <- c("wtrtemp_min_and_GDD_3sites_RY") #"RW_obs_3sites","DLM_3sites", "wtrtemp_min_and_GDD_3sites", "wtrtemp_min_and_GDD_3sites_RY")
@@ -35,7 +37,7 @@ length(my_models)
 for (i in 1:length(my_models)){
 
 #1) Source helper functions ---------------------------------------------------------
-  source('0_Function_library/model_calibration_plug_n_play_site.R')
+  source('0_Function_library/model_calibration_plug_n_play_site_v2.R') # test new observation error prior
   source('0_Function_library/model_calibration_get_data_site_longformat.R') #check correct script sourced
   #source('0_Function_library/model_calibration_get_data_multisite_longformat.R') #check correct script sourced
   source('0_Function_library/model_calibration_plots.R')
@@ -117,7 +119,7 @@ jags.out_DL_3  <- coda.samples(model = j.model,
                                    variable.names = c("tau_proc","tau_obs","beta1","beta2","beta3","beta4","beta5"), #"beta1","beta2","beta3","beta4","beta5"),
                                    n.iter = 50000) #10000
 
-jags.out_DL_1_RY_NSH <- coda.samples (model = j.model,
+jags.out_DL_1_RY_NB <- coda.samples (model = j.model,
                                         variable.names = c("beta1","beta2","beta3","beta4","beta5", "tau_proc","tau_obs","tau_yr", "yr"),
                                         n.iter = 50000) #10000
 
@@ -142,11 +144,14 @@ gelman.diag(jags.burn2)
 
 
 # Calculate DIC
+DIC.RW <- dic.samples(j.model, n.iter=50000)
+DIC.RW
+
 DIC.DLM <- dic.samples(j.model, n.iter=50000)
 DIC.DLM
 
 DIC.DL_1 <- dic.samples(j.model, n.iter=50000)
 DIC.DL_1
 
-DIC.DL_3_RY <- dic.samples(j.model, n.iter=50000)
-DIC.DL_3_RY
+DIC.DL_1_RY <- dic.samples(j.model, n.iter=50000)
+DIC.DL_1_RY
