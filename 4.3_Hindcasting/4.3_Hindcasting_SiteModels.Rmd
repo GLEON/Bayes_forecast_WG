@@ -33,7 +33,7 @@ gloeo <- read_csv("./00_Data_files/Bayesian_model_input_data/Gloeo_AllSites.csv"
   source('0_Function_library/model_hindcasting_plug_n_play_site.R')
 
 # Get model
-my_models <- c("DLM_1site") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY", "wtrtemp_min_and_airtempGDD_1site_RY_HC"
+my_models <- c("wtrtemp_min_and_airtempGDD_1site_RY_NB") #,"RW_obs_1site", "DLM_1site","wtrtemp_min_and_GDD_1site", "wtrtemp_min_and_GDD_1site_RY", "wtrtemp_min_and_airtempGDD_1site_RY_HC"
 
 model_name = my_models
 model=paste0("4.1_JAGS_models/",model_name, '.R') #Do not edit
@@ -69,7 +69,7 @@ jags.out.mcmc <- as.mcmc.list(jags.out)
 #6) Save output for calibration assessment
 
 #save predicted states
-Nmc = 10000
+Nmc = 10000 #should be 7500
 out <- as.matrix(jags.out.mcmc) # Window to thin, burn-in,
 
 srow <- sample.int(nrow(out),Nmc,replace=TRUE)
@@ -78,26 +78,19 @@ betas <- out[srow, grep("beta",colnames(out))]
 taus <- out[srow, grep("tau",colnames(out))]
 params_init <- cbind(betas, taus)
 
+# Ensemble for covariate driver dat
 covar1_ensemble <- out[srow, grep("covar1",colnames(out))]
 covar2_ensemble <- out[srow, grep("covar2",colnames(out))]
 
-# Ensemble
-out_hc <- out
-out_nb <- out
-out_nsh <- out
+median(covar1_ensemble)
+mean(covar1_ensemble)
+range(covar1_ensemble)
 
-out_all <- cbind(out_hc, out_nb, out_nsh)
- mu.cols <- grep("^mu",colnames(out_all)) # out ## grab all columns that start with the letter mu
+median(covar2_ensemble)
+mean(covar2_ensemble)
+range(covar2_ensemble)
 
-mu_ensemble <- apply(out_all[,mu.cols],1,mean) ## model was fit on log scale but keep in log scale
 
-mu_ensemble_col <- apply(out_all[,mu.cols],2,mean) ## model was fit on log scale but keep in log scale
-
-srow_v2 <- sample.int(nrow(out_all),Nmc,replace=TRUE)
-
-mus_v2 <- mu_ensemble[srow_v2,grep("mu",colnames(out_all))]
-
-nrow(out)
 ```
 
 
@@ -111,7 +104,7 @@ hist(mus)
 median(mus)
 max(mus)
 mean(mus)
-hist(mus_v2)
+#hist(mus_v2)
 ```
 
 
@@ -127,6 +120,9 @@ time2 = 121:140   ## forecast period
 mu.cols <- grep("^mu",colnames(out)) # out ## grab all columns that start with the letter mu
 
 ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
+hc_ci <- ci
+nb_ci <- ci
+nsh_ci <- ci
 
 plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="LN Gloeo", xlab = "Week", xlim=time[time.rng]) #, xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
 if(diff(time.rng) < 100){ 
@@ -205,52 +201,46 @@ time.rng = c(1,length(time))       ## adjust to zoom in and out
 # 
 # ci <- apply(out[,mu.cols],2,quantile,c(0.025,0.5,0.975)) ## model was fit on log scale but keep in log scale
 
-#Dates on x-axis, plots entire year
-time = gloeo_final_site$date # for 2013
-
-plot(time,hc_ci[2,],type='n',ylim=range(hc_ci,na.rm=TRUE), xlim=time[time.rng],
-     ylab="Natural Log G. echinulata (colonies/L)", xlab = "",
-     main = "Herrick Cove", xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
-if(diff(time.rng) < 150){
-  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]], by = "year"), format = "%Y") #, labels = T)
-}
+# #Dates on x-axis, plots entire year
+# time = gloeo_final_site$date # for 2013
+# 
+# plot(time,hc_ci[2,],type='n',ylim=range(hc_ci,na.rm=TRUE), xlim=time[time.rng],
+#      ylab="Natural Log G. echinulata (colonies/L)", xlab = "",
+#      main = "Herrick Cove", xaxt = "n") #, xaxt = "n"#log='y', don't need on log scale
+# if(diff(time.rng) < 150){
+#   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]], by = "year"), format = "%Y") #, labels = T)
+# }
 
 range(hc_ci) # [1] -7.008958  4.415712
 range(nb_ci) #-8.230718  4.444704
 
 plot(time,hc_ci[2,],type='n',ylim=range(nb_ci,na.rm=TRUE), xlim=time[time.rng], 
-     xaxt = "n",
+     #xaxt = "n",
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.5,
      cex.main = 2.5,
-     ylab="", xlab = "",  #Log G. echinulata (colonies/L)
+     ylab="Log G. echinulata (colonies/L)", xlab = "",  #Log G. echinulata (colonies/L)
      main = "Herrick Cove") 
 ecoforecastR::ciEnvelope(time,hc_ci[1,],hc_ci[3,],col=ecoforecastR::col.alpha(5,0.5))
-lines(time,y, lwd = 1.5)
-points(time,y,pch=19,cex=1.5, col = 3) #0.5, pch="+",
-points(time, y, cex = 1.5)
-lines(time, hc_ci[2,], lty = 2, lwd = 2)
+#lines(time,y, lty = 2, lwd = 2)
+points(time,y,pch=19,cex=1.5) #0.5, pch="+", col = 3 #green
+#points(time, y, cex = 1.5) # black outline
+#lines(time, hc_ci[2,], lty = 2, lwd = 2)
 #lines(time, ci[3,], lty = 2)
+
+# Add in 2015 data HC
+lines(time2, gloeo$hc_gloeo_ln[121:140], lty = 2, lwd = 2)
+points(time2, gloeo$hc_gloeo_ln[121:140], pch=19,cex=1.5)
+
+
 points(time, hc_ci[2,], col = 6, pch=19, cex = 1.35)
 #points(time, ci[2,], cex = 1) # black outline
 
-legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 1.25, bty = "n")
+legend("topleft",legend=c("Observed","Median predicted", "95% credible interval"),col=c(1,6, 5),pch = 19, cex = 1.25, bty = "n")
 
 quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
-
-# Add in 2015 data HC
-lines(time2, gloeo$hc_gloeo_ln[121:140], lwd = 1.5)
-points(time2, gloeo$hc_gloeo_ln[121:140], pch=19,cex=1.5, col = 3)
-
-# Add in 2015 data NB
-lines(time2, gloeo$nb_gloeo_ln[121:140])
-points(time2, gloeo$nb_gloeo_ln[121:140], pch=19,cex=1.25, col = 3)
-
-# Add in 2015 data NSH
-lines(time2, gloeo$nsh_gloeo_ln[121:140])
-points(time2, gloeo$nsh_gloeo_ln[121:140], pch=19,cex=1.25, col = 3)
 
 
 # Add data in for 2015
@@ -277,19 +267,19 @@ plot(time,hc_ci[2,121:140],type='n',ylim=range(nb_ci,na.rm=TRUE),
      cex.axis = 1.5,
      cex.lab = 1.5,
      cex.main = 2.5,
-     ylab="", xlab = "",  #Log G. echinulata (colonies/L)
-     main = "South of the Fells Prediction \n with Herrick Cove Model")
+     ylab="", xlab = "")  #Log G. echinulata (colonies/L)
+   #  main = "South of the Fells Prediction \n with Herrick Cove Model")
 if(diff(time.rng) < 150){
 axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]], by = "2 weeks"), format = "%d-%b", labels = T, cex.axis = 1.5)
 }
   ecoforecastR::ciEnvelope(time,hc_ci[1,121:140],hc_ci[3,121:140],col=col.alpha(5,0.5))
-  lines(time,gloeo$sotf_gloeo_ln[121:140], lwd = 1.5)
-  points(time,gloeo$sotf_gloeo_ln[121:140],pch=19,cex=2.5, col = 3)
-  points(time,gloeo$sotf_gloeo_ln[121:140],cex = 2.5)
-  lines(time, hc_ci[2,121:140], lty = 2, lwd = 2)
+  #lines(time,gloeo$sotf_gloeo_ln[121:140], lwd = 1.5)
+  points(time,gloeo$sotf_gloeo_ln[121:140],pch=19,cex=2.5, col = 1)
+  #points(time,gloeo$sotf_gloeo_ln[121:140],cex = 2.5)
+  #lines(time, hc_ci[2,121:140], lty = 2, lwd = 2)
   points(time, hc_ci[2,121:140], col = 6, pch=19, cex = 2.35)
 
-legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 2, bty = "n")
+legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(1,6, 5),pch = 19, cex = 1.5, bty = "n")
 
 quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('SOTF_',model_name,'_Obs_vs_pred2015_data2015.pdf'))),type = "pdf", dpi = 600) #, width = 8.5, height = 11)
 
@@ -330,22 +320,23 @@ plot(time,nb_ci[2,],type='n',ylim=range(nb_ci,na.rm=TRUE), xlim=time[time.rng],
      ylab="", xlab = "",  #Log G. echinulata (colonies/L)
      main = "Newbury") 
 ecoforecastR::ciEnvelope(time,nb_ci[1,],nb_ci[3,],col=ecoforecastR::col.alpha(5,0.5))
-lines(time,y, lwd = 1.5)
-points(time,y,pch=19,cex=1.5, col = 3) #0.5, pch="+",
-points(time, y, cex = 1.5)
-lines(time, nb_ci[2,], lty = 2, lwd = 2)
+lines(time,y, lty = 2, lwd = 2)
+points(time,y,pch=19,cex=1.5) #0.5, pch="+",
+#points(time, y, cex = 1.5)
+#lines(time, nb_ci[2,], lty = 2, lwd = 2)
 #lines(time, ci[3,], lty = 2)
-points(time, nb_ci[2,], col = 6, pch=19, cex = 1.35)
 #points(time, ci[2,], cex = 1) # black outline
 
-legend("bottomleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 1.25, bty = "n")
+# Add in 2015 data NB
+lines(time2, gloeo$nb_gloeo_ln[121:140], lty = 2, lwd = 2)
+points(time2, gloeo$nb_gloeo_ln[121:140], pch=19,cex=1.5)
+
+points(time, nb_ci[2,], col = 6, pch=19, cex = 1.35)
+
+legend("bottomleft",legend=c("Observed","Median predicted", "95% credible interval"),col=c(1,6, 5),pch = 19, cex = 1.25, bty = "n")
 
 # quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
 
-
-# Add in 2015 data NB
-lines(time2, gloeo$nb_gloeo_ln[121:140], lwd = 1.5)
-points(time2, gloeo$nb_gloeo_ln[121:140], pch=19,cex=1.5, col = 3)
 
 # Save plot with data for 2015
 quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015_data2015.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
@@ -371,19 +362,19 @@ plot(time,nb_ci[2,121:140],type='n',ylim=range(nb_ci,na.rm=TRUE),
      cex.axis = 1.5,
      cex.lab = 1.5,
      cex.main = 2.5,
-     ylab="", xlab = "",  #Log G. echinulata (colonies/L)
-     main = "South of the Fells Prediction \n with Newbury Model")
+     ylab="", xlab = "")  #Log G. echinulata (colonies/L)
+    # main = "South of the Fells Prediction \n with Newbury Model")
 if(diff(time.rng) < 150){
 axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]], by = "2 weeks"), format = "%d-%b", labels = T, cex.axis = 1.5)
 }
   ecoforecastR::ciEnvelope(time,nb_ci[1,121:140],nb_ci[3,121:140],col=col.alpha(5,0.5))
-  lines(time,gloeo$sotf_gloeo_ln[121:140], lwd = 1.5)
-  points(time,gloeo$sotf_gloeo_ln[121:140],pch=19,cex=2.5, col = 3)
-  points(time,gloeo$sotf_gloeo_ln[121:140],cex = 2.5)
-  lines(time, nb_ci[2,121:140], lty = 2, lwd = 2)
+  #lines(time,gloeo$sotf_gloeo_ln[121:140], lwd = 1.5)
+  points(time,gloeo$sotf_gloeo_ln[121:140],pch=19,cex=2.5, col = 1)
+  #points(time,gloeo$sotf_gloeo_ln[121:140],cex = 2.5)
+  #lines(time, nb_ci[2,121:140], lty = 2, lwd = 2)
   points(time, nb_ci[2,121:140], col = 6, pch=19, cex = 2.35)
 
-legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 2, bty = "n")
+legend("topleft",legend=c("Observed","Median predicted", "95% CI"),col=c(1,6, 5),pch = 19, cex = 1.5, bty = "n")
 
 quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('SOTF_',model_name,'_Obs_vs_pred2015_data2015.pdf'))),type = "pdf", dpi = 600) #, width = 8.5, height = 11)
 
@@ -415,7 +406,7 @@ range(hc_ci) # [1] -7.008958  4.415712
 range(nb_ci) #-8.230718  4.444704
 
 plot(time,nsh_ci[2,],type='n',ylim=range(nb_ci,na.rm=TRUE), xlim=time[time.rng], 
-     xaxt = "n",
+    # xaxt = "n",
      las = 1,
      bty = "l",
      cex.axis = 1.5,
@@ -424,22 +415,23 @@ plot(time,nsh_ci[2,],type='n',ylim=range(nb_ci,na.rm=TRUE), xlim=time[time.rng],
      ylab="", xlab = "",  #Log G. echinulata (colonies/L)
      main = "North Sunapee Harbor") 
 ecoforecastR::ciEnvelope(time,nsh_ci[1,],nsh_ci[3,],col=ecoforecastR::col.alpha(5,0.5))
-lines(time,y, lwd = 1.5)
-points(time,y,pch=19,cex=1.5, col = 3) #0.5, pch="+",
-points(time, y, cex = 1.5)
-lines(time, nsh_ci[2,], lty = 2, lwd = 2)
+lines(time,y, lty = 2, lwd = 2)
+points(time,y,pch=19,cex=1.5) #0.5, pch="+",
+#points(time, y, cex = 1.5)
+#lines(time, nsh_ci[2,], lty = 2, lwd = 2)
 #lines(time, ci[3,], lty = 2)
-points(time, nsh_ci[2,], col = 6, pch=19, cex = 1.35)
 #points(time, ci[2,], cex = 1) # black outline
 
-legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 1.25, bty = "n")
 
 # quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
 
 # Add in 2015 data NSH
-lines(time2, gloeo$nsh_gloeo_ln[121:140], lwd = 1.5)
-points(time2, gloeo$nsh_gloeo_ln[121:140], pch=19,cex=1.5, col = 3)
+lines(time2, gloeo$nsh_gloeo_ln[121:140], lty = 2, lwd = 2)
+points(time2, gloeo$nsh_gloeo_ln[121:140], pch=19,cex=1.5)
 
+points(time, nsh_ci[2,], col = 6, pch=19, cex = 1.35)
+
+legend("topleft",legend=c("Observed","Median predicted", "95% credible interval"),col=c(1,6, 5),pch = 19, cex = 1.25, bty = "n")
 
 # Add data in for 2015
 quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015_data2015.pdf'))), type = "pdf", family = "Helvetica", dpi = 600, width = 11, height = 8.5)
@@ -465,19 +457,19 @@ plot(time,nsh_ci[2,121:140],type='n',ylim=range(nb_ci,na.rm=TRUE),
      cex.axis = 1.5,
      cex.lab = 1.5,
      cex.main = 2.5,
-     ylab="", xlab = "",  #Log G. echinulata (colonies/L)
-     main = "South of the Fells Prediction \n with North Sunapee Harbor Model")
+     ylab="", xlab = "")  #Log G. echinulata (colonies/L)
+     #main = "South of the Fells Prediction \n with North Sunapee Harbor Model")
 if(diff(time.rng) < 150){
 axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]], by = "2 weeks"), format = "%d-%b", labels = T, cex.axis = 1.5)
 }
   ecoforecastR::ciEnvelope(time,nsh_ci[1,121:140],nsh_ci[3,121:140],col=col.alpha(5,0.5))
-  lines(time,gloeo$sotf_gloeo_ln[121:140], lwd = 1.5)
-  points(time,gloeo$sotf_gloeo_ln[121:140],pch=19,cex=2.5, col = 3)
-  points(time,gloeo$sotf_gloeo_ln[121:140],cex = 2.5)
-  lines(time, nsh_ci[2,121:140], lty = 2, lwd = 2)
+  #lines(time,gloeo$sotf_gloeo_ln[121:140], lwd = 1.5)
+  points(time,gloeo$sotf_gloeo_ln[121:140],pch=19,cex=2.5, col = 1)
+  #points(time,gloeo$sotf_gloeo_ln[121:140],cex = 2.5)
+  #lines(time, nsh_ci[2,121:140], lty = 2, lwd = 2)
   points(time, nsh_ci[2,121:140], col = 6, pch=19, cex = 2.35)
 
-legend("topleft",legend=c("Observed Gloeo","Predicted Gloeo", "95% CI"),col=c(3,6, 5),pch = 19, cex = 2, bty = "n")
+legend("topleft",legend=c("Observed","Median predicted", "95% CI"),col=c(1,6, 5),pch = 19, cex = 2, bty = "n")
 
 quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('SOTF_',model_name,'_Obs_vs_pred2015_data2015.pdf'))),type = "pdf", dpi = 600) #, width = 8.5, height = 11)
 
@@ -485,34 +477,13 @@ quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output
 
 ## Observed vs. Predicted plots
 ```{r}
-
-hc_ci <-  ci
-nb_ci <-  ci
-nsh_ci <-  ci
-
-fitHC <- lm(gloeo$hc_gloeo_ln[121:140] ~ mean_pred_log_hc)
-summary(fitHC)
-
-fitHC_SOTF <- lm(gloeo$sotf_gloeo_ln[121:140] ~ mean_pred_log_hc)
-summary(fitHC_SOTF)
-
-fitNB <- lm(gloeo$nb_gloeo_ln[121:140] ~ mean_pred_log_nb)
-summary(fitNB)
-
-fitNB_SOTF <- lm(gloeo$sotf_gloeo_ln[121:140] ~ mean_pred_log_nb)
-summary(fitNB_SOTF)
-
-fitNSH <- lm(gloeo$nsh_gloeo_ln[121:140] ~ mean_pred_log_nsh)
-summary(fitNSH)
-
-fitNSH_SOTF <- lm(gloeo$sotf_gloeo_ln[121:140] ~ mean_pred_log_nsh)
-summary(fitNSH_SOTF)
-
-
 # Save output for each site with initial, parameter, and process uncertainty
 N.IPDE_hc <- N.IPDE
 N.IPDE_nb <- N.IPDE
 N.IPDE_nsh <- N.IPDE
+
+#write.csv(N.IPDE_hc_f, "5_Model_output/5.2_Hindcasting/N.IPDE_hc_f.csv")
+
 
 # Same for fichter
 
@@ -538,6 +509,26 @@ mean_pred_log_nb_f <- colMeans(N.IPDE_nb_f)
 mean_pred_log_nsh_f <- colMeans(N.IPDE_nsh_f)
 
 
+fitHC <- lm(mean_pred_log_hc ~ gloeo$hc_gloeo_ln[121:140])
+summary(fitHC)
+
+fitHC_SOTF <- lm(mean_pred_log_hc_f ~ gloeo$sotf_gloeo_ln[121:140])
+summary(fitHC_SOTF)
+
+fitNB <- lm(mean_pred_log_nb ~ gloeo$nb_gloeo_ln[121:140])
+summary(fitNB)
+
+fitNB_SOTF <- lm(mean_pred_log_nb_f ~ gloeo$sotf_gloeo_ln[121:140])
+summary(fitNB_SOTF)
+
+fitNSH <- lm(mean_pred_log_nsh ~ gloeo$nsh_gloeo_ln[121:140])
+summary(fitNSH)
+
+fitNSH_SOTF <- lm(mean_pred_log_nsh_f ~ gloeo$sotf_gloeo_ln[121:140])
+summary(fitNSH_SOTF)
+
+
+
 RMSE_hc <- round(sqrt(mean((mean_pred_log_hc - obs_log_hc)^2, na.rm = T)),2)
 RMSE_nb <- round(sqrt(mean((mean_pred_log_nb - obs_log_nb)^2, na.rm = T)),2)
 RMSE_nsh <- round(sqrt(mean((mean_pred_log_nsh - obs_log_nsh)^2, na.rm = T)),2)
@@ -547,115 +538,437 @@ RMSE_hc_f <- round(sqrt(mean((mean_pred_log_hc_f - obs_log_sotf)^2, na.rm = T)),
 RMSE_nb_f <- round(sqrt(mean((mean_pred_log_nb_f - obs_log_sotf)^2, na.rm = T)),2)
 RMSE_nsh_f <- round(sqrt(mean((mean_pred_log_nsh_f - obs_log_sotf)^2, na.rm = T)),2)
 
+range(gloeo$hc_gloeo_ln[121:140], na.rm = T)
+range(mean_pred_log_hc)
+
+range(gloeo$nsh_gloeo_ln[121:140], na.rm = T)
+
+range(gloeo$nb_gloeo_ln[121:140], na.rm = T)
+range(mean_pred_log_nb) #max range -5.2 to 3.26
+
+
 #HC
-plot(gloeo$hc_gloeo_ln[121:140] ~ mean_pred_log_hc,
-     pch=19,cex=2.5, col = 3,
-     ylim=c(-5.2,0.2), xlim=c(-5.2,0.2), 
+plot(mean_pred_log_hc ~ gloeo$hc_gloeo_ln[121:140],
+     pch=19,cex=2.5, col = "mediumaquamarine",
+     ylim=c(-5.2,3.26), xlim=c(-5.2,3.26), 
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.25,
      cex.main = 2.25,
-     ylab="Observed Log G. echinulata (colonies/L)", xlab = "Predicted Log G. echinulata (colonies/L)", 
+     ylab="Predicted Log G. echinulata (colonies/L)", xlab = "Observed Log G. echinulata (colonies/L)", 
      main = "Herrick Cove")
-abline(fitHC, lwd = 3.5, col = 5)
+abline(fitHC, lwd = 3.5, col = "skyblue") # 5, skyblue
 abline(0,1,col=1,lwd=2.5, lty = 2)
 #lines(gloeo$hc_gloeo_ln[121:140], hc_ci[2,121:140], lty = 2)
-legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.45"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
+legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.44", "RMSE 75th = 1.31", "RMSE 25th = 0.72"),col=c(1, "skyblue"), lty =c(2,1), lwd = 4, cex = 1.5, bty = "n")
 
-quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('HC_reg.pdf'))), type = "pdf", dpi = 600) #, width = 11, height = 8.5
+#Add lines for quantiles
+abline(h = -2.98857689, lty = 3) #25% predicted
+abline(v = -2.4261686, lty = 3) #25% observed
+
+abline(h = -0.63133784, lty = 3) #75% predicted
+abline(v = -0.2244205, lty = 3) #75% observed
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('HC_reg.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
+
+# Quantiles
+quantile(mean_pred_log_hc)
+#        0%         25%         50%         75%        100% 
+#-4.17716066 -2.98857689 -1.79823824 -0.63133784  0.07872195 
+quantile(gloeo$hc_gloeo_ln[121:140], na.rm = T)
+#        0%        25%        50%        75%       100% 
+#-4.2635586 -2.4261686 -1.2815573 -0.2244205  2.6470306 
+
+
+
+#top 75th quantile for predictions
+mean_pred_log_hc.df <- as_tibble(mean_pred_log_hc)
+mean_pred_log_hc_top <- mean_pred_log_hc.df %>% 
+  filter(value >= -0.63133784)
+
+mean_pred_log_hc_top75 <- mean_pred_log_hc_top$value
+
+#top 75th quantile for observed
+hc_gloeo_ln_top <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(hc_gloeo_ln >= -0.2244205)
+
+hc_gloeo_ln_top75 <- hc_gloeo_ln_top$hc_gloeo_ln
+
+RMSE_hc_topq <- round(sqrt(mean((mean_pred_log_hc_top75 - hc_gloeo_ln_top75)^2, na.rm = T)),2)
+RMSE_hc_topq #1.31
+
+
+#bottom 25th quantile for predictions
+mean_pred_log_hc.df <- as_tibble(mean_pred_log_hc)
+mean_pred_log_hc_bottom <- mean_pred_log_hc.df %>% 
+  filter(value <= -2.98857689)
+
+mean_pred_log_hc_bottom25 <- mean_pred_log_hc_bottom$value
+
+#bottom 25th quantile for observed
+hc_gloeo_ln_bottom <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(hc_gloeo_ln <= -2.4261686)
+
+hc_gloeo_ln_bottom25 <- hc_gloeo_ln_bottom$hc_gloeo_ln
+
+RMSE_hc_bottomq <- round(sqrt(mean((mean_pred_log_hc_bottom25 - hc_gloeo_ln_bottom25)^2, na.rm = T)),2)
+RMSE_hc_bottomq #0.72
 
 #HC SOTF
-plot(gloeo$sotf_gloeo_ln[121:140] ~ mean_pred_log_hc_f,
-     pch=19,cex=2.5, col = 3,
-     ylim=c(-5.2,0.2), xlim=c(-5.2,0.2), 
+
+range(gloeo$sotf_gloeo_ln[121:140], na.rm = T)
+
+plot(mean_pred_log_hc_f ~ gloeo$sotf_gloeo_ln[121:140],
+     pch=19,cex=2.5, col = "mediumaquamarine",
+     ylim=c(-5.2,3.26), xlim=c(-5.2,3.26), 
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.25,
      cex.main = 2.25,
-     ylab="Observed Log G. echinulata (colonies/L)", xlab = "Predicted Log G. echinulata (colonies/L)", 
+     ylab="Predicted Log G. echinulata (colonies/L)", xlab = "Observed Log G. echinulata (colonies/L)", 
      main = "South of the Fells \n with Herrick Cove Model")
 abline(fitHC_SOTF, lwd = 3.5, col = 5)
 abline(0,1,col=1,lwd=2.5, lty = 2)
 #lines(gloeo$hc_gloeo_ln[121:140], hc_ci[2,121:140], lty = 2)
-legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.24"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
+legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.22","RMSE 75th = 1.04", "RMSE 25th = 0.79"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
 
-quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('HC_F_reg.pdf'))), type = "pdf", dpi = 600) #, width = 11, height = 8.5
+#Add lines for quantiles
+abline(h = -3.001279183, lty = 3) #25% predicted
+abline(v = -2.8634393, lty = 3) #25% observed
 
+abline(h = -0.646238482, lty = 3) #75% predicted
+abline(v = -0.2599733, lty = 3) #75% observed
+
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('HC_F_reg.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
+
+# Quantiles
+quantile(mean_pred_log_hc_f)
+#        0%         25%         50%         75%        100% 
+#-4.229103015 -3.001279183 -1.744117406 -0.646238482  0.004360874 
+quantile(gloeo$sotf_gloeo_ln[121:140], na.rm = T)
+#        0%        25%        50%        75%       100% 
+#-4.9515928 -2.8634393 -1.6191240 -0.2599733  1.5377426  
+
+#top 75th quantile for predictions
+mean_pred_log_hc_f.df <- as_tibble(mean_pred_log_hc_f)
+mean_pred_log_hc_f_top <- mean_pred_log_hc_f.df %>% 
+  filter(value >= -0.646238482 )
+
+mean_pred_log_hc_f_top75 <- mean_pred_log_hc_f_top$value
+
+#top 75th quantile for observed
+sotf_gloeo_ln_top <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(sotf_gloeo_ln >= -0.3) #changed to get value at cut-off
+
+sotf_gloeo_ln_top75 <- sotf_gloeo_ln_top$sotf_gloeo_ln
+
+RMSE_hc_f_topq <- round(sqrt(mean((mean_pred_log_hc_f_top75 - sotf_gloeo_ln_top75)^2, na.rm = T)),2)
+ RMSE_hc_f_topq #1.04
+
+
+#bottom 25th quantile for predictions
+mean_pred_log_hc_f.df <- as_tibble(mean_pred_log_hc_f)
+mean_pred_log_hc_f_bottom <- mean_pred_log_hc_f.df %>% 
+  filter(value <= -3.001279183)
+
+mean_pred_log_hc_f_bottom25 <- mean_pred_log_hc_f_bottom$value
+
+#bottom 25th quantile for observed
+sotf_gloeo_ln_bottom <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(sotf_gloeo_ln <= -2.8)
+
+sotf_gloeo_ln_bottom25 <- sotf_gloeo_ln_bottom$sotf_gloeo_ln
+
+RMSE_hc_f_bottomq <- round(sqrt(mean((mean_pred_log_hc_f_bottom25 - sotf_gloeo_ln_bottom25)^2, na.rm = T)),2)
+RMSE_hc_f_bottomq #0.79
 
 #NB
-plot(gloeo$nb_gloeo_ln[121:140] ~ mean_pred_log_nb,
-     pch=19,cex=2.5, col = 3,
-     ylim=c(-5.2,0.2), xlim=c(-5.2,0.2), 
+plot(mean_pred_log_nb ~ gloeo$nb_gloeo_ln[121:140],
+     pch=19,cex=2.5, col = "mediumaquamarine",
+     ylim=c(-5.2,3.26), xlim=c(-5.2,3.26), 
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.25,
      cex.main = 2.25,
-     ylab="Observed Log G. echinulata (colonies/L)", xlab = "Predicted Log G. echinulata (colonies/L)", 
+     ylab="Predicted Log G. echinulata (colonies/L)", xlab = "Observed Log G. echinulata (colonies/L)", 
      main = "Newbury")
 abline(fitNB, lwd = 3.5, col = 5)
 abline(0,1,col=1,lwd=2.5, lty = 2)
 #lines(gloeo$hc_gloeo_ln[121:140], hc_ci[2,121:140], lty = 2)
-legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.82"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
 
-quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NB_reg.pdf'))), type = "pdf", dpi = 600) #, width = 11, height = 8.5
+legend("topleft", legend = c('1:1','Regression Fit',"RMSE = 1.81", "RMSE 75th = 2.38", "RMSE 25th = 0.18"),col=c(1, "skyblue"), lty =c(2,1), lwd = 4, cex = 1.5, bty = "n")
+
+#Add lines for quantiles
+abline(h = -4.0420858, lty = 3) #25% predicted
+abline(v = -3.3037747, lty = 3) #25% observed
+
+abline(h = -1.2122658, lty = 3) #75% predicted
+abline(v = -0.3672117, lty = 3) #75% observed
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NB_reg.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
+
+# Quantiles
+quantile(mean_pred_log_nb)
+#        0%        25%        50%        75%       100% 
+# -5.1535655 -4.0420858 -2.5570615 -1.2122658 -0.1911341 
+quantile(gloeo$nb_gloeo_ln[121:140], na.rm = T)
+#        0%        25%        50%        75%       100% 
+# -4.9515928 -3.3037747 -1.5183542 -0.3672117  3.2543616 
+
+
+#top 75th quantile for predictions
+mean_pred_log_nb.df <- as_tibble(mean_pred_log_nb)
+mean_pred_log_nb_top <- mean_pred_log_nb.df %>% 
+  filter(value >= -1.2122658)
+
+mean_pred_log_nb_top75 <- mean_pred_log_nb_top$value
+
+#top 75th quantile for observed
+nb_gloeo_ln_top <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(nb_gloeo_ln >= -0.3672117)
+
+nb_gloeo_ln_top75 <- nb_gloeo_ln_top$nb_gloeo_ln
+
+RMSE_nb_topq <- round(sqrt(mean((mean_pred_log_nb_top75 - nb_gloeo_ln_top75)^2, na.rm = T)),2)
+RMSE_nb_topq #2.38
+
+#bottom 25th quantile for predictions
+mean_pred_log_nb.df <- as_tibble(mean_pred_log_nb)
+mean_pred_log_nb_bottom <- mean_pred_log_nb.df %>% 
+  filter(value <= -4.0420858)
+
+mean_pred_log_nb_bottom25 <- mean_pred_log_nb_bottom$value
+
+#bottom 25th quantile for observed
+nb_gloeo_ln_bottom <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(nb_gloeo_ln <= -3.3037747)
+
+nb_gloeo_ln_bottom25 <- nb_gloeo_ln_bottom$nb_gloeo_ln
+
+RMSE_nb_bottomq <- round(sqrt(mean((mean_pred_log_nb_bottom25 - nb_gloeo_ln_bottom25)^2, na.rm = T)),2)
+RMSE_nb_bottomq #0.18
 
 #NB SOTF
-plot(gloeo$sotf_gloeo_ln[121:140] ~ mean_pred_log_nb_f,
-     pch=19,cex=2.5, col = 3,
-     ylim=c(-5.2,0.2), xlim=c(-5.2,0.2), 
+plot(mean_pred_log_nb_f ~ gloeo$sotf_gloeo_ln[121:140],
+     pch=19,cex=2.5, col = "mediumaquamarine",
+     ylim=c(-5.2,3.26), xlim=c(-5.2,3.26), 
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.25,
      cex.main = 2.25,
-     ylab="Observed Log G. echinulata (colonies/L)", xlab = "Predicted Log G. echinulata (colonies/L)", 
+     ylab="Predicted Log G. echinulata (colonies/L)", xlab = "Observed Log G. echinulata (colonies/L)", 
      main = "South of the Fells \n with Newbury Model")
 abline(fitNB_SOTF, lwd = 3.5, col = 5)
 abline(0,1,col=1,lwd=2.5, lty = 2)
 #lines(gloeo$hc_gloeo_ln[121:140], hc_ci[2,121:140], lty = 2)
-legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.37"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
 
-quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NB_F_reg.pdf'))), type = "pdf", dpi = 600) #, width = 11, height = 8.5
+legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.41","RMSE 75th = 1.28", "RMSE 25th = 1.03"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
+
+#Add lines for quantiles
+abline(h = -3.80376350, lty = 3) #25% predicted
+abline(v = -2.8634393, lty = 3) #25% observed
+
+abline(h = -1.07045376, lty = 3) #75% predicted
+abline(v = -0.2599733, lty = 3) #75% observed
+
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NB_F_reg.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
+
+
+# Quantiles
+quantile(mean_pred_log_nb_f)
+#          0%         25%         50%         75%        100% 
+# -5.15308781 -3.80376350 -2.48421457 -1.07045376  0.07782427 
+quantile(gloeo$sotf_gloeo_ln[121:140], na.rm = T)
+#        0%        25%        50%        75%       100% 
+#-4.9515928 -2.8634393 -1.6191240 -0.2599733  1.5377426  
+
+#top 75th quantile for predictions
+mean_pred_log_nb_f.df <- as_tibble(mean_pred_log_nb_f)
+mean_pred_log_nb_f_top <- mean_pred_log_nb_f.df %>% 
+  filter(value >= -1.07045376 )
+
+mean_pred_log_nb_f_top75 <- mean_pred_log_nb_f_top$value
+
+#top 75th quantile for observed
+sotf_gloeo_ln_top <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(sotf_gloeo_ln >= -0.3) #changed to get value at cut-off
+
+sotf_gloeo_ln_top75 <- sotf_gloeo_ln_top$sotf_gloeo_ln
+
+RMSE_nb_f_topq <- round(sqrt(mean((mean_pred_log_nb_f_top75 - sotf_gloeo_ln_top75)^2, na.rm = T)),2)
+ RMSE_nb_f_topq #1.28
+
+
+#bottom 25th quantile for predictions
+mean_pred_log_nb_f.df <- as_tibble(mean_pred_log_nb_f)
+mean_pred_log_nb_f_bottom <- mean_pred_log_nb_f.df %>% 
+  filter(value <= -3.80376350)
+
+mean_pred_log_nb_f_bottom25 <- mean_pred_log_nb_f_bottom$value
+
+#bottom 25th quantile for observed
+sotf_gloeo_ln_bottom <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(sotf_gloeo_ln <= -2.8)
+
+sotf_gloeo_ln_bottom25 <- sotf_gloeo_ln_bottom$sotf_gloeo_ln
+
+RMSE_nb_f_bottomq <- round(sqrt(mean((mean_pred_log_nb_f_bottom25 - sotf_gloeo_ln_bottom25)^2, na.rm = T)),2)
+RMSE_nb_f_bottomq #1.03
 
 #NSH
-plot(gloeo$nsh_gloeo_ln[121:140] ~ mean_pred_log_nsh,
-     pch=19,cex=2.5, col = 3,
-     ylim=c(-5.2,0.2), xlim=c(-5.2,0.2), 
+plot(mean_pred_log_nsh ~ gloeo$nsh_gloeo_ln[121:140],
+     pch=19,cex=2.5, col = "mediumaquamarine",
+     ylim=c(-5.2,3.26), xlim=c(-5.2,3.26), 
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.25,
      cex.main = 2.25,
-     ylab="Observed Log G. echinulata (colonies/L)", xlab = "Predicted Log G. echinulata (colonies/L)", 
+     ylab="Predicted Log G. echinulata (colonies/L)", xlab = "Observed Log G. echinulata (colonies/L)", 
      main = "North Sunapee Harbor")
 abline(fitNSH, lwd = 3.5, col = 5)
 abline(0,1,col=1,lwd=2.5, lty = 2)
 #lines(gloeo$hc_gloeo_ln[121:140], hc_ci[2,121:140], lty = 2)
-legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 1.39"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
 
-quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NSH_reg.pdf'))), type = "pdf", dpi = 600) #, width = 11, height = 8.5
+legend("topleft", legend = c('1:1','Regression Fit',"RMSE = 1.39", "RMSE 75th = 1.69", "RMSE 25th = 0.32 "),col=c(1, "skyblue"), lty =c(2,1), lwd = 4, cex = 1.5, bty = "n")
+
+#Add lines for quantiles
+abline(h = -3.843922, lty = 3) #25% predicted
+abline(v = -3.859804, lty = 3) #25% observed
+
+abline(h = -2.149716, lty = 3) #75% predicted
+abline(v = -1.208188, lty = 3) #75% observed
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NSH_reg.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
+
+# Quantiles
+quantile(mean_pred_log_nsh)
+#        0%       25%       50%       75%      100% 
+# -4.969770 -3.843922 -3.174117 -2.149716 -1.454508 
+quantile(gloeo$nsh_gloeo_ln[121:140], na.rm = T)
+#        0%       25%       50%       75%      100% 
+# -4.951593 -3.859804 -2.179729 -1.208188  1.314012 
+
+#top 75th quantile for predictions
+mean_pred_log_nsh.df <- as_tibble(mean_pred_log_nsh)
+mean_pred_log_nsh_top <- mean_pred_log_nsh.df %>% 
+  filter(value >= -2.149716)
+
+mean_pred_log_nsh_top75 <- mean_pred_log_nsh_top$value
+
+#top 75th quantile for observed
+nsh_gloeo_ln_top <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(nsh_gloeo_ln >= -1.208188)
+
+nsh_gloeo_ln_top75 <- nsh_gloeo_ln_top$nsh_gloeo_ln
+
+RMSE_nsh_topq <- round(sqrt(mean((mean_pred_log_nsh_top75 - nsh_gloeo_ln_top75)^2, na.rm = T)),2)
+RMSE_nsh_topq #1.69
+
+
+#bottom 25th quantile for predictions
+mean_pred_log_nsh.df <- as_tibble(mean_pred_log_nsh)
+mean_pred_log_nsh_bottom <- mean_pred_log_nsh.df %>% 
+  filter(value <= -3.843922)
+
+mean_pred_log_nsh_bottom25 <- mean_pred_log_nsh_bottom$value
+
+#bottom 25th quantile for observed
+nsh_gloeo_ln_bottom <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(nsh_gloeo_ln <= -3.859803)
+
+nsh_gloeo_ln_bottom25 <- nsh_gloeo_ln_bottom$nsh_gloeo_ln[-1]
+
+RMSE_nsh_bottomq <- round(sqrt(mean((mean_pred_log_nsh_bottom25 - nsh_gloeo_ln_bottom25)^2, na.rm = T)),2)
+RMSE_nsh_bottomq #0.32
+
 
 #NSH SOTF
-plot(gloeo$sotf_gloeo_ln[121:140] ~ mean_pred_log_nsh_f,
-     pch=19,cex=2.5, col = 3,
-     ylim=c(-5.2,0.2), xlim=c(-5.2,0.2), 
+plot(mean_pred_log_nsh_f ~ gloeo$sotf_gloeo_ln[121:140],
+     pch=19,cex=2.5, col = "mediumaquamarine",
+     ylim=c(-5.2,3.26), xlim=c(-5.2,3.26), 
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.25,
      cex.main = 2.25,
-     ylab="Observed Log G. echinulata (colonies/L)", xlab = "Predicted Log G. echinulata (colonies/L)", 
+     ylab="Predicted Log G. echinulata (colonies/L)", xlab = "Observed Log G. echinulata (colonies/L)", 
      main = "South of the Fells \n with North Sunapee Harbor Model")
 abline(fitNSH_SOTF, lwd = 3.5, col = 5)
 abline(0,1,col=1,lwd=2.5, lty = 2)
 #lines(gloeo$hc_gloeo_ln[121:140], hc_ci[2,121:140], lty = 2)
-legend("bottomright", legend = c('1:1','Regression Fit',"RMSE = 2.03"),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
 
-quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NSH_F_reg.pdf'))), type = "pdf", dpi = 600) #, width = 11, height = 8.5
 
+legend("topleft", legend = c('1:1','Regression Fit',"RMSE = 2.01","RMSE 75th = 2.52", "RMSE 25th = 0.91 "),col=c(1, 5, 3), lty =c(2,1,1), lwd = 4, cex = 1.5, bty = "n")
+
+#Add lines for quantiles
+abline(h = -3.846274, lty = 3) #25% predicted
+abline(v = -2.8634393, lty = 3) #25% observed
+
+abline(h = -2.221410, lty = 3) #75% predicted
+abline(v = -0.2599733, lty = 3) #75% observed
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('NSH_F_reg.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
+
+
+# Quantiles
+quantile(mean_pred_log_nsh_f)
+#        0%       25%       50%       75%      100% 
+# -4.912927 -3.846274 -3.089032 -2.221410 -1.493643 
+quantile(gloeo$sotf_gloeo_ln[121:140], na.rm = T)
+#        0%        25%        50%        75%       100% 
+#-4.9515928 -2.8634393 -1.6191240 -0.2599733  1.5377426  
+
+#top 75th quantile for predictions
+mean_pred_log_nsh_f.df <- as_tibble(mean_pred_log_nsh_f)
+mean_pred_log_nsh_f_top <- mean_pred_log_nsh_f.df %>% 
+  filter(value >= -2.221410 )
+
+mean_pred_log_nsh_f_top75 <- mean_pred_log_nsh_f_top$value
+
+#top 75th quantile for observed
+sotf_gloeo_ln_top <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(sotf_gloeo_ln >= -0.3) #changed to get value at cut-off
+
+sotf_gloeo_ln_top75 <- sotf_gloeo_ln_top$sotf_gloeo_ln
+
+RMSE_nsh_f_topq <- round(sqrt(mean((mean_pred_log_nsh_f_top75 - sotf_gloeo_ln_top75)^2, na.rm = T)),2)
+ RMSE_nsh_f_topq #2.52
+
+
+#bottom 25th quantile for predictions
+mean_pred_log_nsh_f.df <- as_tibble(mean_pred_log_nsh_f)
+mean_pred_log_nsh_f_bottom <- mean_pred_log_nsh_f.df %>% 
+  filter(value <= -3.846274)
+
+mean_pred_log_nsh_f_bottom25 <- mean_pred_log_nsh_f_bottom$value
+
+#bottom 25th quantile for observed
+sotf_gloeo_ln_bottom <- gloeo %>% 
+  filter(year == 2015) %>% 
+  filter(sotf_gloeo_ln <= -2.8)
+
+sotf_gloeo_ln_bottom25 <- sotf_gloeo_ln_bottom$sotf_gloeo_ln
+
+RMSE_nsh_f_bottomq <- round(sqrt(mean((mean_pred_log_nsh_f_bottom25 - sotf_gloeo_ln_bottom25)^2, na.rm = T)),2)
+RMSE_nsh_f_bottomq #0.91
 
 ```
 
@@ -664,7 +977,7 @@ quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output
 ```{r, echo=FALSE}
 ### settings
 Nmc = 7500         ## set number of Monte Carlo draws 1000
-ylim = range(ci,na.rm=TRUE)  ## set Y range on plot
+ylim = range(nb_ci,na.rm=TRUE)  ## set Y range on plot
 N.cols <- c("black","red","green","blue","orange") ## set colors
 trans <- 0.8       ## set transparency
 time = 1:140    ## total time
@@ -678,7 +991,7 @@ Before we get started with prediction, let's focus in on a single site to make t
 ```{r}
 plot.run <- function(){
  # sel = seq(s,ncol(ci),by=NS) # add a sequence to avoid overplotting
-  plot(time,time,type='n',ylim=ylim,ylab="LN Gloeo", xlab = "Week")
+  plot(time,time,type='n',ylim=ylim,ylab="Log G. echinulata (colonies/L)", xlab = "Week")
   ecoforecastR::ciEnvelope(time1,ci[1,1:120],ci[3,1:120],col=col.alpha(5,0.5))
   lines(time1,ci[2,1:120], lty = 2)
   points(time1,ci[2,1:120],pch=19,cex=1.25, col = 6)
@@ -695,18 +1008,27 @@ plot.run()
 plot.run.figs <- function(){
  # sel = seq(s,ncol(ci),by=NS) # add a sequence to avoid overplotting
   plot(time,time,type='n',ylim=ylim,
-      xaxt = "n",
+     #xaxt = "n",
      las = 1,
      bty = "l",
      cex.axis = 1.5,
      cex.lab = 1.5,
      cex.main = 2.5,
-     ylab="", xlab = "",  #Log G. echinulata (colonies/L)
-     main = "Herrick Cove")
+     ylab="Log G. echinulata (colonies/L)", xlab = "",  #Log G. echinulata (colonies/L)
+     main = "North Sunapee Harbor")
   ecoforecastR::ciEnvelope(time1,ci[1,1:120],ci[3,1:120],col=col.alpha(5,0.5))
-  lines(time1,ci[2,1:120], lty = 2, lwd = 2)
+  # Add observed gloeo data
+  lines(time,y,lty = 2, lwd = 2) 
+  points(time,y,pch=19,cex=1.5) #0.5, pch="+", col = 3 #green
+
+  
+  # Add predicted gloeo data
+  #lines(time1,ci[2,1:120], lty = 2, lwd = 2)
   points(time1,ci[2,1:120],pch=19,cex=1.35, col = 6)
  # points(time1,ci[2,1:120],cex = 1)
+  
+
+
 }
 
 plot.run.figs()
@@ -853,7 +1175,7 @@ forecastN_SOTF <- function(IC,params,n=Nmc){
 
   gloeo_prev <- IC          ## initialize
 
-  for(t in 1:length(time2)){ # start for last 2 years
+  for(t in 1:length(time2)){ # start for 2015
     #covar model
       #  covar1 <- covar_hindcast$covar1[t] # hindcasted covariates
       #  covar2 <- covar_hindcast$covar2[t]
@@ -896,7 +1218,7 @@ N.det <- forecastN(IC = mean(IC[,"mu[120]"]),  ## mean of IC
 plot.run()
 lines(time2,N.det,col="purple",lwd=3)
 
-write.csv(N.det,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction','.csv'))),row.names = FALSE)
+#write.csv(N.det,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction','.csv'))),row.names = FALSE)
 
 ```
 
@@ -918,7 +1240,7 @@ N.det <- forecastN_SOTF(IC = mean(IC[,"mu[120]"]),  ## mean of IC
 plot.run()
 lines(time2,N.det,col="purple",lwd=3)
 
-write.csv(N.det,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_','SOTF','.csv'))),row.names = FALSE)
+#write.csv(N.det,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_det.prediction_','SOTF','.csv'))),row.names = FALSE)
 
 ```
 
@@ -945,7 +1267,7 @@ N.I.ci = apply(N.I,2,quantile,c(0.025,0.5,0.975))
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.I,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC','.csv'))),row.names = FALSE)
+#write.csv(N.I,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC','.csv'))),row.names = FALSE)
 
 ```
 
@@ -967,7 +1289,7 @@ N.I.ci = apply(N.I,2,quantile,c(0.025,0.5,0.975))
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.I,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_','SOTF','.csv'))),row.names = FALSE)
+#write.csv(N.I,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC_','SOTF','.csv'))),row.names = FALSE)
 
 ```
 
@@ -992,7 +1314,7 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.IP,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa','.csv'))),row.names = FALSE)
+#write.csv(N.IP,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa','.csv'))),row.names = FALSE)
 
 ```
 
@@ -1017,7 +1339,7 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.IP,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa_','SOTF','.csv'))),row.names = FALSE)
+#write.csv(N.IP,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa_','SOTF','.csv'))),row.names = FALSE)
 
 ```
 
@@ -1093,12 +1415,47 @@ legend("topleft",legend=c("Process","Parameter","Initial Conditions"),col=c(4, 2
 
 #legend("topleft",legend=c("Process","Driver","Parameter","InitCond"),col=rev(N.cols[-5]),lty=1,lwd=5)
 
-write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P','.csv'))),row.names = FALSE)
+#write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P','.csv'))),row.names = FALSE)
 
 # quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_TS_pred2015.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
 # 
 # quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Obs_vs_pred2015.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
 
+
+```
+
+# Figure for gloeo time series within site models and uncertainty underlay
+
+```{r}
+plot.run.figs()
+
+N.IPDE.ci = apply(N.IPDE,2,quantile,c(0.025,0.5,0.975))
+ecoforecastR::ciEnvelope(time2,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
+#ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time2,N.I.ci[2,],lwd=0.5)
+
+
+# # Add in 2015 data HC
+# time2 = 121:140   ## forecast period
+# lines(time2, gloeo$hc_gloeo_ln[121:140], lty = 2, lwd = 2)
+# points(time2, gloeo$hc_gloeo_ln[121:140], pch=19,cex=1.35)
+
+# # Add in 2015 data NB
+# lines(time2, gloeo$nb_gloeo_ln[121:140], lty = 2, lwd = 2)
+# points(time2, gloeo$nb_gloeo_ln[121:140], pch=19,cex=1.35)
+
+# Add in 2015 data NSH
+lines(time2, gloeo$nsh_gloeo_ln[121:140], lty = 2, lwd = 2)
+points(time2, gloeo$nsh_gloeo_ln[121:140], pch=19,cex=1.35)
+
+legend("topleft",legend=c("Observed","Median predicted"),col=c(1,6),pch = 19, cex = 1.25, bty = "n")
+
+legend("bottomleft",legend=c("Process Uncertainty","Parameter Uncertainty","Initial Conditions Uncertainty"),col=c(4, 2, 1),lty=1,lwd=5, cex = 1.25, bty = "n")
+
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_Uncertainty_underlay.pdf'))), type = "pdf", dpi = 600, width = 11, height = 8.5)
 
 ```
 
@@ -1125,9 +1482,56 @@ ecoforecastR::ciEnvelope(time2,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],t
 ecoforecastR::ciEnvelope(time2,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
 lines(time2,N.I.ci[2,],lwd=0.5)
 
-write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P_','SOTF', '.csv'))),row.names = FALSE)
+#write.csv(N.IPDE,file=file.path(paste("./5_Model_output/5.2_Hindcasting/",paste0(model_name,'_hindcast.IC.Pa.D.P_','SOTF', '.csv'))),row.names = FALSE)
 
 # quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0(model_name,'_SOTF', '_TS_pred2015.png'))), type = "png")
+
+```
+
+# Figure for SOTF uncertainty underlay
+```{r}
+
+gloeo_final_site <- gloeo_final %>% 
+  filter(site == "SouthOfTheFells") %>% 
+  filter(year == 2015)
+
+time.rng = c(1,length(time2))       ## adjust to zoom in and out
+time = gloeo_final_site$date
+
+plot(time,hc_ci[2,121:140],type='n',ylim=range(nb_ci,na.rm=TRUE),
+     xaxt = "n",
+     las = 1,
+     bty = "l",
+     cex.axis = 1.5,
+     cex.lab = 1.5,
+     cex.main = 2.5,
+     ylab="", xlab = "")  #Log G. echinulata (colonies/L)
+     #main = "South of the Fells Prediction \n with North Sunapee Harbor Model")
+if(diff(time.rng) < 150){
+axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]], by = "2 weeks"), format = "%d-%b", labels = T, cex.axis = 1.5)
+}
+
+ecoforecastR::ciEnvelope(time,N.IPDE.ci[1,],N.IPDE.ci[3,],col=col.alpha(N.cols[4],trans))
+#ecoforecastR::ciEnvelope(time2,N.IPD.ci[1,],N.IPD.ci[3,],col=col.alpha(N.cols[3],trans))
+ecoforecastR::ciEnvelope(time,N.IP.ci[1,],N.IP.ci[3,],col=col.alpha(N.cols[2],trans))
+ecoforecastR::ciEnvelope(time,N.I.ci[1,],N.I.ci[3,],col=col.alpha(N.cols[1],trans))
+lines(time,N.I.ci[2,],lwd=0.5)
+
+
+ # ecoforecastR::ciEnvelope(time,nsh_ci[1,121:140],nsh_ci[3,121:140],col=col.alpha(5,0.5))
+  #lines(time,gloeo$sotf_gloeo_ln[121:140], lwd = 1.5)
+  points(time,gloeo$sotf_gloeo_ln[121:140],pch=19,cex=2.5, col = 1)
+  #points(time,gloeo$sotf_gloeo_ln[121:140],cex = 2.5)
+  #lines(time, nsh_ci[2,121:140], lty = 2, lwd = 2)
+  
+  #points(time, hc_ci[2,121:140], col = 6, pch=19, cex = 2.35)
+  #points(time, nb_ci[2,121:140], col = 6, pch=19, cex = 2.35)
+  points(time, nsh_ci[2,121:140], col = 6, pch=19, cex = 2.35)
+
+
+legend("topleft",legend=c("Observed","Median predicted", "95% CI"),col=c(1,6, 5),pch = 19, cex = 2, bty = "n")
+
+quartz.save(file = file.path(paste("~/Documents/Gloeo Bayesian Modeling/R Output/Hindcasting_Figures/", paste0('SOTF_',model_name,'_SOTF_uncertainty_underlay.pdf'))),type = "pdf", dpi = 600) #, width = 8.5, height = 11)
 
 ```
 

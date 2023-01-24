@@ -71,12 +71,12 @@ sampling_dates <- sampling_dates_HC %>%
   mutate(year = year(date))
 
 
-# Filter precip data for sampling dates in HC
+# Filter airtemp data for sampling dates in HC
 airtemp2a <- airtemp1 %>%
   select(Date, starts_with(c("midge", "fichter"))) %>%
   filter(Date %in% sampling_dates_HC$date)
 
-# Filter precip data for sampling dates in NB
+# Filter airtemp data for sampling dates in NB
 airtemp2b <- airtemp1 %>%
   select(Date, starts_with(c("coffin", "newbury"))) %>%
   filter(Date %in% sampling_dates_NB$date)

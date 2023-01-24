@@ -370,6 +370,135 @@ Multivariate psrf
 
 1
 
+
+## Random Walk - Pre 2009 gloeo data for observation error 3 sites - no Fichter
+
+```{r}
+y = as.matrix(pre_gloeo4[,2:4]) # NO Fichter
+
+#year_no = as.numeric(as.factor(2007:2008))
+season_weeks = pre_gloeo4$season_week
+site_no = c(1:3)
+
+a_obs = 0.1; r_obs = 0.1 # uninformed priors 0.001
+#a_obs = 0.152; r_obs = 0.0011 # informed priors 13.088, 25.513
+a_proc=0.1; r_proc=0.1 #0.001
+
+
+##Random Walk run - converges fine
+data.rw <- list(y=y,n=length(season_weeks),site_no = site_no, x_ic=-5, tau_ic=100, a_obs=a_obs, r_obs=r_obs, a_proc=a_proc,  r_proc=r_proc)
+
+RandomWalk = "
+model{
+  
+for(j in 1:max(site_no)) {
+
+  #### Data Model
+  for(t in 1:n){
+    y[t,j] ~ dnorm(x[t,j],tau_obs)
+  }
+  
+  #### Process Model
+  for(t in 2:n){
+    x[t,j]~dnorm(x[t-1,j],tau_proc)
+  }
+  
+ #### Initial Conditions
+  x[1,j] ~ dnorm(x_ic,tau_ic)
+
+}
+ #### Priors
+  tau_obs ~ dgamma(a_obs,r_obs)
+  tau_proc ~ dgamma(a_proc,r_proc)
+}
+"
+
+# nchain = 3
+# init <- list()
+# for(i in 1:nchain){
+#   y.samp = sample(y,length(y),replace=TRUE)
+#   init[[i]] <- list(tau_obs=5/var(y.samp,na.rm=T))}
+
+init <- list(list(tau_proc=0.001, tau_obs = 0.1), list(tau_proc=0.1, tau_obs = 1), list(tau_proc=1, tau_obs = 5))
+
+  
+  
+j.model_RW_multi   <- jags.model (file = textConnection(RandomWalk),
+                             data = data.rw,
+                             inits = init,
+                             n.chains = 3)  
+
+
+
+jags.out_RW_multi   <- coda.samples (model = j.model_RW_multi,
+                            variable.names = c("tau_proc","tau_obs"),
+                            n.iter = 50000)
+plot(jags.out_RW_multi)
+
+summary(jags.out_RW_multi)
+
+gelman.diag(jags.out_RW_multi)
+
+GBR <- gelman.plot(jags.out_RW_multi) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
+
+burnin = 30000                              ## determine convergence
+jags.burn_RW_multi <- window(jags.out_RW_multi,start=burnin) 
+
+summary(jags.burn_RW_multi) 
+plot(jags.burn_RW_multi)
+
+gelman.diag(jags.burn_RW_multi)
+
+GBR <- gelman.plot(jags.burn_RW_multi) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
+
+# Calculate DIC
+DIC.RW <- dic.samples(j.model_RW_multi, n.iter=5000)
+DIC.RW
+```
+
+2 Dec 2022 - used 2007 & 2008 data from 3 sites (no Fichter), a/r=0.1, burnin = 30000
+mean = 1.2813, SD = 1.663
+
+mean = a/r
+variance = a/r^2
+
+r=mean/sd^2
+a=mean * r
+
+r = 0.463
+a = 0.594
+
+summary(jags.burn_RW_multi) 
+
+Iterations = 30000:50000
+Thinning interval = 1 
+Number of chains = 3 
+Sample size per chain = 20001 
+
+1. Empirical mean and standard deviation for each variable,
+   plus standard error of the mean:
+
+           Mean     SD  Naive SE Time-series SE
+tau_obs  1.2813 1.6630 0.0067890       0.047599
+tau_proc 0.6337 0.2348 0.0009586       0.004201
+
+2. Quantiles for each variable:
+
+           2.5%    25%    50%   75% 97.5%
+tau_obs  0.5061 0.7418 0.9421 1.269 4.269
+tau_proc 0.2829 0.4634 0.5994 0.765 1.191
+
+gelman.diag(jags.burn_RW_multi)
+Potential scale reduction factors:
+
+         Point est. Upper C.I.
+tau_obs         1.1       1.12
+tau_proc        1.0       1.00
+
+Multivariate psrf
+
+1
+
 ## Random Walk - Fichter 2009-2014 gloeo data for observation error as matrix
 
 ```{r}
@@ -448,6 +577,8 @@ jags.burn_RW <- window(jags.out_RW,start=burnin)
 
 summary(jags.burn_RW)
 plot(jags.burn_RW)
+
+GBR <- gelman.plot(jags.burn_RW) #The point up to where the GBR drops below 1.05 is termed the "burn in" period
 
 jags.out <- run.jags(model = RandomWalk,
                      data = data.rw,

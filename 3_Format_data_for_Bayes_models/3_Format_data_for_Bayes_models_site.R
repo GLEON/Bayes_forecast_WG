@@ -93,7 +93,7 @@ mintemp_all_sites <- bind_cols(mintemp_hc, mintemp_nb[,3],  mintemp_nsh[,3],  mi
 
 write.csv(mintemp_all_sites, "./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv", row.names = FALSE)
 
-# Use data from all sites for min water temp prior
+# Use data from 3 sites for min water temp prior
 #wtrtempmin_allsites <- read_csv("./00_Data_files/Bayesian_model_input_data/wtrtemp_min_AllSites.csv")
 
 wtr_weeklymean <- rowMeans(mintemp_all_sites[,-c(1:2,6)], na.rm = T) # drop year, season week & Fichter data
